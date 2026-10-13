@@ -2,6 +2,8 @@
 
 Liquid Glass Orb and Topographic Terrain, with source, catalog previews, customizers and a shadcn registry.
 
+[Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
+
 ## Install
 
 ```sh
