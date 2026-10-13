@@ -1,0 +1,63 @@
+{
+  "name": "@reactdrops/catalog-ui",
+  "version": "0.1.0",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": "./src/public-index.ts",
+    "./shared-hover-indicator": "./src/shared-hover-indicator.ts",
+    "./pages/components": "./src/components-page.tsx",
+    "./pages/fluid-agent-orb": "./src/fluid-agent-orb-page.tsx",
+    "./pages/topographic-terrain": "./src/topographic-terrain-page.tsx"
+  },
+  "dependencies": {
+    "@reactdrops/catalog-data": "workspace:*",
+    "@reactdrops/components": "workspace:*",
+    "highlight.js": "11.12.0",
+    "lucide-react": "^1.46.0"
+  },
+  "peerDependencies": {
+    "@gsap/react": ">=2.1.0",
+    "gsap": ">=3.13.0",
+    "react": ">=18.3.0",
+    "react-dom": ">=18.3.0",
+    "react-router": ">=7.0.0"
+  },
+  "files": [
+    "src/assets/liquid-glass-orb-preview.webp",
+    "src/assets/topographic-terrain-preview.webp",
+    "src/catalog-component-card.tsx",
+    "src/catalog-sidebar.tsx",
+    "src/catalog.css",
+    "src/color-control.css",
+    "src/color-control.tsx",
+    "src/component-detail-layout.tsx",
+    "src/component-preview-toolbar.tsx",
+    "src/components-page.tsx",
+    "src/control-help.tsx",
+    "src/controls-panel.tsx",
+    "src/copy-prompt-menu.css",
+    "src/copy-prompt-menu.tsx",
+    "src/customizer-controls.css",
+    "src/customizer-controls.tsx",
+    "src/dropdown-surface.css",
+    "src/dropdown-surface.tsx",
+    "src/fluid-agent-orb-page.css",
+    "src/fluid-agent-orb-page.tsx",
+    "src/fluid-agent-orb-speech.ts",
+    "src/highlighted-code.tsx",
+    "src/popup-motion-settings.ts",
+    "src/public-index.ts",
+    "src/shared-hover-indicator.ts",
+    "src/topographic-terrain-page.css",
+    "src/topographic-terrain-page.tsx",
+    "src/use-control-motion.ts",
+    "src/use-number-elasticity.ts",
+    "src/use-number-motion.ts",
+    "src/use-popup-motion.ts",
+    "src/use-preview-fullscreen.ts",
+    "src/use-switch-motion.ts"
+  ]
+}

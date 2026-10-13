@@ -1,0 +1,201 @@
+.reveal-color {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.reveal-color-trigger {
+  flex: 0 0 19px;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  background: repeating-conic-gradient(#aaa 0% 25%, #fff 0% 50%) 0 / 8px 8px;
+  background-clip: padding-box;
+}
+.reveal-color-trigger span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--theme-ink);
+}
+.reveal-color-popup {
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
+  max-width: calc(100vw - 24px);
+  border-radius: var(--radius-md, 8px);
+  color: var(--theme-ink);
+  font-family: inherit;
+  font-size: 12px;
+}
+.reveal-color-popup[data-open='false'] {
+  pointer-events: none;
+}
+.reveal-color-panel {
+  position: relative;
+  border-radius: inherit;
+}
+.reveal-color-surface {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: inherit;
+  background: var(--theme-background);
+  box-shadow: 0 8px 32px #0003;
+  pointer-events: none;
+}
+.reveal-color-content {
+  position: relative;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: inherit;
+}
+
+.reveal-color-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.reveal-color-heading strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.reveal-color-heading button {
+  border: 0;
+  background: transparent;
+  color: var(--theme-ink-muted);
+  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+}
+.reveal-color-plane {
+  position: relative;
+  height: 144px;
+  border-radius: 5px;
+  background-image:
+    linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  touch-action: none;
+  cursor: crosshair;
+}
+.reveal-color-plane > span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #0008;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.reveal-color-channel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.reveal-color-channel > span {
+  width: 44px;
+  color: var(--theme-ink-muted);
+}
+.reveal-color-channel input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+  margin: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.reveal-color-hue {
+  background: linear-gradient(to right, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
+}
+.reveal-color-channel input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px #0008;
+}
+.reveal-color-channel input::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px #0008;
+}
+.reveal-color-value input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 30px;
+  margin-top: 14px;
+  border: 1px solid var(--theme-border);
+  border-radius: 5px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--theme-ink);
+  font: inherit;
+}
+.reveal-color-value input[aria-invalid='true'] {
+  border-color: #ef4444;
+}
+.reveal-color-swatches {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  margin-top: 12px;
+}
+.reveal-color-swatches button {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #8885;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.reveal-color-keywords {
+  display: flex;
+  gap: 5px;
+  margin-top: 12px;
+}
+.reveal-color-keywords button {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--theme-border);
+  border-radius: 5px;
+  padding: 5px 2px;
+  background: transparent;
+  color: var(--theme-ink-muted);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.reveal-color-popup button[aria-pressed='true'] {
+  outline: 1px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.reveal-color-popup :focus-visible,
+.reveal-field .reveal-color-trigger:focus-visible {
+  outline: 2px solid var(--theme-ink-muted);
+  outline-offset: 3px;
+}
+
+/* Keep the content layer stable through scale/blur completion. Removing this
+   hint at rest can rerasterize glyphs with a visible change in weight. The layer
+   is released with the popup, rather than at the last animation frame. */
+.reveal-color-content {
+  will-change: transform, filter;
+}

@@ -1,0 +1,304 @@
+{
+  "slug": "topographic-terrain",
+  "name": "Topographic Terrain",
+  "family": {
+    "slug": "background",
+    "name": "Background"
+  },
+  "version": "1.0.14",
+  "description": "Animated 3D topographic layers with adjustable perspective, material, bevel and lighting.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": true,
+  "drop": 2,
+  "publishedAt": "2026-10-13",
+  "styles": [
+    "organic",
+    "minimal",
+    "3d"
+  ],
+  "types": [
+    "background"
+  ],
+  "interactions": [
+    "automatic"
+  ],
+  "technologies": [
+    "react",
+    "canvas",
+    "webgl"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "reduced-motion"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "preset",
+      "label": "Preset",
+      "type": "select",
+      "defaultValue": "terraced",
+      "description": "Starting material, terrain and camera configuration. Explicit properties override it.",
+      "options": [
+        "terraced",
+        "slate",
+        "terraced-top",
+        "slate-top",
+        "slate-red",
+        "slate-red-top",
+        "slate-blue",
+        "slate-blue-top",
+        "slate-cyan",
+        "slate-cyan-top",
+        "slate-green",
+        "slate-green-top",
+        "slate-magenta",
+        "slate-magenta-top",
+        "slate-yellow",
+        "slate-yellow-top",
+        "slate-rgb",
+        "slate-rgb-top"
+      ]
+    },
+    {
+      "name": "elevation",
+      "label": "Relief depth (px)",
+      "type": "number",
+      "defaultValue": 160,
+      "description": "Vertical height of the 3D relief. Zero flattens the surface.",
+      "min": 0,
+      "max": 240,
+      "step": 5
+    },
+    {
+      "name": "cameraTilt",
+      "label": "Camera tilt (°)",
+      "type": "number",
+      "defaultValue": 38,
+      "description": "Angle from the top-down view. Increase to reveal the sides of the terraced layers.",
+      "min": 0,
+      "max": 60,
+      "step": 1
+    },
+    {
+      "name": "cameraRotation",
+      "label": "Camera rotation (°)",
+      "type": "number",
+      "defaultValue": -20,
+      "description": "Rotate the view around the terrain without rotating its material or grain.",
+      "min": -180,
+      "max": 180,
+      "step": 1
+    },
+    {
+      "name": "cameraZoom",
+      "label": "Camera zoom",
+      "type": "number",
+      "defaultValue": 1,
+      "description": "Camera magnification, independent of terrain scale and contour density.",
+      "min": 0.6,
+      "max": 2,
+      "step": 0.05
+    },
+    {
+      "name": "terraceSoftness",
+      "label": "Layer bevel",
+      "type": "number",
+      "defaultValue": 0.6,
+      "description": "Width of the smooth transitions between layers. Values above 1 blend neighboring layer edges into broader, smoother relief.",
+      "min": 0.08,
+      "max": 3,
+      "step": 0.02
+    },
+    {
+      "name": "shadowAnimation",
+      "label": "Shadow animation",
+      "type": "select",
+      "defaultValue": "none",
+      "description": "Use a fixed shadow color or a smooth RGB color cycle. The cycle shares visible playback with terrain motion.",
+      "options": [
+        "none",
+        "rgb"
+      ]
+    },
+    {
+      "name": "shadowCycleDuration",
+      "label": "Color cycle (s)",
+      "type": "number",
+      "defaultValue": 6,
+      "description": "Seconds for one complete RGB shadow cycle, independent of terrain speed. Pause, reduced motion and Speed 0 hold the color. Replay resets it to red.",
+      "min": 1,
+      "max": 30,
+      "step": 0.5
+    },
+    {
+      "name": "shadowColor",
+      "label": "Shadow color",
+      "type": "color",
+      "defaultValue": "#737373",
+      "description": "Color of the relief shading, independent of the material. The default follows the theme: #737373 in light mode, #9d9d9d in dark mode. Custom values persist across theme changes."
+    },
+    {
+      "name": "lightingBlend",
+      "label": "Lighting blend",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Blend from the pure selected material with soft relief around every layer edge (0) to directional lighting (1).",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "lightDirection",
+      "label": "Light direction (°)",
+      "type": "number",
+      "defaultValue": 315,
+      "description": "Direction of the single light over the relief. Ambient illumination keeps unlit surfaces readable.",
+      "min": 0,
+      "max": 360,
+      "step": 5
+    },
+    {
+      "name": "lightIntensity",
+      "label": "Light intensity",
+      "type": "number",
+      "defaultValue": 1,
+      "description": "Strength of directional lighting. Zero leaves ambient illumination and the subtle local layer shading.",
+      "min": 0,
+      "max": 2,
+      "step": 0.05
+    },
+    {
+      "name": "surfaceColor",
+      "label": "Surface color",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Base material color of the 3D layers. Terraced follows the theme with pure white or black when omitted. Explicit colors override it."
+    },
+    {
+      "name": "scale",
+      "label": "Terrain scale (px)",
+      "type": "number",
+      "defaultValue": 400,
+      "description": "Larger values create broader hills and valleys. Independent of layer density.",
+      "min": 80,
+      "max": 1200,
+      "step": 10
+    },
+    {
+      "name": "density",
+      "label": "Layer density",
+      "type": "number",
+      "defaultValue": 6,
+      "description": "Number of elevation levels forming the terraced layers.",
+      "min": 2,
+      "max": 20,
+      "step": 1
+    },
+    {
+      "name": "distortion",
+      "label": "Terrain distortion",
+      "type": "number",
+      "defaultValue": 2.4,
+      "description": "Terrain irregularity and the strength of its smooth elevation morph.",
+      "min": 0,
+      "max": 3,
+      "step": 0.05
+    },
+    {
+      "name": "seed",
+      "label": "Terrain seed",
+      "type": "number",
+      "defaultValue": 42,
+      "description": "Reproducible terrain composition. Changing the seed creates a new map.",
+      "min": 0,
+      "max": 1000,
+      "step": 1
+    },
+    {
+      "name": "lineWidth",
+      "label": "Line width (px)",
+      "type": "number",
+      "defaultValue": 0.5,
+      "description": "Thickness of optional continuous contour ink on the layer edges, in CSS pixels.",
+      "min": 0.25,
+      "max": 5,
+      "step": 0.25
+    },
+    {
+      "name": "opacity",
+      "label": "Line opacity",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Opacity of optional contour ink. Zero leaves the material and lighting visible.",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Solid color behind the 3D terrain and the Canvas fallback."
+    },
+    {
+      "name": "lineColor",
+      "label": "Contour color",
+      "type": "color",
+      "defaultValue": "#000000",
+      "description": "Color of optional contour ink on the layer edges."
+    },
+    {
+      "name": "accentColor",
+      "label": "Major contour color",
+      "type": "color",
+      "defaultValue": "#000000",
+      "description": "Color of optional contour ink at every fourth elevation level."
+    },
+    {
+      "name": "gradientDiffusion",
+      "label": "Gradient diffusion",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Spread the blend between neighboring elevation colors without changing the terrain geometry.",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "grain",
+      "label": "Surface grain",
+      "type": "number",
+      "defaultValue": 0.2,
+      "description": "Fine white grain, cached at device resolution and fixed in screen coordinates. Textures both the surface and optional contour ink.",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "speed",
+      "label": "Terrain speed",
+      "type": "number",
+      "defaultValue": 1.5,
+      "description": "Rate of the elevation morph. Zero holds the current relief.",
+      "min": 0,
+      "max": 4,
+      "step": 0.1
+    },
+    {
+      "name": "paused",
+      "label": "Paused",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the current relief without resetting its animation clock."
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@reactdrops/catalog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_ENV=development vite",
+    "build": "NODE_ENV=production vite build",
+    "typecheck": "tsc",
+    "predev": "pnpm --dir ../.. registry:build",
+    "prebuild": "pnpm --dir ../.. registry:build"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@reactdrops/catalog-data": "workspace:*",
+    "@reactdrops/catalog-ui": "workspace:*",
+    "@reactdrops/component-schema": "workspace:*",
+    "@reactdrops/components": "workspace:*",
+    "gsap": "^3.15.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-router": "^7.9.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "^0.170.0",
+    "@vitejs/plugin-react": "6.0.2",
+    "typescript": "5.9.3",
+    "vite": "8.0.13"
+  },
+  "files": [
+    "index.html",
+    "public-release/r/liquid-glass-orb.json",
+    "public-release/r/topographic-terrain.json",
+    "src/generated/published-routes.ts",
+    "src/main.tsx",
+    "src/styles.css",
+    "tsconfig.json",
+    "vite.config.ts"
+  ]
+}

@@ -1,0 +1,360 @@
+{
+  "slug": "liquid-glass-orb",
+  "name": "Liquid Glass Orb",
+  "family": {
+    "slug": "ai",
+    "name": "AI"
+  },
+  "version": "2.0.0",
+  "description": "A liquid glass orb for AI interfaces, with animated agent states, voice response, customizable glass material, and six color palettes.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": true,
+  "drop": 1,
+  "publishedAt": "2026-10-13",
+  "styles": ["glass", "organic", "orb"],
+  "types": ["ai"],
+  "interactions": ["audio", "state"],
+  "technologies": ["webgl", "css"],
+  "scopes": ["component"],
+  "compatibility": ["react", "vite", "next-js", "responsive", "reduced-motion"],
+  "dependencies": ["gsap"],
+  "controls": [
+    {
+      "name": "preset",
+      "label": "Preset",
+      "type": "select",
+      "defaultValue": "monochrome",
+      "options": [
+        "tide",
+        "cobalt",
+        "cobalt-dark",
+        "lilac",
+        "dune",
+        "honey",
+        "berry",
+        "frost",
+        "aqua",
+        "red",
+        "monochrome",
+        "azure",
+        "indigo",
+        "mint",
+        "coral",
+        "scarlet",
+        "fuchsia"
+      ],
+      "description": "Choose a color palette. Monochrome is the default. Cluster count defaults to 7.2 for Tide and Monochrome, and 3 for all other presets."
+    },
+    {
+      "name": "state",
+      "label": "State",
+      "type": "select",
+      "defaultValue": "idle",
+      "options": ["idle", "listening", "thinking", "searching", "speaking", "success", "error"],
+      "description": "Idle uses the original Fluid Glass distortion. Speaking adds a subtle voice speed boost to those organic folds and gently renews local wrinkles, while the circle pulses. Thinking offers a two-arm spiral, concentric ripples or curved scanning folds across the entire orb, selected with thinkingAnimation. Error holds a stationary cross. Other states use recognizable glass shapes with fixed material settings."
+    },
+    {
+      "name": "animateEntrance",
+      "label": "Entrance animation",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Grow from 8% to full size with power4.out over 1.2 seconds once the first frame is ready and visible. Set false to show the orb immediately. Respects reduced motion."
+    },
+    {
+      "name": "thinkingAnimation",
+      "label": "Thinking animation",
+      "type": "select",
+      "defaultValue": "ripples",
+      "options": ["spiral", "ripples", "scan"],
+      "description": "Glass pattern used during Thinking: a two-arm spiral, concentric ripples, or curved scanning folds. Changes blend smoothly."
+    },
+    {
+      "name": "searchingAnimation",
+      "label": "Searching animation",
+      "type": "select",
+      "defaultValue": "lens",
+      "options": ["lens", "small-lens"],
+      "description": "Glass pattern used during Searching: Lens overlaps power3.out laps, starts picking up speed again at two o'clock before each lap ends with continuous forward motion; Small lens glides continuously along a rounded path with gentle changes in pace. Changes blend smoothly."
+    },
+    {
+      "name": "preserveWhites",
+      "label": "Preserve whites",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Keep white and near-white palette areas bright and neutral under the glass. Turn off to restore the previous color treatment."
+    },
+    {
+      "name": "audioLevel",
+      "label": "Voice level",
+      "type": "number",
+      "defaultValue": 0.55,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Normalized microphone or agent-output amplitude. Active while listening or speaking."
+    },
+    {
+      "name": "intensity",
+      "label": "Responsiveness",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "Strength of the voice response in Listening and Speaking. Changes microphone response, voice-driven size and subtle wrinkle renewal without scaling state-icon relief."
+    },
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "number",
+      "defaultValue": 1.5,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Speed of the flowing colors. Zero holds the current frame."
+    },
+    {
+      "name": "flowType",
+      "label": "Flow type",
+      "type": "select",
+      "defaultValue": "drift",
+      "options": ["drift", "vortex", "wave"],
+      "description": "Choose a seamless morphing cycle (Drift), a circulating vortex, or rolling waves."
+    },
+    {
+      "name": "distortion",
+      "label": "Distortion",
+      "type": "number",
+      "defaultValue": 0.8,
+      "min": 0,
+      "max": 8,
+      "step": 0.05,
+      "description": "Bend the glass surface into flowing folds and organic reliefs. Supports values from 0 to 8."
+    },
+    {
+      "name": "animateDistortion",
+      "label": "Animated distortion",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Keep the distortion points moving. Turn off to fix them at their current positions while colors continue flowing."
+    },
+    {
+      "name": "clusterCount",
+      "label": "Cluster count",
+      "type": "number",
+      "defaultValue": 7.2,
+      "min": 0,
+      "max": 64,
+      "step": 0.1,
+      "description": "Density of flowing glass clusters. Defaults to 7.2 for Tide and Monochrome, and 3 for all other presets. Higher values create more, smaller reliefs; zero disables the additional cluster field. Supported range: 0 to 64."
+    },
+    {
+      "name": "clusterIntensity",
+      "label": "Cluster intensity",
+      "type": "number",
+      "defaultValue": 3,
+      "min": 0,
+      "max": 12,
+      "step": 0.01,
+      "description": "How strongly the clusters contribute to the glass relief and flowing folds. Zero removes it. Supported range: 0 to 12."
+    },
+    {
+      "name": "clusterSize",
+      "label": "Cluster size",
+      "type": "number",
+      "defaultValue": 22.5,
+      "min": 0.25,
+      "max": 32,
+      "step": 0.05,
+      "description": "Scale the glass clusters while keeping folds distributed across the surface. Supported range: 0.25 to 32."
+    },
+    {
+      "name": "scale",
+      "label": "Pattern scale",
+      "type": "number",
+      "defaultValue": 0.23,
+      "min": 0.01,
+      "max": 5,
+      "step": 0.01,
+      "description": "Higher values produce smaller, more numerous color pools."
+    },
+    {
+      "name": "spotSize",
+      "label": "Spot size",
+      "type": "number",
+      "defaultValue": 1.15,
+      "min": 0.1,
+      "max": 5,
+      "step": 0.05,
+      "description": "Resize color patches within the flow. Higher values make larger patches; pattern scale and distortion stay unchanged."
+    },
+    {
+      "name": "rotation",
+      "label": "Rotation (deg)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": -180,
+      "max": 180,
+      "step": 1,
+      "description": "Rotate the gradient composition."
+    },
+    {
+      "name": "seed",
+      "label": "Seed",
+      "type": "number",
+      "defaultValue": 145,
+      "min": 0,
+      "max": 200,
+      "step": 1,
+      "description": "A reproducible variation of the gradient composition."
+    },
+    {
+      "name": "size",
+      "label": "Size (px)",
+      "type": "number",
+      "defaultValue": 250,
+      "min": 80,
+      "max": 1000,
+      "step": 10,
+      "description": "Maximum width for a bounded shape. Background fills its parent container."
+    },
+    {
+      "name": "softness",
+      "label": "Softness",
+      "type": "number",
+      "defaultValue": 0.31,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Soften the shoulders of the raised glass surface."
+    },
+    {
+      "name": "relief",
+      "label": "Relief",
+      "type": "number",
+      "defaultValue": 2.94,
+      "min": 0,
+      "max": 3,
+      "step": 0.01,
+      "description": "Height of the glass relief. Zero produces a flat surface; higher values deepen the rounded forms and their reflections."
+    },
+    {
+      "name": "refraction",
+      "label": "Refraction",
+      "type": "number",
+      "defaultValue": 0.65,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "How strongly the raised glass displaces the flowing colors visible behind it."
+    },
+    {
+      "name": "roughness",
+      "label": "Roughness",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Low values create narrow polished reflections. Higher values spread the highlights into a frosted finish."
+    },
+    {
+      "name": "reflection",
+      "label": "Reflection",
+      "type": "number",
+      "defaultValue": 1.3,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Strength of the reflected studio lights. One preserves the original glass finish; zero removes reflections without changing the flow."
+    },
+    {
+      "name": "caustics",
+      "label": "Caustics",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Add light concentrations transmitted through the relief. Zero keeps the original finish; higher values reveal brighter flowing caustics."
+    },
+    {
+      "name": "dispersion",
+      "label": "Dispersion",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Separate refracted red and blue color channels along the glass folds. Zero keeps the original colors."
+    },
+    {
+      "name": "grain",
+      "label": "Grain amount",
+      "type": "number",
+      "defaultValue": 0.3,
+      "min": 0,
+      "max": 0.5,
+      "step": 0.01,
+      "description": "Strength of the fine grain. Zero removes it completely."
+    },
+    {
+      "name": "grainMode",
+      "label": "Grain style",
+      "type": "select",
+      "defaultValue": "fine",
+      "options": ["fine", "coarse", "rough", "monochrome"],
+      "description": "Select fine motes, larger flecks, rough texture, or monochrome noise."
+    },
+    {
+      "name": "grainSize",
+      "label": "Grain size (px)",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.5,
+      "max": 5,
+      "step": 0.1,
+      "description": "Grain size in CSS pixels, consistent across screen densities."
+    },
+    {
+      "name": "colorDistribution",
+      "label": "Color distribution",
+      "type": "number",
+      "defaultValue": 0,
+      "min": -1,
+      "max": 1,
+      "step": 0.01,
+      "description": "Left: more color. Right: more light background. Zero uses the default distribution. Uses your Background color."
+    },
+    {
+      "name": "baseColor",
+      "label": "Base color",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Color used by the procedural gradient."
+    },
+    {
+      "name": "colorA",
+      "label": "Primary color",
+      "type": "color",
+      "defaultValue": "#000000",
+      "description": "Color used by the procedural gradient."
+    },
+    {
+      "name": "colorB",
+      "label": "Secondary color",
+      "type": "color",
+      "defaultValue": "#4d4d4d",
+      "description": "Color used by the procedural gradient."
+    },
+    {
+      "name": "colorC",
+      "label": "Accent color",
+      "type": "color",
+      "defaultValue": "#a9a9a9",
+      "description": "Color used by the procedural gradient."
+    }
+  ]
+}

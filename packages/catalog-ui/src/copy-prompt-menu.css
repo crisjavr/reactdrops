@@ -1,0 +1,288 @@
+.prompt-copy {
+  position: relative;
+  flex: none;
+}
+.prompt-copy > button {
+  min-width: 108px;
+  transition:
+    scale 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 80ms;
+}
+.prompt-copy[data-pressed] > button {
+  scale: 0.94;
+  transition: scale 120ms cubic-bezier(0.35, 0, 0.5, 1);
+}
+.prompt-copy[data-present] > button {
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+  scale: 1;
+}
+.prompt-copy > button.is-copied {
+  background: #15803d;
+  color: #fff;
+}
+.component-detail-page .prompt-copy > button.is-copied .components-copy-label {
+  color: #fff;
+}
+.prompt-copy-popup[data-open='false'][data-copied] .prompt-copy-surface {
+  background: #15803d;
+}
+.prompt-copy-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.prompt-copy-error {
+  position: absolute;
+  z-index: 10002;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  padding: 8px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--theme-background);
+  color: var(--theme-ink);
+  font-size: 12px;
+}
+.prompt-copy-popup {
+  position: fixed;
+  z-index: 10001;
+  color: var(--theme-ink);
+  font-family: inherit;
+}
+.prompt-copy-popup[data-open='false'] {
+  pointer-events: none;
+}
+.prompt-copy-surface {
+  position: absolute;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background: var(--components-selection-background);
+  border-radius: var(--radius-md, 8px);
+  pointer-events: none;
+}
+.prompt-copy-options {
+  position: absolute;
+  inset: 0;
+}
+.prompt-copy-option {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  line-height: 16px;
+  height: var(--prompt-copy-row-height);
+  width: 100%;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+}
+.prompt-copy-option small {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--theme-ink-muted);
+}
+.prompt-copy-option:focus-visible {
+  outline: 1px solid var(--theme-ink-muted);
+  outline-offset: -2px;
+}
+.prompt-copy-popup[data-open='true'] .prompt-copy-option {
+  animation: prompt-copy-row 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.prompt-copy-popup[data-open='false'] .prompt-copy-option {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 70ms,
+    transform 100ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.prompt-copy-highlight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: var(--prompt-copy-row-height);
+  border-radius: var(--radius-md, 8px);
+  background: color-mix(in srgb, var(--theme-ink) 9%, transparent);
+  pointer-events: none;
+  transition:
+    transform 380ms cubic-bezier(0.32, 1.26, 0.4, 1),
+    opacity 180ms;
+}
+.prompt-copy-popup[data-open='false'] .prompt-copy-highlight {
+  opacity: 0 !important;
+}
+@keyframes prompt-copy-row {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prompt-copy > button,
+  .prompt-copy[data-pressed] > button {
+    scale: 1;
+    transition: none;
+  }
+  .prompt-copy-popup .prompt-copy-option,
+  .prompt-copy-highlight {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.prompt-copy-popup[data-open='false'] .prompt-copy-surface {
+  transition: background 100ms;
+}
+
+/* The readout returns over the closing surface, not after its unmount. */
+.prompt-copy:not([data-present]):not([data-pressed]) > button {
+  transition:
+    scale 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 420ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.prompt-copy-return {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  box-sizing: border-box;
+  padding: 0 0.65rem 0 0.5rem;
+  pointer-events: none;
+  animation: prompt-copy-readout 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.prompt-copy-return .components-copy-label {
+  min-width: 0;
+  font-size: inherit;
+}
+.prompt-copy-return svg {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.prompt-copy-popup[data-copied] .prompt-copy-return {
+  color: #fff;
+}
+@keyframes prompt-copy-readout {
+  from {
+    opacity: 0;
+    translate: 0 3px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prompt-copy-return {
+    animation: none;
+  }
+}
+
+/* Both complete readouts share a cell: the wider one reserves space while
+   each icon/label pair is centered independently and crossfades together. */
+.prompt-copy > button {
+  padding-inline: 0.575rem;
+}
+.prompt-copy-return {
+  padding-inline: 0.575rem;
+}
+.prompt-copy-readout {
+  display: grid;
+}
+.prompt-copy-state {
+  grid-area: 1 / 1;
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: opacity 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.prompt-copy-success {
+  opacity: 0;
+}
+.prompt-copy-readout[data-copied] .prompt-copy-normal {
+  opacity: 0;
+}
+.prompt-copy-readout[data-copied] .prompt-copy-success {
+  opacity: 1;
+}
+.component-detail-page .prompt-copy > button .components-copy-label {
+  color: inherit;
+}
+@media (prefers-reduced-motion: reduce) {
+  .prompt-copy-state {
+    transition: none;
+  }
+}
+
+/* Match the navbar theme icon's rotation, scale and timing. */
+.prompt-copy-state svg {
+  transition: transform 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.prompt-copy-success svg {
+  transform: rotate(-35deg) scale(0.7);
+}
+.prompt-copy-readout[data-copied] .prompt-copy-normal svg {
+  transform: rotate(35deg) scale(0.7);
+}
+.prompt-copy-readout[data-copied] .prompt-copy-success svg {
+  transform: rotate(0deg) scale(1);
+}
+.prompt-copy[data-present] .prompt-copy-state,
+.prompt-copy[data-present] .prompt-copy-state svg {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .prompt-copy-state svg,
+  .prompt-copy:not([data-present]):not([data-pressed]) > button {
+    transition: none;
+  }
+}
+
+.prompt-copy-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.prompt-copy-readout[data-copied] .prompt-copy-check {
+  animation: prompt-copy-check-draw 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes prompt-copy-check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prompt-copy-readout[data-copied] .prompt-copy-check {
+    animation: none;
+  }
+}

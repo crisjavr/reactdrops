@@ -1,0 +1,78 @@
+.reveal-dropdown-shell {
+  position: fixed;
+  z-index: 10000;
+}
+.reveal-dropdown-panel {
+  position: relative;
+  transform-origin: top center;
+}
+.reveal-dropdown-shell[data-open='false'] {
+  pointer-events: none;
+}
+.reveal-dropdown-surface {
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--theme-border-strong, var(--theme-border));
+  border-radius: 8px;
+  background: var(--theme-background);
+  box-shadow:
+    0 8px 32px #0003,
+    0 2px 6px #0001;
+  pointer-events: none;
+  transform-origin: center;
+}
+.reveal-dropdown-shell .reveal-select-menu {
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.reveal-select-options {
+  position: relative;
+}
+.reveal-dropdown-shell .reveal-select-menu [role='option'] {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  height: var(--dropdown-row-height);
+  min-height: var(--dropdown-row-height);
+  padding: 0 10px;
+  border-radius: 0;
+}
+.reveal-dropdown-shell .reveal-select-menu .is-highlighted {
+  background: transparent;
+}
+.reveal-select-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 380ms cubic-bezier(0.32, 1.26, 0.4, 1),
+    height 200ms ease,
+    opacity 150ms ease;
+}
+.reveal-select-highlight > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--theme-ink) 9%, var(--theme-background));
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-select-highlight {
+    transition: none;
+  }
+}
+
+/* Keep the content layer stable through scale/blur completion. Removing this
+   hint at rest can rerasterize glyphs with a visible change in weight. The layer
+   is released with the popup, rather than at the last animation frame. */
+.reveal-dropdown-content {
+  will-change: transform, filter;
+}

@@ -1,0 +1,509 @@
+.component-controls-section .component-controls:has(.reveal-control-group) {
+  container-type: inline-size;
+  display: block;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  --reveal-control-height: 30px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.reveal-control-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.reveal-control-group + .reveal-control-group {
+  margin-top: 18px;
+}
+.reveal-group-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+}
+.reveal-group-heading h3 {
+  margin: 0;
+  color: var(--theme-ink);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+}
+.reveal-group-heading p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--theme-ink-faint);
+}
+.reveal-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.reveal-field {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: calc(var(--reveal-control-height) + 2px);
+  padding: 0 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: border-color 140ms;
+}
+.reveal-field:hover {
+  border-color: var(--theme-border-strong);
+}
+.reveal-field:focus-within {
+  border-color: var(--theme-ink-muted);
+}
+.reveal-field[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--theme-border);
+}
+.reveal-field[aria-disabled='true'] .reveal-number {
+  background: transparent;
+}
+.reveal-field[aria-disabled='true'] .reveal-number::before {
+  display: none;
+}
+.component-controls .reveal-field input:disabled {
+  cursor: not-allowed;
+}
+.reveal-field > span {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--theme-ink-muted);
+}
+.reveal-field.is-wide {
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.reveal-field.is-long-value {
+  grid-template-columns: 85px minmax(0, 1fr);
+}
+.component-controls .reveal-field input,
+.reveal-select > button,
+.reveal-switch-field {
+  box-sizing: border-box;
+  height: var(--reveal-control-height);
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  min-width: 0;
+}
+.component-controls .reveal-field input {
+  text-align: right;
+}
+.component-controls .reveal-field.is-wide input {
+  text-align: left;
+}
+.reveal-field :is(input, button):focus-visible {
+  outline: none;
+}
+.reveal-select {
+  position: relative;
+  min-width: 0;
+}
+.reveal-select > button {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: right;
+}
+/* A single hit surface prevents cursor changes between labels, padding and
+   values. Editable comboboxes retain their text input and separate arrow. */
+.reveal-field:not([aria-disabled='true']):has(> .reveal-select > button[role='combobox']),
+.reveal-field:not([aria-disabled='true']):has(> .reveal-switch-field) {
+  cursor: pointer;
+}
+.reveal-field:has(> .reveal-select > button[role='combobox']) > span,
+.reveal-field:has(> .reveal-switch-field) > span {
+  pointer-events: none;
+}
+.reveal-field > .reveal-select:has(> button[role='combobox']) {
+  position: static;
+}
+.reveal-field > .reveal-select > button[role='combobox'],
+.reveal-field > .reveal-switch-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 10px;
+  border-radius: inherit;
+  cursor: inherit;
+}
+.reveal-field > .reveal-select > button[role='combobox'] {
+  padding-left: calc(50% + 4px);
+}
+.reveal-select > button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reveal-select svg {
+  transition: transform 140ms;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  color: var(--theme-ink-muted);
+}
+.component-controls .reveal-select input {
+  padding-right: 22px;
+}
+.reveal-select > .reveal-select-arrow {
+  position: absolute;
+  right: -4px;
+  top: calc((var(--reveal-control-height) - 28px) / 2);
+  height: 28px;
+  width: 24px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+}
+.reveal-select-menu {
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 5px;
+  border: 1px solid var(--theme-border-strong, var(--theme-border));
+  border-radius: 8px;
+  background: var(--theme-background);
+  color: var(--theme-ink);
+  box-shadow:
+    0 8px 32px #0003,
+    0 2px 6px #0001;
+  font-family: inherit;
+  font-size: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-border-strong) transparent;
+}
+.reveal-select-menu [role='option'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.reveal-select-menu [role='option'] > span {
+  overflow-wrap: anywhere;
+}
+.reveal-select-menu .is-highlighted {
+  background: color-mix(in srgb, var(--theme-ink) 9%, var(--theme-background));
+}
+.reveal-select-menu svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.reveal-select-menu p {
+  margin: 8px;
+  color: var(--theme-ink-muted);
+  font-size: 12px;
+}
+
+/* The label overlays a real range input; the value remains directly editable. */
+.reveal-field.is-number {
+  display: block;
+  padding: 0;
+}
+.reveal-field.is-number:not([aria-disabled='true']) {
+  cursor: ew-resize;
+}
+.reveal-field.is-number > span {
+  position: absolute;
+  z-index: 1;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: calc(100% - 90px);
+  pointer-events: none;
+}
+.reveal-number {
+  position: relative;
+  min-width: 0;
+  height: var(--reveal-control-height);
+  border-radius: calc(var(--radius-md) - 1px);
+  --reveal-stop: var(--reveal-progress);
+  background: linear-gradient(
+    to right,
+    var(--components-selection-background) var(--reveal-stop),
+    transparent var(--reveal-stop)
+  );
+}
+/* Paint the marker with the fill so both share the same position and rounded
+   corners. At either endpoint the contour itself marks the limit. */
+.reveal-number::before {
+  --reveal-marker-color: color-mix(in srgb, var(--theme-ink) 24%, var(--theme-background));
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    transparent calc(var(--reveal-stop) - 0.75px),
+    var(--reveal-marker-color) calc(var(--reveal-stop) - 0.75px),
+    var(--reveal-marker-color) calc(var(--reveal-stop) + 0.75px),
+    transparent calc(var(--reveal-stop) + 0.75px)
+  );
+}
+.reveal-number:hover::before {
+  --reveal-marker-color: color-mix(in srgb, var(--theme-ink) 58%, var(--theme-background));
+}
+.reveal-number[data-at-edge='true']::before {
+  opacity: 0;
+}
+.reveal-number[data-elastic='true']::before {
+  opacity: 0;
+}
+/* Only the painted shell stretches beyond an endpoint, by at most 2px.
+   The opposite edge, labels, editable value and hit area stay anchored. */
+.reveal-field.is-number:has(.reveal-number[data-elastic='true']) {
+  border-color: transparent;
+}
+.reveal-number[data-elastic='true'] {
+  background: transparent;
+}
+.reveal-number[data-elastic='true']::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: calc(-1px + min(var(--reveal-pull, 0px), 0px));
+  right: calc(-1px - max(var(--reveal-pull, 0px), 0px));
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    to right,
+    var(--components-selection-background) var(--reveal-progress),
+    transparent var(--reveal-progress)
+  );
+  pointer-events: none;
+}
+.reveal-number[data-elastic='true']:hover::after {
+  border-color: var(--theme-border-strong, var(--theme-border));
+}
+.reveal-number[data-elastic='true']:focus-within::after {
+  border-color: var(--theme-ink-muted);
+}
+.component-controls .reveal-number input[role='spinbutton'] {
+  position: absolute;
+  z-index: 2;
+  top: 3px;
+  right: 0;
+  width: 72px;
+  height: calc(var(--reveal-control-height) - 10px);
+  padding: 0 10px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.component-controls .reveal-number input[role='spinbutton']:not(:disabled) {
+  cursor: text;
+}
+.component-controls .reveal-number input.reveal-number-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: var(--reveal-control-height);
+  padding: 0 3px;
+  border-radius: inherit;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+.component-controls .reveal-number input.reveal-number-slider:disabled {
+  cursor: not-allowed;
+}
+.reveal-number-slider::-webkit-slider-runnable-track {
+  height: var(--reveal-control-height);
+  background: transparent;
+}
+.reveal-number-slider::-moz-range-track {
+  height: var(--reveal-control-height);
+  background: transparent;
+}
+.reveal-number-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 3px;
+  height: var(--reveal-control-height);
+  margin-top: 0;
+  border: 0;
+  background: transparent;
+}
+.reveal-number-slider::-moz-range-thumb {
+  width: 3px;
+  height: var(--reveal-control-height);
+  border: 0;
+  background: transparent;
+}
+.reveal-field.is-boolean {
+  grid-template-columns: minmax(0, 1fr) 36px;
+}
+.reveal-switch-field {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: pointer;
+}
+.reveal-switch-track {
+  --switch-travel: 12px;
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 30px;
+  height: 18px;
+  border-radius: 20px;
+  padding: 3px;
+  background: color-mix(in srgb, var(--theme-ink) 20%, var(--theme-background));
+  transition: background 320ms;
+}
+.reveal-switch-track > span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--theme-ink-muted);
+  transform-origin: center;
+  transition: background 320ms;
+}
+.reveal-switch-field[aria-checked='true'] .reveal-switch-track {
+  background: var(--theme-ink);
+}
+.reveal-switch-field[aria-checked='true'] .reveal-switch-track > span {
+  transform: translateX(var(--switch-travel));
+  background: var(--theme-background);
+}
+@container (min-width: 480px) {
+  .reveal-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reveal-field.is-long-value {
+    grid-column: span 2;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+}
+@container (min-width: 720px) {
+  .reveal-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .reveal-fields.is-content .is-wide {
+    grid-column: span 2;
+  }
+  .reveal-fields.is-content .is-preset {
+    align-self: start;
+  }
+}
+@media (pointer: coarse) {
+  .component-controls-section .component-controls:has(.reveal-control-group) {
+    --reveal-control-height: 42px;
+  }
+  .reveal-select > .reveal-select-arrow {
+    top: 0;
+    height: 38px;
+    width: 28px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-field *,
+  .reveal-select * {
+    transition: none !important;
+  }
+}
+
+.reveal-help-scope {
+  display: contents;
+}
+.component-controls-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.component-controls-section .component-controls-heading h2 {
+  margin: 0;
+}
+.reveal-help-info {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--theme-ink-muted);
+  cursor: help;
+}
+.reveal-help-info:hover,
+.reveal-help-info:focus-visible {
+  color: var(--theme-ink);
+}
+.reveal-help-info svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+.reveal-control-tooltip {
+  position: fixed;
+  z-index: 10001;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 11px 13px;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: var(--radius-md, 8px);
+  background: var(--theme-background);
+  color: var(--theme-ink);
+  box-shadow: 0 8px 24px #0003;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+.reveal-control-tooltip strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.reveal-control-tooltip p {
+  margin: 4px 0 0;
+  color: var(--theme-ink-muted);
+}
+
+.reveal-select.is-open > button svg,
+.reveal-select.is-open .reveal-select-arrow svg {
+  transform: rotate(180deg);
+}

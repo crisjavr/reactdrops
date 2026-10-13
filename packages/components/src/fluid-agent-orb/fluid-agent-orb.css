@@ -1,0 +1,22 @@
+.fluid-glass-gradient.fluid-agent-orb {
+  /* Keep the reserved space empty until the renderer reveals its first frame. */
+  background: none;
+}
+
+.fluid-agent-orb {
+  scale: calc(var(--agent-voice-scale, 1) * var(--agent-entrance-scale, 1));
+  translate: 0 var(--agent-voice-shift, 0px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fluid-agent-orb--entrance:not([data-orb-entered]) {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fluid-agent-orb {
+    scale: 1;
+    translate: none;
+  }
+}

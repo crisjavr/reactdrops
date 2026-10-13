@@ -1,0 +1,26 @@
+.fluid-glass-gradient {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 28% 32%, var(--gradient-a), transparent 58%),
+    radial-gradient(ellipse at 78% 78%, var(--gradient-c), transparent 54%),
+    radial-gradient(ellipse at 70% 20%, var(--gradient-b), transparent 65%), var(--gradient-base);
+}
+.fluid-glass-gradient[data-shape='background'] {
+  width: 100%;
+  height: 100%;
+}
+.fluid-glass-gradient canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.fluid-glass-gradient[data-flow-ready='true'] canvas {
+  opacity: 1;
+}

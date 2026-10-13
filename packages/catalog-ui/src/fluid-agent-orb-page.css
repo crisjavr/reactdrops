@@ -1,0 +1,182 @@
+.component-detail-page:has(.fluid-agent-orb-demo) .component-preview-stage {
+  padding: 0;
+  background: transparent;
+}
+.fluid-agent-orb-demo {
+  font-family: Inter, system-ui, sans-serif;
+  width: 100%;
+  padding: 28px 32px 24px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: var(--theme-background, #080909);
+  color: var(--theme-ink, #eeeeee);
+  text-align: center;
+}
+.fluid-agent-orb-demo-stage {
+  display: grid;
+  place-items: center;
+  padding: 8px 0;
+  min-height: 300px;
+  width: 100%;
+}
+.fluid-agent-orb-state-tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 40px 0 0;
+}
+.fluid-agent-orb-state-tabs button,
+.fluid-agent-orb-demo-actions button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+.fluid-agent-orb-state-tabs button {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 0;
+  color: var(--theme-ink-muted, #888);
+  font-size: 11px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+/* Use contiguous rectangular hit targets, painting the rounded pills inside
+   them. The four-pixel visual gaps stay clickable and keep the same cursor. */
+.fluid-agent-orb-state-tabs button::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1px 1px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  pointer-events: none;
+  transition: background 0.2s;
+}
+.fluid-agent-orb-state-tabs button[aria-pressed='true']::before {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border-color: var(--theme-border, #ffffff12);
+}
+.fluid-agent-orb-state-tabs button[aria-pressed='true'] {
+  color: var(--theme-ink, #eee);
+}
+.fluid-agent-orb-demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.fluid-agent-orb-demo-actions button {
+  padding: 11px 16px;
+  border-radius: 24px;
+  border: 1px solid var(--theme-border, #ffffff20);
+  background: transparent;
+  font-size: 12px;
+}
+.fluid-agent-orb-demo-actions .fluid-agent-orb-primary {
+  background: var(--theme-ink, #eee);
+  color: var(--theme-background, #080909);
+  border-color: transparent;
+}
+.fluid-agent-orb-curve-actions {
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+.fluid-agent-orb-curve-editor {
+  max-width: 480px;
+  margin-top: 16px;
+  color: var(--theme-ink-muted, #888);
+}
+.fluid-agent-orb-curve-editor svg {
+  display: block;
+  width: 100%;
+}
+.fluid-agent-orb-curve-editor text {
+  fill: currentColor;
+  font:
+    11px Inter,
+    sans-serif;
+}
+.fluid-agent-orb-curve-guide {
+  fill: none;
+  stroke: currentColor;
+  opacity: 0.2;
+  stroke-dasharray: 3 4;
+}
+.fluid-agent-orb-curve-line {
+  fill: none;
+  stroke: var(--theme-ink, #eee);
+  stroke-width: 2;
+}
+.fluid-agent-orb-curve-editor p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+.fluid-agent-orb-demo button:focus-visible {
+  outline: 2px solid #5fa8a6;
+  outline-offset: 3px;
+}
+
+.component-showcase.is-fullscreen .fluid-agent-orb-demo {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: center;
+  overflow-y: auto;
+}
+.component-showcase.is-fullscreen .fluid-agent-orb-demo > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .fluid-agent-orb-demo {
+    padding: 22px 16px;
+  }
+  .fluid-agent-orb-demo-stage {
+    min-height: 250px;
+  }
+  .fluid-agent-orb-state-tabs button {
+    padding: 7px 12px;
+  }
+}
+
+.fluid-agent-orb-curve-editor svg {
+  max-width: 380px;
+  overflow: visible;
+  touch-action: none;
+}
+.fluid-agent-orb-curve-editor code {
+  display: block;
+  margin: 8px 0 14px;
+  font-size: 12px;
+}
+.fluid-agent-orb-curve-grid {
+  fill: none;
+  stroke: currentColor;
+  opacity: 0.15;
+}
+.fluid-agent-orb-curve-tangent {
+  fill: none;
+  stroke: #5fa8a6;
+  stroke-width: 1.5;
+}
+.fluid-agent-orb-curve-handle {
+  fill: var(--theme-background, #080909);
+  stroke: #5fa8a6;
+  stroke-width: 3;
+  cursor: grab;
+}
+.fluid-agent-orb-curve-handle:active {
+  cursor: grabbing;
+}
+.fluid-agent-orb-curve-handle:focus-visible {
+  outline: none;
+  stroke-width: 5;
+}
+.fluid-agent-orb-curve-anchor {
+  fill: var(--theme-ink, #eee);
+}

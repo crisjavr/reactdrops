@@ -1,0 +1,56 @@
+{
+  "name": "@reactdrops/components",
+  "version": "0.1.0",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": "./src/public-index.ts",
+    "./fluid-agent-orb": "./src/fluid-agent-orb/index.ts",
+    "./liquid-glass-orb": "./src/liquid-glass-orb/index.ts",
+    "./topographic-terrain": "./src/topographic-terrain/index.ts"
+  },
+  "peerDependencies": {
+    "@gsap/react": ">=2.1.0",
+    "gsap": ">=3.15.0",
+    "react": ">=18.3.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "three": "^0.170.0"
+  },
+  "dependencies": {
+    "html-to-image": "1.11.13"
+  },
+  "files": [
+    "src/fluid-agent-orb/fluid-agent-orb-entrance.ts",
+    "src/fluid-agent-orb/fluid-agent-orb-model.ts",
+    "src/fluid-agent-orb/fluid-agent-orb-motion.ts",
+    "src/fluid-agent-orb/fluid-agent-orb-patterns.ts",
+    "src/fluid-agent-orb/fluid-agent-orb-search-curve.ts",
+    "src/fluid-agent-orb/fluid-agent-orb.css",
+    "src/fluid-agent-orb/fluid-agent-orb.tsx",
+    "src/fluid-agent-orb/index.ts",
+    "src/fluid-glass-gradient/fluid-glass-gradient-renderer.ts",
+    "src/fluid-glass-gradient/fluid-glass-gradient-shaders.ts",
+    "src/fluid-glass-gradient/fluid-glass-gradient.css",
+    "src/fluid-glass-gradient/fluid-glass-gradient.tsx",
+    "src/fluid-glass-gradient/index.ts",
+    "src/liquid-glass-orb/index.ts",
+    "src/liquid-glass-orb/liquid-glass-orb.tsx",
+    "src/public-index.ts",
+    "src/shared/agent-orb-motion.ts",
+    "src/topographic-flow/topographic-field.ts",
+    "src/topographic-flow/topographic-grain.ts",
+    "src/topographic-flow/topographic-renderer.ts",
+    "src/topographic-flow/topographic-surface.ts",
+    "src/topographic-terrain/index.ts",
+    "src/topographic-terrain/topographic-terrain-presets.ts",
+    "src/topographic-terrain/topographic-terrain-renderer.ts",
+    "src/topographic-terrain/topographic-terrain-shaders.ts",
+    "src/topographic-terrain/topographic-terrain.css",
+    "src/topographic-terrain/topographic-terrain.tsx"
+  ]
+}

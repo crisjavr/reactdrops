@@ -1,0 +1,25 @@
+{
+  "name": "@reactdrops/catalog-data",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/public-index.ts",
+    "./catalog": "./src/public-catalog.ts",
+    "./sources/fluid-agent-orb": "./src/generated/fluid-agent-orb-source.ts",
+    "./sources/topographic-terrain": "./src/generated/topographic-terrain-source.ts",
+    "./publication": "./src/publication.mjs"
+  },
+  "dependencies": {
+    "@reactdrops/component-schema": "workspace:*"
+  },
+  "files": [
+    "src/components/fluid-agent-orb.json",
+    "src/components/topographic-terrain.json",
+    "src/generated/fluid-agent-orb-source.ts",
+    "src/generated/topographic-terrain-source.ts",
+    "src/public-catalog.ts",
+    "src/public-index.ts",
+    "src/publication.d.mts",
+    "src/publication.mjs"
+  ]
+}
