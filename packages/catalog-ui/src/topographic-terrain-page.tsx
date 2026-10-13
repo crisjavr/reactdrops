@@ -127,7 +127,7 @@ export default function TopographicTerrainPage() {
     ),
   ) as Record<ComponentPackageManager, string>;
   const prompt = (code: string) =>
-    `Install the existing ReactDrops component "Topographic Terrain" (ID: "topographic-terrain") using:\n\n${commands.npm}\n\nUse the downloaded implementation as the source of truth. Do not recreate or redesign it. Preserve the animated 3D terrain, adjustable perspective, layered material, lighting, reduced motion, visibility pausing and cleanup. Integrate this configuration:\n\n${code}`;
+    `Install the existing ReactDrops component "Topographic Terrain" (ID: "topographic-terrain") using:\n\n${commands.npm}\n\nIntegrate Topographic Terrain into the existing application, following its layout, styles and architecture. Keep the surrounding application intact and place the terrain where it belongs in the current interface. Render only the component by default. Add buttons, preset selectors, sliders, control panels or other demo UI only when the user explicitly requests them.\n\nUse the downloaded implementation as the source of truth. Do not recreate or redesign it. Preserve the animated 3D terrain, adjustable perspective, layered material, lighting, reduced motion, visibility pausing and cleanup. Integrate this configuration:\n\n${code}`;
   const files: ComponentSourceFile[] = [
     { id: 'usage', label: 'usage', code: usage, language: 'typescript' },
     {
