@@ -1,8 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-// Include the shared terrain engine without releasing Topographic Flow's page
-// or React component. Install all modules together so their imports stay local.
+// Bundle the terrain component and shared rendering modules with local imports.
 const modules = [
   'topographic-terrain/topographic-terrain.tsx',
   'topographic-terrain/topographic-terrain-presets.ts',
@@ -16,16 +15,19 @@ const modules = [
 ];
 
 export async function packageTopographicTerrain(root) {
-  return Promise.all(modules.map(async (module) => {
-    const name = module.split('/').at(-1);
-    const content = (await readFile(resolve(root, 'packages/components/src', module), 'utf8'))
-      .replaceAll('../topographic-flow/', './');
-    return {
-      name,
-      path: `components/${name}`,
-      target: `@components/${name}`,
-      type: name.endsWith('.ts') ? 'registry:lib' : 'registry:ui',
-      content,
-    };
-  }));
+  return Promise.all(
+    modules.map(async (module) => {
+      const name = module.split('/').at(-1);
+      const content = (
+        await readFile(resolve(root, 'packages/components/src', module), 'utf8')
+      ).replaceAll('../topographic-flow/', './');
+      return {
+        name,
+        path: `components/${name}`,
+        target: `@components/${name}`,
+        type: name.endsWith('.ts') ? 'registry:lib' : 'registry:ui',
+        content,
+      };
+    }),
+  );
 }

@@ -7,9 +7,7 @@ execFileSync(process.execPath, [resolve(root, 'scripts/check-public-files.mjs')]
 });
 const gitRoot = execFileSync('git', ['-C', root, 'rev-parse', '--show-toplevel']).toString().trim();
 if (gitRoot !== root)
-  throw new Error(
-    'Initialize Git inside reactdrops-open-source so the private workspace stays separate.',
-  );
+  throw new Error('Initialize Git at this project root before installing release guards.');
 const hooks = execFileSync('git', ['-C', root, 'rev-parse', '--git-path', 'hooks'])
   .toString()
   .trim();

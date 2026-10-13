@@ -1,4 +1,4 @@
-# Generated public allowlist. Edit the private author workspace and export again.
+# Reviewed release files. All other files are excluded by default.
 *
 !*/
 !/.editorconfig
