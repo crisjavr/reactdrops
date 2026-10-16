@@ -3,6 +3,7 @@ import { componentPath } from '@reactdrops/catalog-data/publication';
 import { Link } from 'react-router';
 import liquidGlassOrbPreview from './assets/liquid-glass-orb-preview.webp';
 import topographicTerrainPreview from './assets/topographic-terrain-preview.webp';
+import fanGalleryPreview from './assets/fan-gallery-preview.webp';
 
 export function CatalogComponentCard({ component }: { component: ComponentMetadata }) {
   const isOrb = component.slug === 'liquid-glass-orb';
@@ -10,7 +11,9 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
     ? liquidGlassOrbPreview
     : component.slug === 'topographic-terrain'
       ? topographicTerrainPreview
-      : null;
+      : component.slug === 'fan-gallery'
+        ? fanGalleryPreview
+        : null;
   return (
     <Link
       className="components-catalog-card is-static-preview"

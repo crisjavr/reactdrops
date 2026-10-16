@@ -10,7 +10,8 @@
     "./shared-hover-indicator": "./src/shared-hover-indicator.ts",
     "./pages/components": "./src/components-page.tsx",
     "./pages/fluid-agent-orb": "./src/fluid-agent-orb-page.tsx",
-    "./pages/topographic-terrain": "./src/topographic-terrain-page.tsx"
+    "./pages/topographic-terrain": "./src/topographic-terrain-page.tsx",
+    "./pages/fan-gallery": "./src/fan-gallery-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -26,6 +27,8 @@
     "react-router": ">=7.0.0"
   },
   "files": [
+    "LICENSE",
+    "src/assets/fan-gallery-preview.webp",
     "src/assets/liquid-glass-orb-preview.webp",
     "src/assets/topographic-terrain-preview.webp",
     "src/catalog-component-card.tsx",
@@ -44,6 +47,8 @@
     "src/customizer-controls.tsx",
     "src/dropdown-surface.css",
     "src/dropdown-surface.tsx",
+    "src/fan-gallery-page.css",
+    "src/fan-gallery-page.tsx",
     "src/fluid-agent-orb-page.css",
     "src/fluid-agent-orb-page.tsx",
     "src/fluid-agent-orb-speech.ts",
@@ -58,6 +63,10 @@
     "src/use-number-motion.ts",
     "src/use-popup-motion.ts",
     "src/use-preview-fullscreen.ts",
-    "src/use-switch-motion.ts"
-  ]
+    "src/use-switch-motion.ts",
+    "src/viewport-entry-controls.tsx",
+    "src/viewport-guides.css",
+    "src/viewport-guides.tsx"
+  ],
+  "license": "SEE LICENSE IN LICENSE"
 }

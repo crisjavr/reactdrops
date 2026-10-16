@@ -7,19 +7,24 @@
     "./catalog": "./src/public-catalog.ts",
     "./sources/fluid-agent-orb": "./src/generated/fluid-agent-orb-source.ts",
     "./sources/topographic-terrain": "./src/generated/topographic-terrain-source.ts",
+    "./sources/fan-gallery": "./src/generated/fan-gallery-source.ts",
     "./publication": "./src/publication.mjs"
   },
   "dependencies": {
     "@reactdrops/component-schema": "workspace:*"
   },
   "files": [
+    "LICENSE",
+    "src/components/fan-gallery.json",
     "src/components/fluid-agent-orb.json",
     "src/components/topographic-terrain.json",
+    "src/generated/fan-gallery-source.ts",
     "src/generated/fluid-agent-orb-source.ts",
     "src/generated/topographic-terrain-source.ts",
     "src/public-catalog.ts",
     "src/public-index.ts",
     "src/publication.d.mts",
     "src/publication.mjs"
-  ]
+  ],
+  "license": "SEE LICENSE IN LICENSE"
 }

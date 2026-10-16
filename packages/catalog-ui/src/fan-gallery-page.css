@@ -1,0 +1,40 @@
+.component-showcase .component-preview-stage:has(> .fan-gallery) {
+  padding: 0;
+  container-type: inline-size;
+}
+.component-preview-stage > .fan-gallery {
+  background: var(--theme-background);
+  color: var(--theme-ink);
+  font-family: 'Plus Jakarta Sans', 'Inter Variable', sans-serif;
+}
+.fan-gallery-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+.fan-gallery-actions button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--components-selection-background);
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.fan-gallery-actions button:focus-visible {
+  outline: 2px solid var(--theme-ink-muted);
+  outline-offset: 2px;
+}
+/* The preview frame follows the component: no clipping while the fan moves
+   (overshooting springs stay visible) or while a card is active (its
+   neighbors may extend past the sides); clipped again once it rests. */
+.component-showcase:has(.fan-gallery.is-animating),
+.component-showcase:has(.fan-gallery.is-animating) .component-preview-canvas,
+.component-preview-stage:has(> .fan-gallery.is-animating),
+.component-showcase:has(.fan-gallery.is-active),
+.component-showcase:has(.fan-gallery.is-active) .component-preview-canvas,
+.component-preview-stage:has(> .fan-gallery.is-active) {
+  overflow: visible;
+}

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import ts from 'typescript';
 import { format } from 'prettier';
+import { withReactDropsLicense } from './registry-license.mjs';
 
 // Keep authoring modules intact; flatten their source for a two-file install.
 // Dependency order matters for constants initialized at module load time.
@@ -136,14 +137,14 @@ export async function packageLiquidGlassOrb(root, options) {
       path: 'components/liquid-glass-orb.tsx',
       type: 'registry:ui',
       target: '@components/liquid-glass-orb.tsx',
-      content: code,
+      content: withReactDropsLicense(code),
     },
     {
       name: 'liquid-glass-orb.css',
       path: 'components/liquid-glass-orb.css',
       type: 'registry:ui',
       target: '@components/liquid-glass-orb.css',
-      content: css,
+      content: withReactDropsLicense(css),
     },
   ];
 }

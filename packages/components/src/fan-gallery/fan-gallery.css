@@ -1,0 +1,98 @@
+.fan-gallery {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  overflow: clip;
+  padding: 32px 0 20px;
+  color: inherit;
+}
+.fan-gallery .fan-gallery-heading {
+  margin: 0 0 24px;
+  padding: 0 16px;
+  font-family: inherit;
+  text-align: center;
+}
+.fan-gallery-heading h2 {
+  margin: 0;
+  font: inherit;
+  font-size: clamp(1.5rem, 4cqw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+.fan-gallery-heading p {
+  margin: 12px 0 0;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.fan-gallery-stage {
+  position: relative;
+  width: 100%;
+  min-height: 120px;
+  height: 320px;
+  isolation: isolate;
+  touch-action: pan-y;
+  user-select: none;
+  caret-color: transparent;
+}
+.fan-gallery-card {
+  appearance: none;
+  contain: paint;
+  isolation: isolate;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 176px;
+  aspect-ratio: 0.8;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  overflow: hidden;
+  cursor: pointer;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
+}
+/* Only promote layers while something moves. */
+/* The fan is fitted at rest, so while a card is active its neighbors may
+   extend past the sides: clip only vertically then. */
+.fan-gallery.is-active {
+  position: relative;
+  z-index: 1;
+  overflow-x: visible;
+  overflow-y: clip;
+}
+/* While cards move, springs may overshoot past the edges: nothing is cut.
+   Once the motion settles the component clips again. */
+.fan-gallery.is-animating {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+.fan-gallery-stage.is-moving .fan-gallery-card {
+  will-change: transform;
+}
+.fan-gallery-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+.fan-gallery-card:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}
+.fan-gallery:not([data-ready]) .fan-gallery-stage,
+.fan-gallery:not([data-ready]) .fan-gallery-heading {
+  visibility: hidden;
+}
+@media (max-width: 600px) {
+  .fan-gallery {
+    padding-top: 24px;
+  }
+}
