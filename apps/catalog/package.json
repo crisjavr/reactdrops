@@ -31,7 +31,15 @@
     "vite": "8.0.13"
   },
   "files": [
+    "LICENSE",
     "index.html",
+    "public-release/assets/hero-artwork/02.webp",
+    "public-release/assets/hero-artwork/04.webp",
+    "public-release/assets/hero-artwork/05.webp",
+    "public-release/assets/orbit-tunnel/julien-moreau-688Fna1pwOQ-unsplash.webp",
+    "public-release/assets/orbit-tunnel/mavis-hopper-6mhc2gBMAyM-unsplash.webp",
+    "public-release/license.txt",
+    "public-release/r/fan-gallery.json",
     "public-release/r/liquid-glass-orb.json",
     "public-release/r/topographic-terrain.json",
     "src/generated/published-routes.ts",
@@ -39,5 +47,6 @@
     "src/styles.css",
     "tsconfig.json",
     "vite.config.ts"
-  ]
+  ],
+  "license": "SEE LICENSE IN LICENSE"
 }

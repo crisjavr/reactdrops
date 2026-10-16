@@ -433,6 +433,13 @@ export function ComponentDetailLayout({
           <ComponentSourcePanel sourceFiles={sourceFiles} usageOnly />
           {usage}
         </section>
+
+        <footer className="components-document-section">
+          <p className="components-document-intro">
+            Free for personal and commercial projects. Redistributing components, kits or templates
+            requires permission. <a href="/license.txt">Read the license</a>.
+          </p>
+        </footer>
       </article>
 
       <aside className="components-right-sidebar">

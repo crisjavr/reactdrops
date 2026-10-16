@@ -15,6 +15,7 @@ function CatalogApp() {
           </Link>
           <nav aria-label="Catalog navigation">
             <Link to="/components">Components</Link>
+            <a href="/license.txt">License</a>
           </nav>
         </header>
         <Routes>

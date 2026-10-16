@@ -6,6 +6,8 @@
     ".": "./src/index.ts"
   },
   "files": [
+    "LICENSE",
     "src/index.ts"
-  ]
+  ],
+  "license": "SEE LICENSE IN LICENSE"
 }

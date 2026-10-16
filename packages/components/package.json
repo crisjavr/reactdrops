@@ -9,7 +9,8 @@
     ".": "./src/public-index.ts",
     "./fluid-agent-orb": "./src/fluid-agent-orb/index.ts",
     "./liquid-glass-orb": "./src/liquid-glass-orb/index.ts",
-    "./topographic-terrain": "./src/topographic-terrain/index.ts"
+    "./topographic-terrain": "./src/topographic-terrain/index.ts",
+    "./fan-gallery": "./src/fan-gallery/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -25,6 +26,13 @@
     "html-to-image": "1.11.13"
   },
   "files": [
+    "LICENSE",
+    "src/fan-gallery/fan-gallery.css",
+    "src/fan-gallery/fan-gallery.tsx",
+    "src/fan-gallery/fan-layout.ts",
+    "src/fan-gallery/fan-motion.ts",
+    "src/fan-gallery/fan-playback.ts",
+    "src/fan-gallery/index.ts",
     "src/fluid-agent-orb/fluid-agent-orb-entrance.ts",
     "src/fluid-agent-orb/fluid-agent-orb-model.ts",
     "src/fluid-agent-orb/fluid-agent-orb-motion.ts",
@@ -42,6 +50,7 @@
     "src/liquid-glass-orb/liquid-glass-orb.tsx",
     "src/public-index.ts",
     "src/shared/agent-orb-motion.ts",
+    "src/shared/viewport-playback.ts",
     "src/topographic-flow/topographic-field.ts",
     "src/topographic-flow/topographic-grain.ts",
     "src/topographic-flow/topographic-renderer.ts",
@@ -52,5 +61,6 @@
     "src/topographic-terrain/topographic-terrain-shaders.ts",
     "src/topographic-terrain/topographic-terrain.css",
     "src/topographic-terrain/topographic-terrain.tsx"
-  ]
+  ],
+  "license": "SEE LICENSE IN LICENSE"
 }

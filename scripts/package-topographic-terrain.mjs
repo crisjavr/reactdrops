@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { withReactDropsLicense } from './registry-license.mjs';
 
 // Bundle the terrain component and shared rendering modules with local imports.
 const modules = [
@@ -26,7 +27,7 @@ export async function packageTopographicTerrain(root) {
         path: `components/${name}`,
         target: `@components/${name}`,
         type: name.endsWith('.ts') ? 'registry:lib' : 'registry:ui',
-        content,
+        content: withReactDropsLicense(content),
       };
     }),
   );

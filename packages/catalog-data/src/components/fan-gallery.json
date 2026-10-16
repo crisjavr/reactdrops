@@ -1,0 +1,230 @@
+{
+  "slug": "fan-gallery",
+  "name": "Fan Gallery",
+  "family": {
+    "slug": "gallery",
+    "name": "Gallery"
+  },
+  "description": "An image fan on a symmetric curve. Cards spread open, are dealt, rise, flip, sweep or unfold in with spring physics; hovering lifts and straightens a card and parts the fan so it stands clear of every other card.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 29,
+  "publishedAt": "2026-10-16",
+  "styles": [
+    "minimal"
+  ],
+  "types": [
+    "gallery",
+    "image"
+  ],
+  "interactions": [
+    "automatic",
+    "viewport",
+    "manual",
+    "hover",
+    "focus"
+  ],
+  "technologies": [
+    "dom"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "entrance",
+      "label": "Entrance",
+      "type": "select",
+      "defaultValue": "stack",
+      "options": [
+        "stack",
+        "deal",
+        "rise",
+        "flip",
+        "circular",
+        "deck"
+      ],
+      "description": "Stack spread opens a closed stack like a swatch book, every card pivoting from the middle into place. Deal throws each card from a deck beside the stage along an arc. Rise lifts cards into place from below the stage. Flip turns each card from edge-on to face, in place. Circular sweep launches cards one by one along an arc. Deck unfold carries a closed deck along that arc and unfolds it on arrival."
+    },
+    {
+      "name": "stackFrom",
+      "label": "Front cards",
+      "type": "select",
+      "defaultValue": "left",
+      "options": [
+        "left",
+        "right"
+      ],
+      "description": "The front side: which cards lie on top where cards overlap, the order in which every entrance brings cards in, and where Deal, Circular sweep and Deck unfold come from."
+    },
+    {
+      "name": "speed",
+      "label": "Spring speed (s)",
+      "type": "number",
+      "defaultValue": 0.7,
+      "min": 0.2,
+      "max": 2,
+      "step": 0.05,
+      "description": "How quickly cards travel. It sets the spring's pace, not a fixed duration: with more Bounce, cards keep wobbling a little longer before they rest."
+    },
+    {
+      "name": "stagger",
+      "label": "Card stagger (s)",
+      "type": "number",
+      "defaultValue": 0.09,
+      "min": 0,
+      "max": 0.3,
+      "step": 0.005,
+      "description": "Delay between successive cards, front side first. In Deck unfold the deck travels as one and this is the delay between cards unfolding."
+    },
+    {
+      "name": "bounce",
+      "label": "Bounce",
+      "type": "number",
+      "defaultValue": 0.35,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "0 settles softly; higher values overshoot and wobble before resting, which also lengthens the entrance."
+    },
+    {
+      "name": "hoverSpeed",
+      "label": "Focus response (s)",
+      "type": "number",
+      "defaultValue": 0.28,
+      "min": 0.05,
+      "max": 1,
+      "step": 0.01,
+      "description": "How quickly the focus glides to the pointed card."
+    },
+    {
+      "name": "spacing",
+      "label": "Card spacing",
+      "type": "number",
+      "defaultValue": 1.25,
+      "min": 0.15,
+      "max": 3,
+      "step": 0.01,
+      "description": "Distance between card centers, as a fraction of the card width. In a narrow container it is fitted (down to 40%) before the cards shrink."
+    },
+    {
+      "name": "curve",
+      "label": "Curve depth",
+      "type": "number",
+      "defaultValue": 0.14,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How far the outermost cards drop below the middle, as a fraction of the card height."
+    },
+    {
+      "name": "tilt",
+      "label": "Edge tilt (deg)",
+      "type": "number",
+      "defaultValue": 14.5,
+      "min": 0,
+      "max": 60,
+      "step": 0.5,
+      "description": "Tilt of the outermost cards; inner cards tilt in proportion to their distance from the middle."
+    },
+    {
+      "name": "lift",
+      "label": "Hover lift (px)",
+      "type": "number",
+      "defaultValue": 42,
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "description": "How far the hovered card rises as it straightens and comes forward. Space for the rise is reserved above the fan; it never shrinks the cards."
+    },
+    {
+      "name": "spread",
+      "label": "Hover gap",
+      "type": "number",
+      "defaultValue": 0.2,
+      "min": 0,
+      "max": 0.5,
+      "step": 0.01,
+      "description": "Space opened on each side of the hovered card, in card widths. Neighbors first move just clear of it, then this much more, so the gap shows even when cards do not overlap. Hover never shrinks the fan: neighbors may extend past the sides while a card is active."
+    },
+    {
+      "name": "cardWidth",
+      "label": "Card width (px)",
+      "type": "number",
+      "defaultValue": 176,
+      "min": 120,
+      "max": 420,
+      "step": 2,
+      "description": "Requested card width; the whole hand scales down only when it cannot fit the container."
+    },
+    {
+      "name": "aspectRatio",
+      "label": "Image aspect ratio",
+      "type": "number",
+      "defaultValue": 0.8,
+      "min": 0.3,
+      "max": 3,
+      "step": 0.01,
+      "description": "Width divided by height of each image."
+    },
+    {
+      "name": "radius",
+      "label": "Image border radius (px)",
+      "type": "number",
+      "defaultValue": 18,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "description": "Corner radius before responsive scaling."
+    },
+    {
+      "name": "trigger",
+      "label": "Playback",
+      "type": "select",
+      "defaultValue": "scroll",
+      "description": "Play on mount, viewport entry, hover/focus/tap, or through the component ref.",
+      "options": [
+        "auto",
+        "scroll",
+        "manual",
+        "hover"
+      ]
+    },
+    {
+      "name": "viewportStart",
+      "label": "Viewport start (%)",
+      "type": "number",
+      "defaultValue": 75,
+      "description": "Line reached by the top of the component, measured from the top of the screen. Upward entry mirrors this value unless Separate scroll directions is enabled. Hold the slider to see both lines.",
+      "min": 1,
+      "max": 100,
+      "step": 0.01
+    },
+    {
+      "name": "viewportStartUp",
+      "label": "Scrolling up (%)",
+      "type": "number",
+      "defaultValue": 25,
+      "min": 0,
+      "max": 100,
+      "step": 0.01,
+      "description": "Independent upward entry line measured from the top of the screen. The bottom of the component must reach this line. When omitted, the component uses 100 minus viewportStart."
+    },
+    {
+      "name": "once",
+      "label": "Play once on scroll",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Disable to replay when entering from either direction. Reset happens only after the component leaves the visible viewport completely."
+    }
+  ],
+  "version": "2.0.0"
+}

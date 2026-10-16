@@ -7,9 +7,12 @@ import { publishedEntries } from './catalog-manifest.mjs';
 import { syncRegistry } from './sync-registry.mjs';
 import { packageLiquidGlassOrb } from './package-liquid-glass-orb.mjs';
 import { packageTopographicTerrain } from './package-topographic-terrain.mjs';
+import { packageFanGallery } from './package-fan-gallery.mjs';
+import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
 const root = resolve(import.meta.dirname, '..');
+await syncLicenseFiles(root);
 const entries = publishedEntries();
 const manifest = JSON.parse(readFileSync(resolve(root, 'public-files.json'), 'utf8'));
 assert.deepEqual(
@@ -31,6 +34,12 @@ const releases = {
     prefix: 'topographicTerrain',
     package: () => packageTopographicTerrain(root),
   },
+  'fan-gallery': {
+    sourceSlug: 'fan-gallery',
+    symbol: 'FanGallery',
+    prefix: 'fanGallery',
+    package: () => packageFanGallery(root),
+  },
 };
 for (const { metadata, sourceSlug } of entries) {
   const release = releases[metadata.slug];
@@ -47,6 +56,8 @@ for (const { metadata, sourceSlug } of entries) {
     dependencies: metadata.dependencies,
     files: files.map(({ name, ...file }) => file),
     meta: {
+      license: licenseName,
+      licenseUrl,
       version: metadata.version,
       access: metadata.access,
       drop: metadata.drop,

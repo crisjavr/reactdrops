@@ -6,7 +6,8 @@ import { pathToFileURL } from 'node:url';
 import { resolve, relative, dirname } from 'node:path';
 import ts from 'typescript';
 import { publishedEntries } from './catalog-manifest.mjs';
-import { checkPackageFileLists } from './check-package-contents.mjs';
+import { checkPackageFileLists, checkPackageLicenses } from './check-package-contents.mjs';
+import { licenseName, licenseUrl, licenseHeader } from './registry-license.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 export function checkPublicFiles({ auditGit = true } = {}) {
@@ -96,6 +97,7 @@ export function checkPublicFiles({ auditGit = true } = {}) {
     checkContent(readFileSync(resolve(root, file)), file, 'working tree');
   }
   checkPackageFileLists(allowed, (file) => readFileSync(resolve(root, file)));
+  checkPackageLicenses((file) => readFileSync(resolve(root, file)));
   // Reject a dependency on unreviewed source before it can be committed.
   const packages = new Map(
     ['components', 'catalog-ui', 'catalog-data', 'component-schema'].map((name) => {
@@ -300,6 +302,7 @@ export function checkPublicFiles({ auditGit = true } = {}) {
           'Staged release list differs from reviewed components',
         );
         checkPackageFileLists(allowed, readStaged);
+        checkPackageLicenses(readStaged);
         const stagedPackages = new Map(
           [...packages].map(([name, entry]) => [
             name,
@@ -350,6 +353,14 @@ export function checkPublicFiles({ auditGit = true } = {}) {
       assert.equal(registry.title, metadata.name);
       assert.equal(registry.meta.version, metadata.version);
       assert.equal(registry.meta.drop, metadata.drop);
+      assert.equal(registry.meta.license, licenseName);
+      assert.equal(registry.meta.licenseUrl, licenseUrl);
+      for (const file of registry.files) {
+        assert.ok(
+          file.content.startsWith(licenseHeader),
+          `Missing license: ${metadata.slug}/${file.path}`,
+        );
+      }
     }
   }
   for (const directory of ['registry', 'apps/catalog/public-release/r']) {

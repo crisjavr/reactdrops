@@ -30,11 +30,31 @@ export function checkPackageFileLists(allowed, read) {
   }
 }
 
+export function checkPackageLicenses(read) {
+  const license = read('LICENSE').toString('utf8');
+  assert.ok(license.startsWith('ReactDrops Component License 1.0\n'), 'Unexpected project license');
+  for (const directory of packageDirectories) {
+    const prefix = directory ? directory + '/' : '';
+    const metadata = JSON.parse(read(prefix + 'package.json').toString('utf8'));
+    assert.equal(
+      metadata.license,
+      'SEE LICENSE IN LICENSE',
+      `Package license: ${directory || '.'}`,
+    );
+    assert.equal(
+      read(prefix + 'LICENSE').toString('utf8'),
+      license,
+      `Stale license: ${directory || '.'}`,
+    );
+  }
+}
+
 export function checkPackageContents(root) {
   const allowed = new Set(
     JSON.parse(readFileSync(resolve(root, 'public-files.json'), 'utf8')).files,
   );
   checkPackageFileLists(allowed, (file) => readFileSync(resolve(root, file)));
+  checkPackageLicenses((file) => readFileSync(resolve(root, file)));
   for (const directory of packageDirectories) {
     const result = JSON.parse(
       execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts', '--loglevel=error'], {
@@ -42,6 +62,10 @@ export function checkPackageContents(root) {
         encoding: 'utf8',
         maxBuffer: 8 * 1024 * 1024,
       }),
+    );
+    assert.ok(
+      result[0].files.some(({ path }) => path === 'LICENSE'),
+      `Missing packaged license: ${directory || '.'}`,
     );
     for (const { path } of result[0].files) {
       const file = directory ? directory + '/' + path : path;
