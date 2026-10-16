@@ -27,9 +27,9 @@ export interface FanOptions {
 }
 
 export const fanDefaults: FanOptions = {
-  cardWidth: 176,
+  cardWidth: 162,
   aspectRatio: 0.8,
-  spacing: 1.25,
+  spacing: 0.69,
   curve: 0.14,
   tilt: 14.5,
   lift: 42,
