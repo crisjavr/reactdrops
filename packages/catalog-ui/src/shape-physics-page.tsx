@@ -79,17 +79,25 @@ export default function ShapePhysicsPage() {
           label={c.label}
           description={
             c.name === 'size'
-              ? `Maximum ${sizeLimit}px for the current figures and container.`
+              ? `Maximum ${Math.floor(sizeLimit)}px for the current figures and container.`
               : (c.description ?? '')
           }
         >
+          {/* The size range stays fixed: the fitting limit changes while figures
+              fall in, and a moving max would slide the thumb on its own. The
+              limit is applied when the value changes instead. */}
           <NumberControl
             label={c.label}
             value={values[c.name as keyof ShapeSettings] as number}
-            min={c.name === 'size' ? Math.min(c.min ?? 8, sizeLimit) : c.min}
-            max={c.name === 'size' ? sizeLimit : c.max}
+            min={c.min}
+            max={c.max}
             step={c.step}
-            onChange={(v) => set(c.name as keyof ShapeSettings, v)}
+            onChange={(v) =>
+              set(
+                c.name as keyof ShapeSettings,
+                c.name === 'size' ? Math.min(v, Math.max(c.min ?? 8, Math.floor(sizeLimit))) : v,
+              )
+            }
           />
         </ControlField>
       ));
@@ -233,6 +241,7 @@ export default function ShapePhysicsPage() {
                 />
               </ControlField>
               <ControlField
+                className="is-number"
                 label="Cursor followers (%)"
                 description="Choose how many figures follow the pointer. The others keep their independent gaze."
               >

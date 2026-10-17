@@ -11,7 +11,8 @@
     "./liquid-glass-orb": "./src/liquid-glass-orb/index.ts",
     "./topographic-terrain": "./src/topographic-terrain/index.ts",
     "./fan-gallery": "./src/fan-gallery/index.ts",
-    "./shape-physics": "./src/shape-physics/index.ts"
+    "./shape-physics": "./src/shape-physics/index.ts",
+    "./topographic-flow": "./src/topographic-flow/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -59,8 +60,12 @@
     "src/shape-physics/solid-world.ts",
     "src/shared/agent-orb-motion.ts",
     "src/shared/viewport-playback.ts",
+    "src/topographic-flow/index.ts",
     "src/topographic-flow/topographic-field.ts",
+    "src/topographic-flow/topographic-flow.css",
+    "src/topographic-flow/topographic-flow.tsx",
     "src/topographic-flow/topographic-grain.ts",
+    "src/topographic-flow/topographic-presets.ts",
     "src/topographic-flow/topographic-renderer.ts",
     "src/topographic-flow/topographic-surface.ts",
     "src/topographic-terrain/index.ts",

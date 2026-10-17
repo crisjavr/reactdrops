@@ -12,7 +12,8 @@
     "./pages/fluid-agent-orb": "./src/fluid-agent-orb-page.tsx",
     "./pages/topographic-terrain": "./src/topographic-terrain-page.tsx",
     "./pages/fan-gallery": "./src/fan-gallery-page.tsx",
-    "./pages/shape-physics": "./src/shape-physics-page.tsx"
+    "./pages/shape-physics": "./src/shape-physics-page.tsx",
+    "./pages/topographic-flow": "./src/topographic-flow-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -32,6 +33,7 @@
     "src/assets/fan-gallery-preview.webp",
     "src/assets/liquid-glass-orb-preview.webp",
     "src/assets/shape-physics-preview.webp",
+    "src/assets/topographic-flow-preview.webp",
     "src/assets/topographic-terrain-preview.webp",
     "src/catalog-component-card.tsx",
     "src/catalog-sidebar.tsx",
@@ -60,6 +62,8 @@
     "src/shape-physics-page.css",
     "src/shape-physics-page.tsx",
     "src/shared-hover-indicator.ts",
+    "src/topographic-flow-page.css",
+    "src/topographic-flow-page.tsx",
     "src/topographic-terrain-page.css",
     "src/topographic-terrain-page.tsx",
     "src/use-control-motion.ts",

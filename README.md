@@ -1,6 +1,6 @@
 # ReactDrops — Creative React components
 
-Liquid Glass Orb, Topographic Terrain, Fan Gallery and Shape Physics, with source, catalog previews, customizers and a shadcn registry.
+Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery and Shape Physics, with source, catalog previews, customizers and a shadcn registry.
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
@@ -11,6 +11,7 @@ npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-orb.json
 npx shadcn@latest add https://reactdrops.dev/r/topographic-terrain.json
 npx shadcn@latest add https://reactdrops.dev/r/fan-gallery.json
 npx shadcn@latest add https://reactdrops.dev/r/shape-physics.json
+npx shadcn@latest add https://reactdrops.dev/r/topographic-flow.json
 ```
 
 The installer adds `liquid-glass-orb.tsx`, `liquid-glass-orb.css` and GSAP.
@@ -62,6 +63,20 @@ export function Example() {
 
 In this workspace the same component is available as
 `import { FanGallery } from '@reactdrops/components/fan-gallery'`.
+
+Topographic Flow draws animated contour lines over a slowly morphing
+elevation field, with optional elevation gradients and grain. The pointer
+reshapes the contours with one of five effects (`hoverEffect`: rings by
+default, spread, swirl, ripple or drag). Its installer adds seven
+source/style files and requires no runtime dependencies beyond React.
+
+```tsx
+import { TopographicFlow } from './components/topographic-flow';
+
+export function Example() {
+  return <TopographicFlow preset="survey" height="100svh" />;
+}
+```
 
 Shape Physics fills a Canvas 2D surface with playful 3D characters (spheres,
 cones, cubes, clouds, drops and flowers) that fall in, pile up, follow the cursor
