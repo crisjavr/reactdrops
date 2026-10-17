@@ -9,6 +9,7 @@ import {
   type ContourMotionSpline,
 } from './topographic-field';
 export type TopographicLineStyle = 'solid' | 'mixed' | 'dashed';
+export type TopographicHoverEffect = 'spread' | 'swirl' | 'ripple' | 'rings' | 'drag';
 /** Two to eight colors ordered from valley to summit. Empty disables the height gradient. */
 export type TopographicGradientColors = readonly [string, string, ...string[]] | readonly [];
 export type TopographicReliefProperties =
@@ -63,6 +64,20 @@ export type TopographicConfig = {
   lightingBlend?: number;
   lightDirection?: number;
   lightIntensity?: number;
+  /** How strongly the pointer spreads the terrain horizontally, up to 0.9; negative draws it in, 0 disables hover. */
+  hover?: number;
+  /** Radius of the pointer push in CSS pixels. */
+  hoverRadius?: number;
+  /**
+   * Flat flow only: how the pointer reshapes the contours. 'rings' (default)
+   * raises a hill with new contours, 'spread' moves them away, 'swirl' twists
+   * them, 'ripple' sends waves out and 'drag' carries them along the motion.
+   */
+  hoverEffect?: TopographicHoverEffect;
+  /** Seconds for the hill to catch up with the pointer (smoothing time constant). */
+  hoverFollow?: number;
+  /** Seconds for the terrain to return to normal after the pointer leaves (entering follows `hoverFollow`). */
+  hoverFade?: number;
 };
 const clamp = (value: number, min: number, max: number, fallback: number) =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : fallback));

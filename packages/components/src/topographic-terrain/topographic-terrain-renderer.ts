@@ -4,7 +4,10 @@ import {
   terrainElevationColorShader,
   terrainMaterialShader,
 } from './topographic-terrain-shaders';
-import type { TopographicSurfaceFrame } from '../topographic-flow/topographic-surface';
+import {
+  pointerWarpShader,
+  type TopographicSurfaceFrame,
+} from '../topographic-flow/topographic-surface';
 
 // Keep fine silhouettes at device resolution without unbounded full-screen
 // color/depth storage. The budget counts both resolution and MSAA samples.
@@ -20,8 +23,12 @@ uniform vec2 uGrid, uExtent, uViewport;
 uniform vec4 uCamera;
 uniform float uMargin, uCosine, uSine, uDensity, uElevation, uSoftness;
 uniform float uZoom, uDistance, uOverscan;
+uniform vec4 uStamps[1];
+uniform highp int uStampCount;
+uniform float uPointerRadius, uPointerLift;
 out vec2 vField;
 out vec3 vWorld;
+${pointerWarpShader}
 ${terraceShader}
 vec4 weights(float t) {
   float t2=t*t, t3=t2*t;
@@ -54,7 +61,12 @@ void main() {
   float rx=screen.x*(1.+st*ry/uDistance);
   vec2 ground=vec2(cr*rx+sr*ry,-sr*rx+cr*ry);
   vField=(vec2(ground.x+uViewport.x*.5,uViewport.y*.5-ground.y)+uMargin)/uExtent;
-  float altitude=elevationHeight(vField);
+  // The pointer deforms the terrain horizontally: the ground spreads outward
+  // on its own plane (heights unchanged), so the tilted camera shows the
+  // layers themselves moving aside. Sample where the spread moved this from.
+  vec2 spread=pointerWarp(ground,uPointerLift);
+  float altitude=elevationHeight(
+    (vec2(spread.x+uViewport.x*.5,uViewport.y*.5-spread.y)+uMargin)/uExtent);
   // The riser is centered on the original contour level. Quintic easing keeps
   // height, velocity and acceleration continuous as a vertex crosses a level.
   float q=(altitude-.037)*uDensity+.5;
@@ -79,19 +91,30 @@ uniform float uCosine, uSine, uDensity, uElevation, uSoftness, uRatio;
 uniform float uWidth, uOpacity, uGrainAmount, uLightingBlend, uLightIntensity, uGradientDiffusion;
 uniform vec3 uLineColor, uAccentColor, uSurfaceColor, uShadowColor, uLight, uGradientColors[8];
 uniform int uGradientStops;
+uniform vec4 uStamps[1];
+uniform highp int uStampCount;
+uniform float uPointerRadius, uPointerLift;
 in vec2 vField;
 in vec3 vWorld;
 uniform bool uCustomShadow;
 out vec4 color;
-${terrainSplineShader}${terrainElevationColorShader}${terraceShader}
+${pointerWarpShader}${terrainSplineShader}${terrainElevationColorShader}${terraceShader}
 vec2 fieldAt(vec3 position) {
   return (vec2(position.x+uViewport.x*.5,uViewport.y*.5-position.y)+uMargin)/uExtent;
+}
+// Height and world-space slope through the ground expansion; its Jacobian
+// carries the slope back so lighting follows the spread terrain exactly.
+vec3 surfaceAt(vec2 ground) {
+  vec2 spread=pointerWarp(ground,uPointerLift);
+  vec3 surface=elevationSurface(fieldAt(vec3(spread,0.)));
+  surface.yz=transpose(warpJacobian)*surface.yz;
+  return surface;
 }
 void main() {
   vec3 camera=vec3(-uCamera.z*uCamera.x*uDistance,-uCamera.w*uCamera.x*uDistance,uCamera.y*uDistance);
   vec3 position=vWorld;
   vec3 ray=normalize(position-camera);
-  vec3 sampled=elevationSurface(vField);
+  vec3 sampled=surfaceAt(position.xy);
   // Rasterization supplies a close initial intersection. Correct it along
   // the camera ray so lighting and depth follow the same smooth surface,
   // rather than the mesh's piecewise-linear approximation of each bevel.
@@ -122,7 +145,7 @@ void main() {
     if(hasPositive&&hasNegative&&(next<=lower||next>=upper)) next=(lower+upper)*.5;
     position=origin+ray*next;
     travel=next;
-    sampled=elevationSurface(fieldAt(position));
+    sampled=surfaceAt(position.xy);
   }
   float altitude=sampled.x;
   float q=(altitude-.037)*uDensity+.5;
@@ -194,6 +217,13 @@ export function createTopographicTerrainSurface(
     updateUniforms?: (gl: WebGL2RenderingContext, program: WebGLProgram) => void;
   },
 ) {
+  // Pointer imprints in ground space (x, y, strength, summit) and the last
+  // values sent; a terrain without hover uploads none of them per frame.
+  const groundStamps = new Float32Array(4),
+    sentStamps = new Float32Array(4);
+  let sentStampCount = NaN,
+    sentPointerRadius = NaN,
+    sentPointerLift = NaN;
   let program: WebGLProgram | null = null,
     vao: WebGLVertexArrayObject | null = null,
     indices: WebGLBuffer | null = null,
@@ -261,6 +291,7 @@ export function createTopographicTerrainSurface(
     samplesKnown = true;
   };
   const initialize = () => {
+    sentStampCount = sentPointerRadius = sentPointerLift = NaN;
     initializeSamples();
     scalarHeight = !!gl.getExtension('EXT_color_buffer_float');
     program = gl.createProgram();
@@ -321,6 +352,10 @@ export function createTopographicTerrainSurface(
       'uGradientStops',
       'uGradientColors[0]',
       'uGradientDiffusion',
+      'uStamps[0]',
+      'uStampCount',
+      'uPointerRadius',
+      'uPointerLift',
     ])
       locations[name] = gl.getUniformLocation(program, name);
     gl.useProgram(program);
@@ -613,6 +648,66 @@ export function createTopographicTerrainSurface(
         if (!scalarHeight) {
           gl.uniform1f(locations.uCosine, options.cosine);
           gl.uniform1f(locations.uSine, options.sine);
+        }
+        {
+          // Unproject the pointer onto the terrain, inverting the vertex
+          // projection at the surface height there (the spread leaves the
+          // pointer's own point in place), refined from the CPU height copy.
+          const lift = options.pointerLift,
+            stampCount = lift !== 0 ? Math.min(1, options.pointerStampCount) : 0;
+          if (stampCount) {
+            const elevation = finite(config.elevation, 0, 240, 120),
+              tilt = (finite(config.cameraTilt, 0, 60, 48) * Math.PI) / 180,
+              rotation = (finite(config.cameraRotation, -180, 180, -20) * Math.PI) / 180,
+              zoom = finite(config.cameraZoom, 0.6, 2, 1),
+              distance = Math.hypot(width, height) * 4 + elevation * 4,
+              st = Math.sin(tilt),
+              ct = Math.cos(tilt),
+              sr = Math.sin(rotation),
+              cr = Math.cos(rotation);
+            for (let stamp = 0; stamp < stampCount; stamp++) {
+              const sx = (options.pointerStamps[stamp * 4] - width / 2) / zoom,
+                sy = (height / 2 - options.pointerStamps[stamp * 4 + 1]) / zoom;
+              let z = 0,
+                groundX = 0,
+                groundY = 0;
+              // Damped fixed point: on steep terrain a plain iteration can
+              // oscillate between frames, which reads as stutter.
+              for (let step = 0; step < 8; step++) {
+                const ry =
+                    (sy * (1 - (ct * z) / distance) - st * z) /
+                    Math.max(ct - (sy * st) / distance, 0.025),
+                  rx = sx * (1 + (st * ry - ct * z) / distance);
+                groundX = cr * rx + sr * ry;
+                groundY = -sr * rx + cr * ry;
+                const surfaceZ = options.altitudeAt(groundX, groundY) * elevation;
+                z = step ? (z + surfaceZ) / 2 : surfaceZ;
+              }
+              groundStamps[stamp * 4] = groundX;
+              groundStamps[stamp * 4 + 1] = groundY;
+              groundStamps[stamp * 4 + 2] = options.pointerStamps[stamp * 4 + 2];
+              groundStamps[stamp * 4 + 3] = options.pointerStamps[stamp * 4 + 3];
+            }
+            let changed = stampCount !== sentStampCount;
+            for (let index = 0; !changed && index < stampCount * 4; index++)
+              changed = groundStamps[index] !== sentStamps[index];
+            if (changed) {
+              sentStamps.set(groundStamps.subarray(0, stampCount * 4));
+              gl.uniform4fv(locations['uStamps[0]'], groundStamps, 0, stampCount * 4);
+            }
+            if (lift !== sentPointerLift) {
+              sentPointerLift = lift;
+              gl.uniform1f(locations.uPointerLift, lift);
+            }
+            if (options.pointerRadius !== sentPointerRadius) {
+              sentPointerRadius = options.pointerRadius;
+              gl.uniform1f(locations.uPointerRadius, options.pointerRadius);
+            }
+          }
+          if (stampCount !== sentStampCount) {
+            sentStampCount = stampCount;
+            gl.uniform1i(locations.uStampCount, stampCount);
+          }
         }
         geometry?.updateUniforms?.(gl, program!);
         gl.drawElements(gl.TRIANGLE_STRIP, count, gl.UNSIGNED_INT, 0);

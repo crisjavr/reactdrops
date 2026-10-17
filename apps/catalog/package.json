@@ -41,6 +41,7 @@
     "public-release/license.txt",
     "public-release/r/fan-gallery.json",
     "public-release/r/liquid-glass-orb.json",
+    "public-release/r/shape-physics.json",
     "public-release/r/topographic-terrain.json",
     "src/generated/published-routes.ts",
     "src/main.tsx",

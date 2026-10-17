@@ -1,0 +1,36 @@
+.component-showcase:has(.shape-physics-demo) {
+  --component-background-preview-height: 560px;
+}
+.component-showcase .component-preview-stage:has(> .shape-physics-demo) {
+  padding: 0;
+  min-height: 0;
+}
+.shape-physics-demo {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--theme-background);
+}
+.shape-physics-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.shape-physics-help {
+  margin: 0 0 20px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--theme-muted, #777);
+}
+@media (max-width: 600px) {
+  .component-showcase:has(.shape-physics-demo) {
+    --component-background-preview-height: 460px;
+  }
+}
+
+.shape-physics-actions .component-replay-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

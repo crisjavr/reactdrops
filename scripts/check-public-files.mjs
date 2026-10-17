@@ -8,6 +8,7 @@ import ts from 'typescript';
 import { publishedEntries } from './catalog-manifest.mjs';
 import { checkPackageFileLists, checkPackageLicenses } from './check-package-contents.mjs';
 import { licenseName, licenseUrl, licenseHeader } from './registry-license.mjs';
+import { secretPathPattern, secretPatterns } from './secret-patterns.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 export function checkPublicFiles({ auditGit = true } = {}) {
@@ -22,22 +23,7 @@ export function checkPublicFiles({ auditGit = true } = {}) {
   assert.equal(allowed.size, manifest.files.length, 'Duplicate public file');
 
   const sensitivePatterns = [
-    ['private key', /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/],
-    ['GitHub token', /\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{50,})\b/],
-    ['AWS access key', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/],
-    ['OpenAI token', /\bsk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{40,}\b/],
-    ['Google API key', /\bAIza[A-Za-z0-9_-]{35}\b/],
-    ['Slack token', /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/],
-    ['Stripe secret', /\b(?:sk|rk)_live_[A-Za-z0-9]{20,}\b/],
-    ['JWT', /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/],
-    [
-      'literal credential assignment',
-      /\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|passwd|database[_-]?url|dsn)\b\s*["']?\s*[:=]\s*["'][^"'\r\n]{8,}/i,
-    ],
-    [
-      'credential URL',
-      /\b(?:https?|postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\/[^\s/:'"<>]+:[^\s/@'"<>]+@/,
-    ],
+    ...secretPatterns,
     [
       'local user path',
       /(?:\/Users\/|\/home\/|\/var\/folders\/|\/private\/var\/|[A-Z]:\\Users\\)[A-Za-z0-9_.-]+[\/\\]/,
@@ -85,6 +71,7 @@ export function checkPublicFiles({ auditGit = true } = {}) {
   const physicalRoot = realpathSync(root);
   for (const file of allowed) {
     assert.ok(!file.startsWith('/') && !file.split('/').includes('..'), file);
+    assert.ok(!secretPathPattern.test(file), `Secret file in public allowlist: ${file}`);
     assert.ok(
       lstatSync(resolve(root, file)).isFile(),
       `Public file must be a regular file: ${file}`,
@@ -163,6 +150,10 @@ export function checkPublicFiles({ auditGit = true } = {}) {
   }
   for (const file of allowed) checkSourceImports(file, readFileSync(resolve(root, file)));
   function check(files, label) {
+    // Secret files stay rejected even if someone adds them to the allowlist.
+    for (const file of files) {
+      assert.ok(!secretPathPattern.test(file), `Secret file in ${label}: ${file}`);
+    }
     const unexpected = files.filter((file) => file && !allowed.has(file));
     assert.deepEqual(
       unexpected,

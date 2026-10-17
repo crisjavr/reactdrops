@@ -69,6 +69,10 @@ export const TopographicTerrain = forwardRef<TopographicTerrainHandle, Topograph
       lightingBlend,
       lightDirection,
       lightIntensity,
+      hover,
+      hoverRadius,
+      hoverFollow,
+      hoverFade,
     },
     ref,
   ) {
@@ -121,6 +125,10 @@ export const TopographicTerrain = forwardRef<TopographicTerrainHandle, Topograph
         lightingBlend: lightingBlend ?? palette.lightingBlend,
         lightDirection: lightDirection ?? palette.lightDirection,
         lightIntensity: lightIntensity ?? palette.lightIntensity,
+        hover: hover ?? palette.hover,
+        hoverRadius: hoverRadius ?? palette.hoverRadius,
+        hoverFollow: hoverFollow ?? palette.hoverFollow,
+        hoverFade: hoverFade ?? palette.hoverFade,
       }),
       [
         palette,
@@ -153,6 +161,10 @@ export const TopographicTerrain = forwardRef<TopographicTerrainHandle, Topograph
         lightingBlend,
         lightDirection,
         lightIntensity,
+        hover,
+        hoverRadius,
+        hoverFollow,
+        hoverFade,
       ],
     );
     const latest = useRef(config);

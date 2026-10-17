@@ -3,3 +3,4 @@ export { default as FluidAgentOrbCatalogPage, fluidAgentOrbMeta } from './fluid-
 export { ComponentDetailLayout } from './component-detail-layout';
 export { default as TopographicTerrainCatalogPage, topographicTerrainMeta } from './topographic-terrain-page';
 export { default as FanGalleryCatalogPage, fanGalleryMeta } from './fan-gallery-page';
+export { default as ShapePhysicsCatalogPage, shapePhysicsMeta } from './shape-physics-page';

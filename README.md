@@ -1,6 +1,6 @@
 # ReactDrops — Creative React components
 
-Liquid Glass Orb, Topographic Terrain and Fan Gallery, with source, catalog previews, customizers and a shadcn registry.
+Liquid Glass Orb, Topographic Terrain, Fan Gallery and Shape Physics, with source, catalog previews, customizers and a shadcn registry.
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
@@ -10,6 +10,7 @@ Liquid Glass Orb, Topographic Terrain and Fan Gallery, with source, catalog prev
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-orb.json
 npx shadcn@latest add https://reactdrops.dev/r/topographic-terrain.json
 npx shadcn@latest add https://reactdrops.dev/r/fan-gallery.json
+npx shadcn@latest add https://reactdrops.dev/r/shape-physics.json
 ```
 
 The installer adds `liquid-glass-orb.tsx`, `liquid-glass-orb.css` and GSAP.
@@ -61,6 +62,23 @@ export function Example() {
 
 In this workspace the same component is available as
 `import { FanGallery } from '@reactdrops/components/fan-gallery'`.
+
+Shape Physics fills a Canvas 2D surface with playful 3D characters (spheres,
+cones, cubes, clouds, drops and flowers) that fall in, pile up, follow the cursor
+and can be dragged and thrown. Its installer adds six source/style files and
+requires no runtime dependencies beyond React. The canvas fills its parent, so
+give it a height:
+
+```tsx
+import { ShapePhysics } from './components/shape-physics';
+
+export function Example() {
+  return <ShapePhysics height="100svh" />;
+}
+```
+
+Use `depth="2d"` to keep the figures flat. A ref exposes `replay()`, `clear()`,
+`addShape()` and `shake()`.
 
 ## Development
 

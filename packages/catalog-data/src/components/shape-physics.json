@@ -1,0 +1,218 @@
+{
+  "slug": "shape-physics",
+  "name": "Shape Physics",
+  "family": {
+    "slug": "background",
+    "name": "Background"
+  },
+  "version": "3.0.0",
+  "description": "A playful physics canvas that fills with 3D characters: spheres, cones, cubes, clouds, drops and thick flowers that tumble, pile up and follow the cursor. Drag and drop them, or keep them flat in 2D.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 20,
+  "publishedAt": "2026-10-17",
+  "styles": [
+    "playful",
+    "minimal"
+  ],
+  "types": [
+    "background",
+    "physics"
+  ],
+  "interactions": [
+    "automatic",
+    "click",
+    "drag",
+    "touch"
+  ],
+  "technologies": [
+    "canvas",
+    "physics"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "nextjs",
+    "vite",
+    "responsive",
+    "reduced-motion"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "depth",
+      "label": "Depth",
+      "type": "select",
+      "defaultValue": "3d",
+      "options": [
+        "3d",
+        "2d"
+      ],
+      "description": "3D volumes tumble and show their sides; 2D keeps the same figures flat."
+    },
+    {
+      "name": "shape",
+      "label": "Shape",
+      "type": "select",
+      "defaultValue": "mixed",
+      "options": [
+        "mixed",
+        "circle",
+        "triangle",
+        "square",
+        "cloud",
+        "teardrop",
+        "puff"
+      ],
+      "description": "Mix figures or give every figure the same shape: spheres, cones, cubes, clouds, drops or flowers."
+    },
+    {
+      "name": "faces",
+      "label": "Faces",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Show the eyes."
+    },
+    {
+      "name": "followCursor",
+      "label": "Follow cursor",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Enable mouse or pen tracking for a stable subset of figures. Works during pause; disabling restores the authored expressions."
+    },
+    {
+      "name": "cursorFollowRatio",
+      "label": "Cursor followers",
+      "type": "number",
+      "defaultValue": 0.4,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "Fraction of figures that follow the cursor. The remaining figures keep their independent idle gaze. Use 0 for none or 1 for all."
+    },
+    {
+      "name": "count",
+      "label": "Object count",
+      "type": "number",
+      "defaultValue": 400,
+      "min": 0,
+      "max": 400,
+      "step": 1,
+      "description": "Upper limit for automatic figures. They keep falling in until the container is full, then stop."
+    },
+    {
+      "name": "size",
+      "label": "Object radius (px)",
+      "type": "number",
+      "defaultValue": 64,
+      "min": 8,
+      "max": 80,
+      "step": 1,
+      "description": "Largest figure radius. Increasing it stops when the current figures would overfill the container."
+    },
+    {
+      "name": "sizeVariation",
+      "label": "Size variation",
+      "type": "number",
+      "defaultValue": 0.15,
+      "min": 0,
+      "max": 0.8,
+      "step": 0.01,
+      "description": "Variation below the largest radius. Zero gives every object the same size."
+    },
+    {
+      "name": "spawnRate",
+      "label": "Objects per second",
+      "type": "number",
+      "defaultValue": 14,
+      "min": 0.2,
+      "max": 30,
+      "step": 0.2,
+      "description": "Figures falling in per second until the container is full."
+    },
+    {
+      "name": "appearanceDuration",
+      "label": "Appearance duration (s)",
+      "type": "number",
+      "defaultValue": 0.55,
+      "min": 0,
+      "max": 5,
+      "step": 0.05,
+      "description": "Time for each object to grow into view. Flowers unfold petal by petal; zero creates complete shapes."
+    },
+    {
+      "name": "seed",
+      "label": "Random seed",
+      "type": "number",
+      "defaultValue": 52490,
+      "min": 0,
+      "max": 100000,
+      "step": 1,
+      "description": "Reproducible shapes and placement. Changing this value replays the field."
+    },
+    {
+      "name": "gravity",
+      "label": "Gravity (px/s²)",
+      "type": "number",
+      "defaultValue": 1600,
+      "min": -4000,
+      "max": 4000,
+      "step": 10,
+      "description": "Downward acceleration. Zero makes objects weightless; negative values pull upward."
+    },
+    {
+      "name": "wind",
+      "label": "Wind (px/s²)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": -600,
+      "max": 600,
+      "step": 10,
+      "description": "Horizontal acceleration. Negative values push left."
+    },
+    {
+      "name": "restitution",
+      "label": "Bounce",
+      "type": "number",
+      "defaultValue": 0.42,
+      "min": 0,
+      "max": 0.95,
+      "step": 0.01,
+      "description": "Energy retained after impact. Slow contacts settle without continual bouncing."
+    },
+    {
+      "name": "friction",
+      "label": "Contact friction",
+      "type": "number",
+      "defaultValue": 0.45,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Resistance to sliding along objects and canvas boundaries."
+    },
+    {
+      "name": "damping",
+      "label": "Air resistance",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 5,
+      "step": 0.05,
+      "description": "Exponential damping of linear and angular velocity."
+    },
+    {
+      "name": "spin",
+      "label": "Initial spin",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 4,
+      "step": 0.05,
+      "description": "Initial spin of new figures, in the screen plane and (in 3D) out of it."
+    }
+  ]
+}

@@ -18,6 +18,7 @@
 !/apps/catalog/public-release/license.txt
 !/apps/catalog/public-release/r/fan-gallery.json
 !/apps/catalog/public-release/r/liquid-glass-orb.json
+!/apps/catalog/public-release/r/shape-physics.json
 !/apps/catalog/public-release/r/topographic-terrain.json
 !/apps/catalog/src/generated/published-routes.ts
 !/apps/catalog/src/main.tsx
@@ -29,9 +30,11 @@
 !/packages/catalog-data/package.json
 !/packages/catalog-data/src/components/fan-gallery.json
 !/packages/catalog-data/src/components/fluid-agent-orb.json
+!/packages/catalog-data/src/components/shape-physics.json
 !/packages/catalog-data/src/components/topographic-terrain.json
 !/packages/catalog-data/src/generated/fan-gallery-source.ts
 !/packages/catalog-data/src/generated/fluid-agent-orb-source.ts
+!/packages/catalog-data/src/generated/shape-physics-source.ts
 !/packages/catalog-data/src/generated/topographic-terrain-source.ts
 !/packages/catalog-data/src/public-catalog.ts
 !/packages/catalog-data/src/public-index.ts
@@ -41,6 +44,7 @@
 !/packages/catalog-ui/package.json
 !/packages/catalog-ui/src/assets/fan-gallery-preview.webp
 !/packages/catalog-ui/src/assets/liquid-glass-orb-preview.webp
+!/packages/catalog-ui/src/assets/shape-physics-preview.webp
 !/packages/catalog-ui/src/assets/topographic-terrain-preview.webp
 !/packages/catalog-ui/src/catalog-component-card.tsx
 !/packages/catalog-ui/src/catalog-sidebar.tsx
@@ -66,6 +70,8 @@
 !/packages/catalog-ui/src/highlighted-code.tsx
 !/packages/catalog-ui/src/popup-motion-settings.ts
 !/packages/catalog-ui/src/public-index.ts
+!/packages/catalog-ui/src/shape-physics-page.css
+!/packages/catalog-ui/src/shape-physics-page.tsx
 !/packages/catalog-ui/src/shared-hover-indicator.ts
 !/packages/catalog-ui/src/topographic-terrain-page.css
 !/packages/catalog-ui/src/topographic-terrain-page.tsx
@@ -105,6 +111,13 @@
 !/packages/components/src/liquid-glass-orb/index.ts
 !/packages/components/src/liquid-glass-orb/liquid-glass-orb.tsx
 !/packages/components/src/public-index.ts
+!/packages/components/src/shape-physics/index.ts
+!/packages/components/src/shape-physics/shape-physics.css
+!/packages/components/src/shape-physics/shape-physics.tsx
+!/packages/components/src/shape-physics/shape-settings.ts
+!/packages/components/src/shape-physics/solid-engine.ts
+!/packages/components/src/shape-physics/solid-shapes.ts
+!/packages/components/src/shape-physics/solid-world.ts
 !/packages/components/src/shared/agent-orb-motion.ts
 !/packages/components/src/shared/viewport-playback.ts
 !/packages/components/src/topographic-flow/topographic-field.ts
@@ -122,6 +135,7 @@
 !/public-files.json
 !/registry/fan-gallery.json
 !/registry/liquid-glass-orb.json
+!/registry/shape-physics.json
 !/registry/topographic-terrain.json
 !/scripts/catalog-manifest.mjs
 !/scripts/check-package-contents.mjs
@@ -130,8 +144,10 @@
 !/scripts/install-release-guards.mjs
 !/scripts/package-fan-gallery.mjs
 !/scripts/package-liquid-glass-orb.mjs
+!/scripts/package-shape-physics.mjs
 !/scripts/package-topographic-terrain.mjs
 !/scripts/registry-license.mjs
+!/scripts/secret-patterns.mjs
 !/scripts/sync-registry.mjs
 !/tests/fluid-agent-orb-patterns.test.ts
 !/tests/fluid-agent-orb-search-curve.test.ts
