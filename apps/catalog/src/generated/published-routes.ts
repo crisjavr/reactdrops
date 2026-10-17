@@ -14,6 +14,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/shape-physics')),
   },
   {
+    path: '/components/background/topographic-flow',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/topographic-flow')),
+  },
+  {
     path: '/components/background/topographic-terrain',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/topographic-terrain')),
   },

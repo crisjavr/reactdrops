@@ -3,3 +3,4 @@ export { fluidAgentOrbSourceFiles, fluidAgentOrbUsage } from './generated/fluid-
 export { topographicTerrainSourceFiles, topographicTerrainUsage } from './generated/topographic-terrain-source';
 export { fanGallerySourceFiles, fanGalleryUsage } from './generated/fan-gallery-source';
 export { shapePhysicsSourceFiles, shapePhysicsUsage } from './generated/shape-physics-source';
+export { topographicFlowSourceFiles, topographicFlowUsage } from './generated/topographic-flow-source';

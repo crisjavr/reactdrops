@@ -1,0 +1,272 @@
+{
+  "slug": "topographic-flow",
+  "name": "Topographic Flow",
+  "family": {
+    "slug": "background",
+    "name": "Background"
+  },
+  "version": "3.1.0",
+  "description": "Smoothly evolving topographic contours and elevation gradients with continuous or broken survey lines.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 18,
+  "publishedAt": "2026-10-17",
+  "styles": [
+    "organic",
+    "minimal"
+  ],
+  "types": [
+    "background"
+  ],
+  "interactions": [
+    "automatic",
+    "hover"
+  ],
+  "technologies": [
+    "react",
+    "canvas",
+    "webgl"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "reduced-motion"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "preset",
+      "label": "Preset",
+      "type": "select",
+      "defaultValue": "paper",
+      "description": "Starting palette and contour configuration. Explicit properties override it.",
+      "options": [
+        "terrain",
+        "survey",
+        "paper",
+        "aurora",
+        "dune",
+        "moss",
+        "ocean",
+        "ember",
+        "relief",
+        "midnight",
+        "blueprint",
+        "neon",
+        "sunset",
+        "sage",
+        "graphite"
+      ]
+    },
+    {
+      "name": "scale",
+      "label": "Terrain scale (px)",
+      "type": "number",
+      "defaultValue": 480,
+      "description": "Larger values create broader hills and valleys. Independent of contour density.",
+      "min": 80,
+      "max": 1200,
+      "step": 10
+    },
+    {
+      "name": "density",
+      "label": "Contour density",
+      "type": "number",
+      "defaultValue": 5,
+      "description": "More elevation levels reveal closely spaced, nested curves.",
+      "min": 2,
+      "max": 20,
+      "step": 1
+    },
+    {
+      "name": "distortion",
+      "label": "Terrain distortion",
+      "type": "number",
+      "defaultValue": 2.4,
+      "description": "Terrain irregularity and the strength of its smooth elevation morph.",
+      "min": 0,
+      "max": 3,
+      "step": 0.05
+    },
+    {
+      "name": "seed",
+      "label": "Terrain seed",
+      "type": "number",
+      "defaultValue": 42,
+      "description": "Reproducible terrain composition. Changing the seed creates a new map.",
+      "min": 0,
+      "max": 1000,
+      "step": 1
+    },
+    {
+      "name": "lineStyle",
+      "label": "Line style",
+      "type": "select",
+      "defaultValue": "solid",
+      "description": "Continuous, all dashed, or a mixture with every fourth elevation level dashed.",
+      "options": [
+        "solid",
+        "mixed",
+        "dashed"
+      ]
+    },
+    {
+      "name": "lineWidth",
+      "label": "Line width (px)",
+      "type": "number",
+      "defaultValue": 1,
+      "description": "Uniform stroke thickness in CSS pixels for all elevation levels.",
+      "min": 0.25,
+      "max": 5,
+      "step": 0.25
+    },
+    {
+      "name": "opacity",
+      "label": "Line opacity",
+      "type": "number",
+      "defaultValue": 1,
+      "description": "Opacity of the contours over the background.",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "dashLength",
+      "label": "Dash length (px)",
+      "type": "number",
+      "defaultValue": 7,
+      "description": "Length of each visible dash along a connected contour.",
+      "min": 1,
+      "max": 50,
+      "step": 1
+    },
+    {
+      "name": "dashGap",
+      "label": "Dash gap (px)",
+      "type": "number",
+      "defaultValue": 8,
+      "description": "Empty space between dashes, measured along the curve.",
+      "min": 1,
+      "max": 50,
+      "step": 1
+    },
+    {
+      "name": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Terrain background. Omitted Paper colors follow the site or system theme: white in light mode, black in dark mode."
+    },
+    {
+      "name": "lineColor",
+      "label": "Contour color",
+      "type": "color",
+      "defaultValue": "#000000",
+      "description": "Color of the regular elevation lines. Omitted Paper colors are black in light mode and white in dark mode."
+    },
+    {
+      "name": "accentColor",
+      "label": "Major contour color",
+      "type": "color",
+      "defaultValue": "#000000",
+      "description": "Color of every fourth elevation level; Survey uses these for broken lines. Omitted Paper colors are black in light mode and white in dark mode."
+    },
+    {
+      "name": "gradientDiffusion",
+      "label": "Gradient diffusion",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Spread the blend between neighboring elevation colors. Higher values soften color bands while keeping the terrain and contours crisp. Relief uses 0.5; Aurora and Ember use 0.35; Ocean uses 0.",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "grain",
+      "label": "Gradient grain",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Fine white photographic grain with soft footprints. Cached at device resolution and fixed in screen coordinates; also textures the contour ink. Gradient presets use 0.55.",
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "name": "speed",
+      "label": "Flow speed",
+      "type": "number",
+      "defaultValue": 1.5,
+      "description": "Rate of the elevation morph. Zero holds the current relief.",
+      "min": 0,
+      "max": 4,
+      "step": 0.1
+    },
+    {
+      "name": "hoverEffect",
+      "label": "Effect",
+      "type": "select",
+      "defaultValue": "rings",
+      "description": "How the pointer reshapes the contours: rings raises a hill with new contours (default), spread pushes them aside, swirl twists them, ripple sends waves out and drag carries them along the pointer's motion. Presets choose one.",
+      "options": [
+        "spread",
+        "swirl",
+        "ripple",
+        "rings",
+        "drag"
+      ]
+    },
+    {
+      "name": "hover",
+      "label": "Strength",
+      "type": "number",
+      "defaultValue": 0.6,
+      "description": "How strongly the pointer reshapes the contours with the chosen effect. Negative values reverse it; zero disables the mouse effect.",
+      "min": -0.9,
+      "max": 0.9,
+      "step": 0.05
+    },
+    {
+      "name": "hoverRadius",
+      "label": "Radius (px)",
+      "type": "number",
+      "defaultValue": 200,
+      "description": "Radius of the push around the pointer, in CSS pixels.",
+      "min": 40,
+      "max": 600,
+      "step": 10
+    },
+    {
+      "name": "hoverFollow",
+      "label": "Follow (s)",
+      "type": "number",
+      "defaultValue": 0.16,
+      "description": "Time for the effect to catch up with the pointer, and to build when it enters. Higher values trail behind it.",
+      "min": 0.02,
+      "max": 1,
+      "step": 0.01
+    },
+    {
+      "name": "hoverFade",
+      "label": "Fade (s)",
+      "type": "number",
+      "defaultValue": 0.8,
+      "description": "Time for the contours to return to normal after the pointer leaves. Entering follows the Follow time.",
+      "min": 0.1,
+      "max": 5,
+      "step": 0.1
+    },
+    {
+      "name": "paused",
+      "label": "Paused",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the current relief without resetting its animation clock."
+    }
+  ]
+}
