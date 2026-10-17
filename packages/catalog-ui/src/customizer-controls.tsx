@@ -1,4 +1,12 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type CSSProperties,
+} from 'react';
 import { DropdownSurface } from './dropdown-surface';
 import './customizer-controls.css';
 import { useSwitchMotion } from './use-switch-motion';
@@ -456,6 +464,9 @@ export function NumberControl({
         inputMode="decimal"
         type="text"
         value={draft}
+        // Only the digits are editable: size the box to the value so the text
+        // cursor does not cover the slider beside it.
+        style={{ '--reveal-number-chars': Math.max(2, draft.length) } as CSSProperties}
         autoComplete="off"
         onChange={(event) => {
           setDraft(event.target.value);

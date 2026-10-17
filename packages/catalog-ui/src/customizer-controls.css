@@ -320,7 +320,10 @@
   z-index: 2;
   top: 3px;
   right: 0;
-  width: 72px;
+  /* As wide as the value (digits plus padding), anchored right. A fixed width
+     made the text cursor appear far from the numbers over the slider. */
+  width: calc(var(--reveal-number-chars, 4) * 1ch + 14px);
+  max-width: 96px;
   height: calc(var(--reveal-control-height) - 10px);
   padding: 0 10px 0 4px;
   font-variant-numeric: tabular-nums;
