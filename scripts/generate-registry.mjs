@@ -8,6 +8,7 @@ import { syncRegistry } from './sync-registry.mjs';
 import { packageLiquidGlassOrb } from './package-liquid-glass-orb.mjs';
 import { packageTopographicTerrain } from './package-topographic-terrain.mjs';
 import { packageFanGallery } from './package-fan-gallery.mjs';
+import { packageShapePhysics } from './package-shape-physics.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -40,13 +41,21 @@ const releases = {
     prefix: 'fanGallery',
     package: () => packageFanGallery(root),
   },
+  'shape-physics': {
+    sourceSlug: 'shape-physics',
+    symbol: 'ShapePhysics',
+    prefix: 'shapePhysics',
+    package: () => packageShapePhysics(root),
+    // The canvas fills its parent, so the example gives it a height.
+    element: '<ShapePhysics height="100svh" />',
+  },
 };
 for (const { metadata, sourceSlug } of entries) {
   const release = releases[metadata.slug];
   assert.ok(release, `No reviewed package builder for ${metadata.slug}`);
   assert.equal(sourceSlug, release.sourceSlug);
   const files = await release.package();
-  const usage = `import { ${release.symbol} } from './components/${metadata.slug}';\n\nexport function Example() {\n  return <${release.symbol} />;\n}`;
+  const usage = `import { ${release.symbol} } from './components/${metadata.slug}';\n\nexport function Example() {\n  return ${release.element ?? `<${release.symbol} />`};\n}`;
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
     name: metadata.slug,

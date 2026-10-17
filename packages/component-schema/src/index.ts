@@ -19,14 +19,10 @@ export type ComponentMetadata = {
     slug: string;
     name: string;
   };
-  version: string;
   description: string;
   access: 'free' | 'pro';
-  status: 'draft' | 'published';
   visibility: 'catalog' | 'hidden';
   featured: boolean;
-  drop: number;
-  publishedAt: string;
   styles: string[];
   types: string[];
   interactions: string[];
@@ -35,4 +31,7 @@ export type ComponentMetadata = {
   compatibility: string[];
   dependencies: string[];
   controls: ComponentControl[];
-};
+} & (
+  | { status: 'draft'; version?: string; drop?: number; publishedAt?: string }
+  | { status: 'published'; version: string; drop: number; publishedAt: string }
+);

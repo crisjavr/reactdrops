@@ -10,6 +10,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/fluid-agent-orb')),
   },
   {
+    path: '/components/background/shape-physics',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/shape-physics')),
+  },
+  {
     path: '/components/background/topographic-terrain',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/topographic-terrain')),
   },

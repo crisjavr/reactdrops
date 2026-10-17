@@ -14,7 +14,7 @@ import {
   type ComponentSourceFile,
 } from './component-detail-layout';
 import { ControlField } from './controls-panel';
-import { NumberControl, SelectControl } from './customizer-controls';
+import { NumberControl, SelectControl, SwitchControl } from './customizer-controls';
 import { ColorControl } from './color-control';
 import './catalog.css';
 import './topographic-terrain-page.css';
@@ -42,6 +42,8 @@ export function topographicTerrainMeta() {
 
 export default function TopographicTerrainPage() {
   const [values, setValues] = useState<Values>(defaults);
+  // Strength restored when the mouse effect is switched back on.
+  const hoverMemory = useRef(defaults.hover || 0.5);
   const ref = useRef<TopographicTerrainHandle>(null);
   const followTheme = useRef(true);
   const followShadowTheme = useRef(true);
@@ -334,6 +336,61 @@ export default function TopographicTerrainPage() {
               <h3>Motion</h3>
             </legend>
             <div className="reveal-fields">{numbers(['speed'])}</div>
+          </fieldset>
+          <fieldset className="reveal-control-group">
+            <legend className="reveal-group-heading">
+              <h3>Mouse</h3>
+            </legend>
+            <div className="reveal-fields">
+              <ControlField
+                label="Mouse effect"
+                description="Spread the terrain horizontally around the pointer, on its own ground plane."
+              >
+                <SwitchControl
+                  label="Mouse effect"
+                  checked={values.hover !== 0}
+                  onChange={(on) => {
+                    if (!on) hoverMemory.current = values.hover;
+                    set('hover', on ? hoverMemory.current : 0);
+                  }}
+                />
+              </ControlField>
+              {values.hover !== 0 && (
+                <>
+                  <ControlField
+                    label="Direction"
+                    description="Spread the layers away from the pointer or draw them in."
+                  >
+                    <SelectControl
+                      label="Direction"
+                      value={values.hover > 0 ? 'raise' : 'sink'}
+                      options={[
+                        { value: 'raise', label: 'Expand · out' },
+                        { value: 'sink', label: 'Contract · in' },
+                      ]}
+                      onChange={(direction) =>
+                        set('hover', Math.abs(values.hover) * (direction === 'sink' ? -1 : 1))
+                      }
+                    />
+                  </ControlField>
+                  <ControlField
+                    className="is-number"
+                    label="Strength"
+                    description="How far the layers spread around the pointer."
+                  >
+                    <NumberControl
+                      label="Strength"
+                      value={Math.abs(values.hover)}
+                      min={0.05}
+                      max={0.9}
+                      step={0.05}
+                      onChange={(height) => set('hover', height * Math.sign(values.hover))}
+                    />
+                  </ControlField>
+                  {numbers(['hoverRadius', 'hoverFollow', 'hoverFade'])}
+                </>
+              )}
+            </div>
           </fieldset>
         </>
       }

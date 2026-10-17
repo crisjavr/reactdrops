@@ -8,6 +8,7 @@
     "./sources/fluid-agent-orb": "./src/generated/fluid-agent-orb-source.ts",
     "./sources/topographic-terrain": "./src/generated/topographic-terrain-source.ts",
     "./sources/fan-gallery": "./src/generated/fan-gallery-source.ts",
+    "./sources/shape-physics": "./src/generated/shape-physics-source.ts",
     "./publication": "./src/publication.mjs"
   },
   "dependencies": {
@@ -17,9 +18,11 @@
     "LICENSE",
     "src/components/fan-gallery.json",
     "src/components/fluid-agent-orb.json",
+    "src/components/shape-physics.json",
     "src/components/topographic-terrain.json",
     "src/generated/fan-gallery-source.ts",
     "src/generated/fluid-agent-orb-source.ts",
+    "src/generated/shape-physics-source.ts",
     "src/generated/topographic-terrain-source.ts",
     "src/public-catalog.ts",
     "src/public-index.ts",

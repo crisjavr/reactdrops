@@ -21,6 +21,18 @@ export type TopographicSurfaceFrame = {
   shadow: readonly number[] | null;
   background: readonly number[];
   gradient: { count: number; data: Float32Array };
+  /** Mouse effect strength (the `hover` prop); 0 disables it. */
+  pointerLift: number;
+  /**
+   * The eased pointer in canvas CSS pixels from the top-left corner, packed as
+   * (x, y, presence, unused); `pointerStampCount` is 1 while it is present.
+   */
+  pointerStamps: Float32Array;
+  pointerStampCount: number;
+  /** Mouse effect radius in CSS pixels. */
+  pointerRadius: number;
+  /** Current morphed altitude at a ground point (CSS pixels, y up from the centre). */
+  altitudeAt: (x: number, y: number) => number;
 };
 /** Optional depth renderer supplied only by the standalone terrain component. */
 export type TopographicSurfaceFactory = (gl: WebGL2RenderingContext) => {
@@ -29,6 +41,27 @@ export type TopographicSurfaceFactory = (gl: WebGL2RenderingContext) => {
   draw: (frame: TopographicSurfaceFrame) => void;
   destroy: () => void;
 };
+
+/**
+ * GLSL: spreads the terrain away from the pointer, like a finger pressed
+ * into the map (negative strength draws it in). Heights never change, only
+ * where the terrain is sampled; `warpJacobian` holds the exact derivative
+ * for lit surfaces. Needs uStamps (x, y, presence), uStampCount and
+ * uPointerRadius. The strength stays under 1, so the warp never folds.
+ */
+export const pointerWarpShader = `mat2 warpJacobian;
+vec2 pointerWarp(vec2 point, float strength) {
+  warpJacobian=mat2(1.);
+  if(uStampCount==0||strength==0.) return point;
+  vec2 toPointer=point-uStamps[0].xy;
+  float spread=uPointerRadius*uPointerRadius, distance2=dot(toPointer,toPointer);
+  // Beyond three radii the pointer moves the terrain by under 1e-4.
+  if(distance2>9.*spread) return point;
+  float weight=strength*uStamps[0].z*exp(-distance2/spread);
+  warpJacobian=mat2(1.-weight)+outerProduct(toPointer,toPointer)*(2.*weight/spread);
+  return point-weight*toPointer;
+}
+`;
 
 const vertex = `#version 300 es
 layout(location=0) in vec2 aPosition;
@@ -44,6 +77,11 @@ uniform float uGrainAmount;
 uniform float uGradientDiffusion;
 uniform float uMargin, uRatio, uCosine, uSine, uDensity, uWidth, uOpacity;
 uniform float uDashLength, uDashGap;
+uniform vec4 uStamps[1];
+uniform highp int uStampCount;
+uniform float uPointerRadius, uPointerLift, uHoverTime;
+uniform highp int uHoverEffect;
+uniform vec2 uPointerDrag;
 uniform int uStyle, uLevelOffset, uLayers[41], uGradientEnabled, uGradientStops;
 uniform vec3 uLineColor, uAccentColor, uGradientColors[8];
 out vec4 color;
@@ -103,9 +141,38 @@ vec3 elevationColor(float height) {
 void main() {
   // Canvas coordinates are top-down; the cached terrain covers overscan too.
   vec2 pixels=vec2(gl_FragCoord.x/uRatio, (uExtent.y-2.*uMargin)-gl_FragCoord.y/uRatio);
+  // The pointer reshapes the contours; heights and colors follow. Every
+  // effect fades with distance and none can fold the terrain over itself.
+  float raise=0.;
+  if(uStampCount>0) {
+    vec2 toPointer=pixels-uStamps[0].xy;
+    float spread=uPointerRadius*uPointerRadius, distance2=dot(toPointer,toPointer);
+    if(distance2<9.*spread) {
+      float weight=uStamps[0].z*exp(-distance2/spread);
+      if(uHoverEffect==1) {
+        // Swirl: rotate about the pointer. Distances are kept, so no folds.
+        float angle=uPointerLift*2.*weight, c=cos(angle), s=sin(angle);
+        pixels=uStamps[0].xy+mat2(c,s,-s,c)*toPointer;
+      } else if(uHoverEffect==2) {
+        // Ripple: waves travel outward; small amplitude per wavelength.
+        float distance=sqrt(distance2);
+        float wave=sin(6.2831853*distance/(uPointerRadius*.6)-uHoverTime*4.);
+        pixels-=uPointerLift*.09*uPointerRadius*wave*weight*toPointer/max(distance,.001);
+      } else if(uHoverEffect==3) {
+        // Rings: a hill under the pointer adds concentric contours.
+        raise=uPointerLift*weight;
+      } else if(uHoverEffect==4) {
+        // Drag: contours follow the pointer's motion, then settle back.
+        pixels-=weight*uPointerDrag;
+      } else {
+        // Spread: contours move away from the pointer.
+        pixels-=uPointerLift*weight*toPointer;
+      }
+    }
+  }
   vec2 uv=(pixels+uMargin)/uExtent;
   vec3 h=surface(uv);
-  float altitude=h.x+h.y*uCosine+h.z*uSine;
+  float altitude=h.x+h.y*uCosine+h.z*uSine+raise;
   float elevation=(altitude-.037)*uDensity;
   float level=floor(elevation+.5);
   vec2 slope=vec2(dFdx(elevation),dFdy(elevation));
@@ -306,9 +373,122 @@ export function createTopographicSurface(
   let gridColumns = 1,
     gridRows = 1;
   let heightRevision = 0;
+  // CPU copy of the height modes (3D only), to place the pointer on the terrain.
+  let heightData: Float32Array | null = null,
+    frameCosine = 0,
+    frameSine = 0;
+  const altitudeAt = (x: number, y: number) => {
+    if (!heightData || gridColumns < 2 || gridRows < 2) return 0;
+    const gx = Math.min(
+        gridColumns - 1,
+        Math.max(0, ((x + width / 2 + margin) / spanX) * (gridColumns - 1)),
+      ),
+      gy = Math.min(
+        gridRows - 1,
+        Math.max(0, ((height / 2 - y + margin) / spanY) * (gridRows - 1)),
+      ),
+      x0 = Math.min(gridColumns - 2, Math.floor(gx)),
+      y0 = Math.min(gridRows - 2, Math.floor(gy)),
+      fx = gx - x0,
+      fy = gy - y0;
+    const at = (column: number, row: number) => {
+      const index = (row * gridColumns + column) * 4;
+      return (
+        heightData![index] +
+        heightData![index + 1] * frameCosine +
+        heightData![index + 2] * frameSine
+      );
+    };
+    const top = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * fx,
+      bottom = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * fx;
+    return top + (bottom - top) * fy;
+  };
   let shaders: WebGLShader[] = [];
   let locations: Record<string, WebGLUniformLocation | null> = {};
   const media = matchMedia('(prefers-reduced-motion: reduce)');
+  // Pointer hover: the hill eases toward the pointer and
+  // fades in and out, independent of the flow's own clock and pause state.
+  let pointerX = 0,
+    pointerY = 0,
+    targetX = 0,
+    targetY = 0,
+    presence = 0,
+    velocityX = 0,
+    velocityY = 0,
+    presenceVelocity = 0,
+    inside = false,
+    hoverLast = 0,
+    hoverTime = 0;
+  const stamps = new Float32Array(4);
+  const fadeSeconds = () => finite(config.hoverFade ?? 0.8, 0.05, 5, 0.8);
+  /** Packs the eased pointer; returns 1 while it is present, else 0. */
+  const packStamps = () => {
+    if (hoverAmount() === 0 || presence <= 0.003) return 0;
+    stamps[0] = pointerX;
+    stamps[1] = pointerY;
+    stamps[2] = presence;
+    stamps[3] = 0;
+    return 1;
+  };
+  // Push strength: positive pushes the terrain away, negative pulls it in.
+  // Under 1 so the warp can never fold the terrain over itself.
+  const hoverAmount = () => finite(config.hover ?? 0, -1.5, 0.9, 0);
+  const hoverRadius = () => finite(config.hoverRadius ?? 200, 20, 1200, 200);
+  const hoverEffects = ['spread', 'swirl', 'ripple', 'rings', 'drag'] as const;
+  const hoverEffect = () =>
+    hoverEffects.includes(config.hoverEffect as (typeof hoverEffects)[number])
+      ? (config.hoverEffect as (typeof hoverEffects)[number])
+      : 'rings';
+  const following = () =>
+    hoverAmount() !== 0 &&
+    !destroyed &&
+    !lost &&
+    visible &&
+    !document.hidden &&
+    width > 0 &&
+    height > 0 &&
+    !media.matches &&
+    (Math.abs(presence - (inside ? 1 : 0)) + Math.abs(presenceVelocity) > 0.002 ||
+      Math.abs(targetX - pointerX) + Math.abs(targetY - pointerY) > 0.2 ||
+      Math.abs(velocityX) + Math.abs(velocityY) > 2 ||
+      // Ripples keep travelling while the pointer is present.
+      (!threeDimensional && hoverEffect() === 'ripple' && presence > 0.003));
+  // Exact critically damped spring step: eases in and out without overshoot
+  // and stays stable at any frame rate. Returns [position, velocity].
+  const spring = (
+    position: number,
+    velocity: number,
+    target: number,
+    time: number,
+    delta: number,
+  ) => {
+    const omega = 2 / time,
+      offset = position - target,
+      decay = Math.exp(-omega * delta),
+      carried = (velocity + omega * offset) * delta;
+    return [target + (offset + carried) * decay, (velocity - omega * carried) * decay] as const;
+  };
+  const follow = (now: number) => {
+    const delta = hoverLast ? Math.min(0.1, Math.max(0, (now - hoverLast) / 1000)) : 0;
+    hoverLast = now;
+    if (!delta) return;
+    hoverTime += delta;
+    const glide = finite(config.hoverFollow ?? 0.16, 0.01, 2, 0.16),
+      // Fade is the exit only: the time to settle back to the untouched
+      // terrain after leaving (the spring is ~96% there after 2.5 time
+      // constants). Entering builds the effect at the follow pace.
+      fade = fadeSeconds() / 2.5;
+    [pointerX, velocityX] = spring(pointerX, velocityX, targetX, glide, delta);
+    [pointerY, velocityY] = spring(pointerY, velocityY, targetY, glide, delta);
+    [presence, presenceVelocity] = spring(
+      presence,
+      presenceVelocity,
+      inside ? 1 : 0,
+      inside ? glide : fade,
+      delta,
+    );
+    presence = Math.min(1, Math.max(0, presence));
+  };
   // Literal palette values cannot change with theme/inherited CSS. Reuse them
   // across terrain camera/material edits; dynamic CSS colors still resolve.
   const literalColor = (value: string | undefined) =>
@@ -432,6 +612,13 @@ export function createTopographicSurface(
         'uGradientStops',
         'uGradientDiffusion',
         'uGradientColors[0]',
+        'uStamps[0]',
+        'uStampCount',
+        'uPointerRadius',
+        'uPointerLift',
+        'uHoverTime',
+        'uHoverEffect',
+        'uPointerDrag',
       ])
         locations[name] = gl.getUniformLocation(program, name);
       gl.uniform1i(locations.uHeight, 0);
@@ -553,6 +740,7 @@ export function createTopographicSurface(
     const internal =
       threeDimensional || gl.getExtension('OES_texture_float_linear') ? gl.RGBA32F : gl.RGBA16F;
     gl.texImage2D(gl.TEXTURE_2D, 0, internal, columns, rows, 0, gl.RGBA, gl.FLOAT, data);
+    heightData = threeDimensional ? data : null;
     heightRevision++;
     if (!threeDimensional) {
       gl.uniform2f(locations.uGrid, columns, rows);
@@ -598,14 +786,19 @@ export function createTopographicSurface(
         shadow,
         background,
         gradient: gradientColors,
+        pointerLift: 0,
+        pointerStamps: stamps,
+        pointerStampCount: 0,
+        pointerRadius: 200,
+        altitudeAt,
       };
       // Reuse the private synchronous draw descriptor during animation.
       // Height-cache dimensions only change when rebuild updates the tuples.
       terrainFrame.width = width;
       terrainFrame.height = height;
       terrainFrame.ratio = ratio;
-      terrainFrame.cosine = Math.cos(phase) - 1;
-      terrainFrame.sine = Math.sin(phase);
+      terrainFrame.cosine = frameCosine = Math.cos(phase) - 1;
+      terrainFrame.sine = frameSine = Math.sin(phase);
       terrainFrame.elapsedSeconds = elapsedSeconds;
       terrainFrame.heightTexture = heightTexture;
       terrainFrame.heightRevision = heightRevision;
@@ -616,6 +809,9 @@ export function createTopographicSurface(
       terrainFrame.shadow = shadow;
       terrainFrame.background = background;
       terrainFrame.gradient = gradientColors;
+      terrainFrame.pointerLift = hoverAmount();
+      terrainFrame.pointerStampCount = packStamps();
+      terrainFrame.pointerRadius = hoverRadius();
       terraces.draw(terrainFrame);
       return;
     }
@@ -631,6 +827,22 @@ export function createTopographicSurface(
     gl.uniform1f(locations.uOpacity, finite(config.opacity, 0, 1, 1));
     gl.uniform1f(locations.uDashLength, finite(config.dashLength, 1, 50, 7));
     gl.uniform1f(locations.uDashGap, finite(config.dashGap, 1, 50, 8));
+    const stampCount = packStamps();
+    gl.uniform1i(locations.uStampCount, stampCount);
+    if (stampCount) {
+      gl.uniform4fv(locations['uStamps[0]'], stamps, 0, stampCount * 4);
+      gl.uniform1f(locations.uPointerRadius, hoverRadius());
+      gl.uniform1f(locations.uPointerLift, hoverAmount());
+      gl.uniform1i(locations.uHoverEffect, hoverEffects.indexOf(hoverEffect()));
+      gl.uniform1f(locations.uHoverTime, hoverTime);
+      // Drag offset from the eased pointer velocity, capped below the
+      // fold limit (about 1.16 radii for a Gaussian).
+      const radius = hoverRadius(),
+        dragX = velocityX * hoverAmount() * 0.12,
+        dragY = velocityY * hoverAmount() * 0.12,
+        dragScale = Math.min(1, (radius * 0.8) / Math.max(1e-6, Math.hypot(dragX, dragY)));
+      gl.uniform2f(locations.uPointerDrag, dragX * dragScale, dragY * dragScale);
+    }
     gl.uniform1i(
       locations.uStyle,
       config.lineStyle === 'dashed' ? 2 : config.lineStyle === 'mixed' ? 1 : 0,
@@ -656,21 +868,28 @@ export function createTopographicSurface(
     height > 0;
   const tick = (now: number) => {
     frame = 0;
-    if (!animate()) {
+    const playing = animate(),
+      hovering = following();
+    if (!playing && !hovering) {
       last = 0;
+      hoverLast = 0;
       return;
     }
-    if (last) {
-      const delta = Math.min(0.05, Math.max(0, (now - last) / 1000));
-      time += delta * finite(config.speed, 0, 4, 1.5);
-      elapsedSeconds += delta;
-    }
-    last = now;
+    if (playing) {
+      if (last) {
+        const delta = Math.min(0.05, Math.max(0, (now - last) / 1000));
+        time += delta * finite(config.speed, 0, 4, 1.5);
+        elapsedSeconds += delta;
+      }
+      last = now;
+    } else last = 0;
+    if (hovering) follow(now);
+    else hoverLast = 0;
     draw();
     frame = requestAnimationFrame(tick);
   };
   const sync = () => {
-    if (animate()) {
+    if (animate() || following()) {
       if (!frame) {
         last = 0;
         frame = requestAnimationFrame(tick);
@@ -679,7 +898,39 @@ export function createTopographicSurface(
       cancelAnimationFrame(frame);
       frame = 0;
       last = 0;
+      hoverLast = 0;
     }
+  };
+  const onPointer = (event: PointerEvent) => {
+    const box = host.getBoundingClientRect();
+    targetX = event.clientX - box.left;
+    targetY = event.clientY - box.top;
+    // Entering after the hill has faded starts it at the pointer, not
+    // sweeping in from where the pointer last left.
+    if (!inside && presence < 0.05) {
+      pointerX = targetX;
+      pointerY = targetY;
+      velocityX = velocityY = 0;
+    }
+    inside = true;
+    if (media.matches) {
+      pointerX = targetX;
+      pointerY = targetY;
+      velocityX = velocityY = 0;
+      presence = 1;
+      presenceVelocity = 0;
+      if (!lost) draw();
+    }
+    sync();
+  };
+  const onLeave = () => {
+    inside = false;
+    if (media.matches) {
+      presence = 0;
+      presenceVelocity = 0;
+      if (!lost) draw();
+    }
+    sync();
   };
   const resize = () => {
     const changed = width !== host.clientWidth || height !== host.clientHeight,
@@ -763,6 +1014,10 @@ export function createTopographicSurface(
   window.addEventListener('resize', resize);
   canvas.addEventListener('webglcontextlost', onLost);
   canvas.addEventListener('webglcontextrestored', onRestored);
+  host.addEventListener('pointermove', onPointer);
+  host.addEventListener('pointerdown', onPointer);
+  host.addEventListener('pointerleave', onLeave);
+  host.addEventListener('pointercancel', onLeave);
   resize();
   return {
     update(next: TopographicConfig) {
@@ -837,6 +1092,10 @@ export function createTopographicSurface(
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('webglcontextlost', onLost);
       canvas.removeEventListener('webglcontextrestored', onRestored);
+      host.removeEventListener('pointermove', onPointer);
+      host.removeEventListener('pointerdown', onPointer);
+      host.removeEventListener('pointerleave', onLeave);
+      host.removeEventListener('pointercancel', onLeave);
       release();
       curves = [];
       canvas.width = canvas.height = 1;

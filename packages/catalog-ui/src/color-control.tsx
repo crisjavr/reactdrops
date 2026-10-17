@@ -99,10 +99,12 @@ export function ColorControl({
   label,
   value,
   onChange,
+  allowAuto = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  allowAuto?: boolean;
 }) {
   const id = useId();
   const anchor = useRef<HTMLDivElement>(null),
@@ -134,11 +136,14 @@ export function ColorControl({
   useLayoutEffect(() => {
     if (!open || !anchor.current) return;
     if (value !== emitted.current) {
-      const resolved = resolve(value, anchor.current);
+      const resolved = resolve(
+        allowAuto && value.trim().toLowerCase() === 'auto' ? '#808080' : value,
+        anchor.current,
+      );
       if (resolved) setColor(resolved);
     }
     emitted.current = null;
-  }, [open, value]);
+  }, [open, value, allowAuto]);
   useLayoutEffect(() => {
     if (!open || !present) return;
     const place = () => {
@@ -214,7 +219,8 @@ export function ColorControl({
   };
   const edit = (next: string) => {
     setDraft(next);
-    const valid = CSS.supports('color', next);
+    const valid =
+      (allowAuto && next.trim().toLowerCase() === 'auto') || CSS.supports('color', next);
     setInvalid(!valid);
     if (valid) {
       emitted.current = null;
@@ -259,7 +265,16 @@ export function ColorControl({
         aria-controls={open ? id : undefined}
         onClick={toggle}
       >
-        <span style={{ background: value === 'inherit' ? 'currentColor' : value }} />
+        <span
+          style={{
+            background:
+              allowAuto && value.trim().toLowerCase() === 'auto'
+                ? 'linear-gradient(135deg, #242424, #c9c9cc)'
+                : value === 'inherit'
+                  ? 'currentColor'
+                  : value,
+          }}
+        />
       </button>
       {present &&
         createPortal(
@@ -399,17 +414,19 @@ export function ColorControl({
                     />
                   ))}
                 </div>
-                <div className="reveal-color-keywords">
-                  {['inherit', 'currentColor', 'transparent'].map((keyword) => (
-                    <button
-                      key={keyword}
-                      type="button"
-                      aria-pressed={value === keyword}
-                      onClick={() => edit(keyword)}
-                    >
-                      {keyword}
-                    </button>
-                  ))}
+                <div className={`reveal-color-keywords${allowAuto ? ' has-auto' : ''}`}>
+                  {[...(allowAuto ? ['auto'] : []), 'inherit', 'currentColor', 'transparent'].map(
+                    (keyword) => (
+                      <button
+                        key={keyword}
+                        type="button"
+                        aria-pressed={value === keyword}
+                        onClick={() => edit(keyword)}
+                      >
+                        {keyword}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </div>

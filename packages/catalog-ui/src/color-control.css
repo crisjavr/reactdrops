@@ -183,6 +183,10 @@
   font-size: 10px;
   cursor: pointer;
 }
+.reveal-color-keywords.has-auto {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .reveal-color-popup button[aria-pressed='true'] {
   outline: 1px solid var(--theme-ink);
   outline-offset: 2px;
