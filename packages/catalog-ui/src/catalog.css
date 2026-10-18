@@ -634,7 +634,8 @@
   box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
   opacity: 0;
   pointer-events: none;
-  will-change: transform, width, height;
+  /* No will-change: inside this horizontally scrolling bar, iOS Safari paints
+     a promoted indicator layer above the z-index 1 labels, hiding "All". */
 }
 
 .components-filter-button {
