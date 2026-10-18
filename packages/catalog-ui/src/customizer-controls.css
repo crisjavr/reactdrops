@@ -361,6 +361,8 @@
   margin-top: 0;
   border: 0;
   background: transparent;
+  /* iOS Safari shades the thumb by default; the marker is painted by ::before. */
+  box-shadow: none;
 }
 .reveal-number-slider::-moz-range-thumb {
   width: 3px;

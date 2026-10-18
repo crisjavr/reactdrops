@@ -1616,7 +1616,10 @@
   top: 0.9rem;
   right: 0.9rem;
   display: flex;
-  align-items: center;
+  /* Keep the left inset equal to the right one, and pin Replay and full
+     screen to the first row when page actions wrap on narrow screens. */
+  max-width: calc(100% - 1.8rem);
+  align-items: flex-start;
   gap: 0.4rem;
 }
 
@@ -2293,13 +2296,14 @@
   }
 
   .component-view-toolbar {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
     gap: 1rem;
   }
 
-  .component-header-actions {
-    justify-content: flex-start;
+  /* Copy prompt stays left; favorite and the viewport switch move right. */
+  .component-header-actions .component-favorite-button {
+    margin-left: auto;
   }
 
   .component-controls-section .component-controls {
