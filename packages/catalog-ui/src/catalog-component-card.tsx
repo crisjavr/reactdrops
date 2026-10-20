@@ -6,6 +6,7 @@ import topographicTerrainPreview from './assets/topographic-terrain-preview.webp
 import fanGalleryPreview from './assets/fan-gallery-preview.webp';
 import shapePhysicsPreview from './assets/shape-physics-preview.webp';
 import topographicFlowPreview from './assets/topographic-flow-preview.webp';
+import chromaticButtonPreview from './assets/chromatic-button-preview.webp';
 
 export function CatalogComponentCard({ component }: { component: ComponentMetadata }) {
   const isOrb = component.slug === 'liquid-glass-orb';
@@ -19,7 +20,9 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
           ? shapePhysicsPreview
           : component.slug === 'topographic-flow'
             ? topographicFlowPreview
-            : null;
+            : component.slug === 'chromatic-button'
+              ? chromaticButtonPreview
+              : null;
   return (
     <Link
       className="components-catalog-card is-static-preview"

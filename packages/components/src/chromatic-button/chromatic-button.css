@@ -1,0 +1,135 @@
+.chromatic-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-width: 165.25px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: calc(
+    var(--chromatic-button-short-side, 100px) * var(--chromatic-button-radius, 0.5)
+  );
+  background: radial-gradient(
+    ellipse at var(--chromatic-fallback-focus, 35% 0%),
+    color-mix(
+      in srgb,
+      var(--chromatic-button-color, #b126ff) var(--chromatic-fallback-light, 70%),
+      #000
+    ),
+    color-mix(in srgb, var(--chromatic-button-color, #b126ff) 6%, #000) 70%
+  );
+  box-shadow:
+    inset 0 -2px 7px color-mix(in srgb, var(--chromatic-button-color, #b126ff) 40%, transparent),
+    inset 2px 0 6px color-mix(in srgb, var(--chromatic-button-color, #b126ff) 20%, transparent);
+  color: #fff;
+  font-family: 'Inter Variable', Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: -0.13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 220ms ease,
+    background-position 220ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.chromatic-button .chromatic-surface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.chromatic-button:has([data-renderer='webgl']) {
+  background: transparent;
+  box-shadow: none;
+}
+.chromatic-button-content {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: none;
+}
+.chromatic-button[data-entrance='blur-up'] {
+  animation: chromatic-button-blur-up calc(700ms / var(--chromatic-entrance-speed, 1))
+    cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.chromatic-button[data-entrance='zoom'] {
+  animation: chromatic-button-zoom calc(600ms / var(--chromatic-entrance-speed, 1))
+    cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+@keyframes chromatic-button-blur-up {
+  from {
+    opacity: 0;
+    filter: blur(var(--chromatic-entrance-blur, 10px));
+    translate: 0 var(--chromatic-entrance-distance, 20px);
+  }
+  to {
+    opacity: var(--chromatic-button-opacity, 1);
+    filter: blur(0);
+    translate: 0 0;
+  }
+}
+@keyframes chromatic-button-zoom {
+  from {
+    opacity: 0;
+    scale: var(--chromatic-entrance-scale, 0.65);
+  }
+  to {
+    opacity: var(--chromatic-button-opacity, 1);
+    scale: 1;
+  }
+}
+.chromatic-button:not(:has([data-renderer='webgl'])):not([data-hover-effect='none']):not(
+    :disabled
+  ):is(:hover, :focus-visible) {
+  --chromatic-fallback-light: 85%;
+}
+.chromatic-button[data-hover-effect='flow']:not(:has([data-renderer='webgl'])):not(:disabled):is(
+    :hover,
+    :focus-visible
+  ) {
+  --chromatic-fallback-focus: 65% 70%;
+}
+.chromatic-button:focus-visible {
+  outline: 2px solid #d8b8ff;
+  outline-offset: 5px;
+}
+.chromatic-button:not([data-hover-effect='brighten']) {
+  transition: background-position 220ms ease;
+}
+.chromatic-button[data-hover-effect='spotlight']:not(:disabled) {
+  transform: var(--chromatic-pointer-transform, none);
+}
+.chromatic-button[data-hover-effect='brighten']:not(:disabled):focus-visible {
+  transform: translateY(-2px);
+}
+@media (hover: hover) {
+  .chromatic-button[data-hover-effect='brighten']:not(:disabled):hover {
+    transform: translateY(-2px);
+  }
+}
+.chromatic-button:disabled {
+  --chromatic-button-opacity: 0.45;
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chromatic-button {
+    transition: none;
+  }
+  .chromatic-button[data-entrance] {
+    animation: none;
+  }
+  .chromatic-button[data-hover-effect='brighten']:not(:disabled):is(:hover, :focus-visible) {
+    transform: none;
+  }
+  .chromatic-button[data-hover-effect='spotlight']:not(:disabled) {
+    transform: none;
+  }
+}

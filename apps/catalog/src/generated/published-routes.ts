@@ -2,6 +2,10 @@
 import { lazy } from 'react';
 export const publishedCatalogRoutes = [
   {
+    path: '/components/button/chromatic-button',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/chromatic-button')),
+  },
+  {
     path: '/components/gallery/fan-gallery',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/fan-gallery')),
   },

@@ -12,7 +12,8 @@
     "./topographic-terrain": "./src/topographic-terrain/index.ts",
     "./fan-gallery": "./src/fan-gallery/index.ts",
     "./shape-physics": "./src/shape-physics/index.ts",
-    "./topographic-flow": "./src/topographic-flow/index.ts"
+    "./topographic-flow": "./src/topographic-flow/index.ts",
+    "./chromatic-button": "./src/chromatic-button/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -29,6 +30,12 @@
   },
   "files": [
     "LICENSE",
+    "src/chromatic-button/chromatic-button.css",
+    "src/chromatic-button/chromatic-button.tsx",
+    "src/chromatic-button/index.ts",
+    "src/chromatic-surface/chromatic-field.ts",
+    "src/chromatic-surface/chromatic-shaders.ts",
+    "src/chromatic-surface/chromatic-surface.tsx",
     "src/fan-gallery/fan-gallery.css",
     "src/fan-gallery/fan-gallery.tsx",
     "src/fan-gallery/fan-layout.ts",

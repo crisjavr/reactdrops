@@ -13,7 +13,8 @@
     "./pages/topographic-terrain": "./src/topographic-terrain-page.tsx",
     "./pages/fan-gallery": "./src/fan-gallery-page.tsx",
     "./pages/shape-physics": "./src/shape-physics-page.tsx",
-    "./pages/topographic-flow": "./src/topographic-flow-page.tsx"
+    "./pages/topographic-flow": "./src/topographic-flow-page.tsx",
+    "./pages/chromatic-button": "./src/chromatic-button-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -30,6 +31,7 @@
   },
   "files": [
     "LICENSE",
+    "src/assets/chromatic-button-preview.webp",
     "src/assets/fan-gallery-preview.webp",
     "src/assets/liquid-glass-orb-preview.webp",
     "src/assets/shape-physics-preview.webp",
@@ -38,6 +40,9 @@
     "src/catalog-component-card.tsx",
     "src/catalog-sidebar.tsx",
     "src/catalog.css",
+    "src/chromatic-button-page.tsx",
+    "src/chromatic-material-page.css",
+    "src/chromatic-material-page.tsx",
     "src/color-control.css",
     "src/color-control.tsx",
     "src/component-detail-layout.tsx",

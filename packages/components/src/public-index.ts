@@ -3,3 +3,4 @@ export * from './topographic-terrain';
 export * from './fan-gallery';
 export * from './shape-physics';
 export * from './topographic-flow';
+export * from './chromatic-button';

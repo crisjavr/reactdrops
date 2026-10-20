@@ -1,6 +1,6 @@
 # ReactDrops — Creative React components
 
-Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery and Shape Physics, with source, catalog previews, customizers and a shadcn registry.
+Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics and Chromatic Button, with source, catalog previews, customizers and a shadcn registry.
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
@@ -12,6 +12,7 @@ npx shadcn@latest add https://reactdrops.dev/r/topographic-terrain.json
 npx shadcn@latest add https://reactdrops.dev/r/fan-gallery.json
 npx shadcn@latest add https://reactdrops.dev/r/shape-physics.json
 npx shadcn@latest add https://reactdrops.dev/r/topographic-flow.json
+npx shadcn@latest add https://reactdrops.dev/r/chromatic-button.json
 ```
 
 The installer adds `liquid-glass-orb.tsx`, `liquid-glass-orb.css` and GSAP.
@@ -75,6 +76,20 @@ import { TopographicFlow } from './components/topographic-flow';
 
 export function Example() {
   return <TopographicFlow preset="survey" height="100svh" />;
+}
+```
+
+Chromatic Button is a native button with a living WebGL chromatic material:
+a procedural color field projected onto a sphere, with fixed, two-color,
+three-color or full-spectrum palettes, hover effects and an entrance. Its
+installer adds five source/style files and requires no runtime dependencies
+beyond React.
+
+```tsx
+import { ChromaticButton } from './components/chromatic-button';
+
+export function Example() {
+  return <ChromaticButton onClick={() => console.log('clicked')}>Get started</ChromaticButton>;
 }
 ```
 

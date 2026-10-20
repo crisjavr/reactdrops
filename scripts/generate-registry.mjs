@@ -10,6 +10,7 @@ import { packageTopographicTerrain } from './package-topographic-terrain.mjs';
 import { packageFanGallery } from './package-fan-gallery.mjs';
 import { packageShapePhysics } from './package-shape-physics.mjs';
 import { packageTopographicFlow } from './package-topographic-flow.mjs';
+import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -57,6 +58,13 @@ const releases = {
     package: () => packageTopographicFlow(root),
     // The canvas fills its parent, so the example gives it a height.
     element: '<TopographicFlow height="100svh" />',
+  },
+  'chromatic-button': {
+    sourceSlug: 'chromatic-button',
+    symbol: 'ChromaticButton',
+    prefix: 'chromaticButton',
+    package: () => packageChromaticButton(root),
+    element: '<ChromaticButton>Get started</ChromaticButton>',
   },
 };
 for (const { metadata, sourceSlug } of entries) {

@@ -1,0 +1,232 @@
+{
+  "slug": "chromatic-button",
+  "name": "Chromatic Button",
+  "family": {
+    "slug": "button",
+    "name": "Button"
+  },
+  "version": "0.1.0",
+  "description": "A tactile button with a soft rectangular silhouette, flowing gradients and spherically projected chromatic reflections.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 27,
+  "publishedAt": "2026-10-20",
+  "styles": [
+    "gradient",
+    "glass",
+    "chromatic"
+  ],
+  "types": [
+    "button"
+  ],
+  "interactions": [
+    "automatic",
+    "hover",
+    "focus"
+  ],
+  "technologies": [
+    "webgl",
+    "css"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "responsive",
+    "reduced-motion"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "number",
+      "defaultValue": 0.7,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Speed of the moving reflections and color flow. Fixed color retains its hue. Zero freezes the current frame."
+    },
+    {
+      "name": "color",
+      "label": "Starting color",
+      "type": "color",
+      "defaultValue": "#b126ff",
+      "description": "Starting hue for the spectrum, fixed color, or first gradient stop. Use a hexadecimal color."
+    },
+    {
+      "name": "colorMode",
+      "label": "Color flow",
+      "type": "select",
+      "defaultValue": "spectrum",
+      "options": [
+        "fixed",
+        "gradient-2",
+        "gradient-3",
+        "spectrum"
+      ],
+      "description": "Keep one fixed tint, change the whole material between two or three selected colors over time, or use the original full spectrum. Reflections keep moving; selected colors do not form stripes."
+    },
+    {
+      "name": "color2",
+      "label": "Color 2",
+      "type": "color",
+      "defaultValue": "#ff177c",
+      "description": "Second gradient stop. Used in the two-color and three-color modes."
+    },
+    {
+      "name": "color3",
+      "label": "Color 3",
+      "type": "color",
+      "defaultValue": "#35d3ff",
+      "description": "Third gradient stop. Used only in the three-color mode."
+    },
+    {
+      "name": "feather",
+      "label": "Feather",
+      "type": "number",
+      "defaultValue": 100,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "description": "Feather the projected source edges. Defaults to 100."
+    },
+    {
+      "name": "borderRadius",
+      "label": "Corner radius (%)",
+      "type": "number",
+      "defaultValue": 50,
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "description": "Circular corner radius as a percentage of the shorter side. Default 50 makes a wide button pill-shaped and a square button circular. The material projection and reflections adapt to the contour."
+    },
+    {
+      "name": "projectionScale",
+      "label": "Projection scale (deg)",
+      "type": "number",
+      "defaultValue": 174.7,
+      "min": 90,
+      "max": 179.5,
+      "step": 0.1,
+      "description": "Base projection angle at the default 50% corner radius. The applied angle adapts to the rounded contour; the customizer shows that applied angle. The face uses 0.7 degrees less than the rim."
+    },
+    {
+      "name": "intensity",
+      "label": "Brightness",
+      "type": "number",
+      "defaultValue": 1.4,
+      "min": 0.1,
+      "max": 2,
+      "step": 0.05,
+      "description": "Brightness of the colored field and edge reflections."
+    },
+    {
+      "name": "grain",
+      "label": "Grain",
+      "type": "number",
+      "defaultValue": 0.105,
+      "min": 0,
+      "max": 0.3,
+      "step": 0.005,
+      "description": "Fine stationary texture over the color field. Zero removes the grain."
+    },
+    {
+      "name": "phase",
+      "label": "Starting phase",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 100,
+      "step": 0.01,
+      "description": "Offset the starting position from 0 to 100, in steps of 0.01. Pause to inspect a particular composition before exporting."
+    },
+    {
+      "name": "seed",
+      "label": "Seed",
+      "type": "number",
+      "defaultValue": 7,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "description": "Choose a reproducible variation of the gradient field."
+    },
+    {
+      "name": "paused",
+      "label": "Paused",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the current frame. Resume continues without jumping ahead."
+    },
+    {
+      "name": "hoverEffect",
+      "label": "Hover effect",
+      "type": "select",
+      "defaultValue": "brighten",
+      "options": [
+        "none",
+        "brighten",
+        "flow",
+        "spotlight"
+      ],
+      "description": "Hover or keyboard focus effect: none, brighten (default), gradient flow, or follow pointer. Brighten raises the light and lifts the button by 2px. Follow pointer moves and stretches the whole button with an elastic spring return, plus cursor-following reflections. Fixed colors retain their hue; disabled buttons do not react."
+    },
+    {
+      "name": "entrance",
+      "label": "Entrance",
+      "type": "select",
+      "defaultValue": "blur-up",
+      "options": [
+        "blur-up",
+        "zoom",
+        "none"
+      ],
+      "description": "Mount animation: blur-up (default), zoom, or none. Configure speed, blur, rise distance and starting scale in the Entrance section. Reduced motion disables the entrance."
+    },
+    {
+      "name": "entranceSpeed",
+      "label": "Speed (×)",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.1,
+      "max": 4,
+      "step": 0.05,
+      "description": "Entrance playback multiplier. Higher is faster; 1× takes 700ms for Blur + rise and 600ms for Zoom. Use Replay to preview changes."
+    },
+    {
+      "name": "entranceBlur",
+      "label": "Blur (px)",
+      "type": "number",
+      "defaultValue": 10,
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "description": "Initial blur for Blur + rise, in pixels. Zero removes the blur."
+    },
+    {
+      "name": "entranceDistance",
+      "label": "Rise distance (px)",
+      "type": "number",
+      "defaultValue": 20,
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "description": "Upward travel for Blur + rise, in pixels. Zero keeps the button in place while it fades in."
+    },
+    {
+      "name": "entranceScale",
+      "label": "Starting scale (%)",
+      "type": "number",
+      "defaultValue": 0.65,
+      "min": 0.05,
+      "max": 1,
+      "step": 0.01,
+      "description": "Initial size for Zoom as a fraction of full size. The control displays percent; 0.65 means 65%."
+    }
+  ]
+}

@@ -5,3 +5,4 @@ export { default as TopographicTerrainCatalogPage, topographicTerrainMeta } from
 export { default as FanGalleryCatalogPage, fanGalleryMeta } from './fan-gallery-page';
 export { default as ShapePhysicsCatalogPage, shapePhysicsMeta } from './shape-physics-page';
 export { default as TopographicFlowCatalogPage, topographicFlowMeta } from './topographic-flow-page';
+export { default as ChromaticButtonCatalogPage, chromaticButtonMeta } from './chromatic-button-page';
