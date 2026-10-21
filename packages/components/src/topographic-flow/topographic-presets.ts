@@ -111,7 +111,7 @@ export const topographicPresets = {
     lineColor: '#d9fff5',
     accentColor: '#d9fff5',
     lineStyle: 'solid' as TopographicLineStyle,
-    scale: 140,
+    scale: 220,
     density: 5,
     lineWidth: 1.25,
     opacity: 0.9,
