@@ -196,13 +196,13 @@ export default function TopographicFlowPage() {
                   label="Preset"
                   value={preset}
                   options={[
+                    { value: 'paper', label: 'Paper' },
+                    { value: 'ocean', label: 'Ocean · gradient' },
                     { value: 'terrain', label: 'Terrain' },
                     { value: 'survey', label: 'Survey · broken lines' },
-                    { value: 'paper', label: 'Paper' },
                     { value: 'aurora', label: 'Aurora · gradient' },
                     { value: 'dune', label: 'Dune' },
                     { value: 'moss', label: 'Moss · broken lines' },
-                    { value: 'ocean', label: 'Ocean · gradient' },
                     { value: 'ember', label: 'Ember · gradient' },
                     { value: 'relief', label: 'Relief · depth map' },
                     { value: 'midnight', label: 'Midnight · swirl' },
