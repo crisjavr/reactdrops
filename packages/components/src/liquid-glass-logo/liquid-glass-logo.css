@@ -1,0 +1,33 @@
+.liquid-glass-logo {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 16rem;
+  overflow: hidden;
+}
+.liquid-glass-logo > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+.liquid-glass-logo[data-liquid-glass-ready] > canvas {
+  opacity: 1;
+}
+.liquid-glass-logo-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: pre;
+}
+.liquid-glass-logo-fallback > img {
+  height: 0.8em;
+  width: auto;
+}

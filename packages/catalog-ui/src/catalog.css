@@ -826,6 +826,25 @@
   object-fit: cover;
 }
 
+/* Themed previews: the light image by default, the dark one on a dark page. */
+.components-card-preview-image.is-theme-dark {
+  display: none;
+}
+:root[data-theme='dark'] .components-card-preview-image.is-theme-dark {
+  display: block;
+}
+:root[data-theme='dark'] .components-card-preview-image.is-theme-light {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .components-card-preview-image.is-theme-dark {
+    display: block;
+  }
+  :root:not([data-theme]) .components-card-preview-image.is-theme-light {
+    display: none;
+  }
+}
+
 .components-card-preview-copy {
   font-family: 'Plus Jakarta Sans', 'Inter Variable', sans-serif;
   font-size: clamp(1.4rem, 12cqw, 3.75rem);

@@ -5,9 +5,12 @@ import './customizer-controls.css';
 /** Shared page section: owns delayed help and the information button. */
 export function ControlsPanel({
   componentName,
+  actions,
   children,
 }: {
   componentName: string;
+  /** Optional buttons shown beside the information button. */
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -15,7 +18,14 @@ export function ControlsPanel({
       <ControlHelp>
         <div className="component-controls-heading">
           <h2>Controls</h2>
-          <ControlHelpInfo />
+          {actions ? (
+            <div className="component-controls-actions">
+              {actions}
+              <ControlHelpInfo />
+            </div>
+          ) : (
+            <ControlHelpInfo />
+          )}
         </div>
         <div className="component-controls" aria-label={`${componentName} controls`}>
           {children}

@@ -7,6 +7,13 @@ import fanGalleryPreview from './assets/fan-gallery-preview.webp';
 import shapePhysicsPreview from './assets/shape-physics-preview.webp';
 import topographicFlowPreview from './assets/topographic-flow-preview.webp';
 import chromaticButtonPreview from './assets/chromatic-button-preview.webp';
+import liquidGlassLogoPreviewDark from './assets/liquid-glass-logo-preview-dark.webp';
+import liquidGlassLogoPreviewLight from './assets/liquid-glass-logo-preview-light.webp';
+
+// Cards with one preview per site theme; CSS shows the one matching the page.
+const themedPreviews: Record<string, { dark: string; light: string }> = {
+  'liquid-glass-logo': { dark: liquidGlassLogoPreviewDark, light: liquidGlassLogoPreviewLight },
+};
 
 export function CatalogComponentCard({ component }: { component: ComponentMetadata }) {
   const isOrb = component.slug === 'liquid-glass-orb';
@@ -23,6 +30,7 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
             : component.slug === 'chromatic-button'
               ? chromaticButtonPreview
               : null;
+  const themed = themedPreviews[component.slug];
   return (
     <Link
       className="components-catalog-card is-static-preview"
@@ -30,6 +38,18 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
       aria-label={`View ${component.name}`}
     >
       <span className="components-card-preview">
+        {themed &&
+          (['dark', 'light'] as const).map((theme) => (
+            <img
+              key={theme}
+              className={`components-card-preview-image is-theme-${theme}`}
+              src={themed[theme]}
+              alt=""
+              width={1280}
+              height={720}
+              decoding="async"
+            />
+          ))}
         {preview && (
           <img
             className="components-card-preview-image"

@@ -38,6 +38,8 @@ type ComponentDetailLayoutProps = {
   sourceFiles: ComponentSourceFile[];
   preview: ReactNode;
   controls?: ReactNode;
+  /** Optional buttons in the Controls heading, beside the information button. */
+  controlsActions?: ReactNode;
   properties?: ComponentProperty[];
   /** Optional notes following the shared Usage source panel. */
   usage?: ReactNode;
@@ -177,6 +179,7 @@ export function ComponentDetailLayout({
   sourceFiles,
   preview,
   controls,
+  controlsActions,
   properties,
   usage,
   onReplay,
@@ -423,7 +426,9 @@ export function ComponentDetailLayout({
         </section>
 
         {viewTab === 'preview' && controls && (
-          <ControlsPanel componentName={componentName}>{controls}</ControlsPanel>
+          <ControlsPanel componentName={componentName} actions={controlsActions}>
+            {controls}
+          </ControlsPanel>
         )}
 
         {viewTab === 'preview' && properties && properties.length > 0 && propertyTable}

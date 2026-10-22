@@ -13,7 +13,8 @@
     "./fan-gallery": "./src/fan-gallery/index.ts",
     "./shape-physics": "./src/shape-physics/index.ts",
     "./topographic-flow": "./src/topographic-flow/index.ts",
-    "./chromatic-button": "./src/chromatic-button/index.ts"
+    "./chromatic-button": "./src/chromatic-button/index.ts",
+    "./liquid-glass-logo": "./src/liquid-glass-logo/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -55,6 +56,11 @@
     "src/fluid-glass-gradient/fluid-glass-gradient.css",
     "src/fluid-glass-gradient/fluid-glass-gradient.tsx",
     "src/fluid-glass-gradient/index.ts",
+    "src/liquid-glass-logo/index.ts",
+    "src/liquid-glass-logo/liquid-glass-logo-renderer.ts",
+    "src/liquid-glass-logo/liquid-glass-logo-shaders.ts",
+    "src/liquid-glass-logo/liquid-glass-logo.css",
+    "src/liquid-glass-logo/liquid-glass-logo.tsx",
     "src/liquid-glass-orb/index.ts",
     "src/liquid-glass-orb/liquid-glass-orb.tsx",
     "src/public-index.ts",

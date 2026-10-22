@@ -512,3 +512,8 @@
 .reveal-select.is-open .reveal-select-arrow svg {
   transform: rotate(180deg);
 }
+.component-controls-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

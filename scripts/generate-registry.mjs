@@ -10,6 +10,7 @@ import { packageTopographicTerrain } from './package-topographic-terrain.mjs';
 import { packageFanGallery } from './package-fan-gallery.mjs';
 import { packageShapePhysics } from './package-shape-physics.mjs';
 import { packageTopographicFlow } from './package-topographic-flow.mjs';
+import { packageLiquidGlassLogo } from './package-liquid-glass-logo.mjs';
 import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
@@ -25,6 +26,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'liquid-glass-logo': {
+    sourceSlug: 'liquid-glass-logo',
+    symbol: 'LiquidGlassLogo',
+    prefix: 'liquidGlassLogo',
+    package: () => packageLiquidGlassLogo(root),
+    element: '<LiquidGlassLogo logo="/logo.svg" ending="logo" style={{ height: 480 }} />',
+  },
   'liquid-glass-orb': {
     sourceSlug: 'fluid-agent-orb',
     symbol: 'LiquidGlassOrb',

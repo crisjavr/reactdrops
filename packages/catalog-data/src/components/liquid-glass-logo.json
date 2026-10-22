@@ -1,0 +1,336 @@
+{
+  "slug": "liquid-glass-logo",
+  "name": "Liquid Glass Logo",
+  "family": {
+    "slug": "text-reveal",
+    "name": "Text Reveal"
+  },
+  "version": "0.1.0",
+  "description": "A droplet becomes a glass icon, then the glass and waves disappear, leaving the original logo on the background. The logo stays at its normal size on black. Supports custom SVG, PNG and other image logos.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 30,
+  "publishedAt": "2026-10-22",
+  "styles": [
+    "glass",
+    "chromatic",
+    "experimental"
+  ],
+  "types": [
+    "logo",
+    "text"
+  ],
+  "interactions": [
+    "automatic",
+    "viewport"
+  ],
+  "technologies": [
+    "webgl",
+    "css"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "typescript",
+    "responsive",
+    "reduced-motion"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "text",
+      "label": "Wordmark",
+      "type": "text",
+      "defaultValue": "music",
+      "description": "Text revealed by the expanding lens. Supports custom fonts and Unicode text.",
+      "target": "content"
+    },
+    {
+      "name": "ending",
+      "label": "Finish on",
+      "type": "select",
+      "defaultValue": "logo",
+      "options": [
+        "logo",
+        "wordmark"
+      ],
+      "description": "Play the complete wordmark reveal or finish on the original logo alone. The glass disappears in both modes."
+    },
+    {
+      "name": "logoSize",
+      "label": "Tile size (px)",
+      "type": "number",
+      "defaultValue": 256,
+      "min": 48,
+      "max": 400,
+      "step": 1,
+      "description": "Glass tile edge in pixels. The logo, lens and wordmark shrink together to fit the container."
+    },
+    {
+      "name": "logoScale",
+      "label": "Logo scale",
+      "type": "number",
+      "defaultValue": 0.72,
+      "min": 0.2,
+      "max": 1,
+      "step": 0.01,
+      "description": "Logo width or height as a fraction of the plate edge."
+    },
+    {
+      "name": "finalLogoScale",
+      "label": "Final logo scale",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.1,
+      "max": 1,
+      "step": 0.01,
+      "description": "Resting logo scale. At 1, the logo holds its normal size while the glass fades. Applies to Logo only."
+    },
+    {
+      "name": "tile",
+      "label": "Icon plate",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Lay the logo on a rounded icon plate."
+    },
+    {
+      "name": "fontSize",
+      "label": "Font size (px)",
+      "type": "number",
+      "defaultValue": 64,
+      "min": 16,
+      "max": 200,
+      "step": 1,
+      "description": "Size of the wordmark."
+    },
+    {
+      "name": "fontWeight",
+      "label": "Font weight",
+      "type": "number",
+      "defaultValue": 850,
+      "min": 100,
+      "max": 900,
+      "step": 50,
+      "description": "Weight of the wordmark font."
+    },
+    {
+      "name": "letterSpacing",
+      "label": "Letter spacing (em)",
+      "type": "number",
+      "defaultValue": -0.01,
+      "min": -0.2,
+      "max": 0.5,
+      "step": 0.005,
+      "description": "Tracking of the wordmark."
+    },
+    {
+      "name": "markGap",
+      "label": "Mark gap (em)",
+      "type": "number",
+      "defaultValue": 0.12,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Space between the mark and the wordmark."
+    },
+    {
+      "name": "theme",
+      "label": "Theme",
+      "type": "select",
+      "defaultValue": "dark",
+      "options": [
+        "dark",
+        "light"
+      ],
+      "description": "Light or dark page, plate and logo colors. Colors passed explicitly override the theme."
+    },
+    {
+      "name": "logoRelief",
+      "label": "Logo relief",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Rounded shading on the recolored logo. At 0 the logo is flat in its color; at 1 it has full relief. Original colors are always flat."
+    },
+    {
+      "name": "logoColor",
+      "label": "Logo color",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Recolors the logo silhouette. Pass \"original\" to keep the image colors."
+    },
+    {
+      "name": "textColor",
+      "label": "Text color",
+      "type": "color",
+      "defaultValue": "#e2e6ee",
+      "description": "Color of the wordmark and its mark."
+    },
+    {
+      "name": "tileColor",
+      "label": "Plate color",
+      "type": "color",
+      "defaultValue": "#060c18",
+      "description": "Dark surface beneath the logo lens."
+    },
+    {
+      "name": "background",
+      "label": "Background",
+      "type": "color",
+      "defaultValue": "#000000",
+      "description": "Container background. Use transparent to sit over your own surface."
+    },
+    {
+      "name": "depth",
+      "label": "Optical depth",
+      "type": "number",
+      "defaultValue": 1.2,
+      "min": 0,
+      "max": 4,
+      "step": 0.05,
+      "description": "Optical depth of the glass in tile edges. Deeper glass bends and magnifies the image further."
+    },
+    {
+      "name": "dispersion",
+      "label": "Dispersion",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Separation between wavelengths at the glass bevels and wordmark edges."
+    },
+    {
+      "name": "relief",
+      "label": "Double bevel",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Intensity of the inset glass back face, its separate refracted image and the split highlights in the lower-right corner."
+    },
+    {
+      "name": "caustics",
+      "label": "Caustics",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Light concentrated onto the artwork at the lens shoulder."
+    },
+    {
+      "name": "highlights",
+      "label": "Highlights",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Brightness of the glass contours and reflected studio lights."
+    },
+    {
+      "name": "bloom",
+      "label": "Light diffusion",
+      "type": "number",
+      "defaultValue": 0.55,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "Soft light around the glass and bright artwork edges. Keeps the white of the artwork from being overexposed."
+    },
+    {
+      "name": "dropSize",
+      "label": "Drop size",
+      "type": "number",
+      "defaultValue": 0.32,
+      "min": 0.05,
+      "max": 1,
+      "step": 0.01,
+      "description": "Initial size of the expanding wordmark lens, relative to the tile edge."
+    },
+    {
+      "name": "dropStrength",
+      "label": "Drop strength",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Curvature of the optical surface: stronger lenses pull the image further into their edges."
+    },
+    {
+      "name": "echoTint",
+      "label": "Echo plate tint",
+      "type": "number",
+      "defaultValue": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How much the faint line just outside the rim takes the plate color. At 0 it keeps its cool blue glint; at 1 it matches the plate and stays quiet on dark pages."
+    },
+    {
+      "name": "innerWallFocus",
+      "label": "Inner wall focus",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "At 0 the inner glass wall is drawn whole. At 1 it keeps to bright arcs at the upper-left and lower-right corners, which reads cleaner on a light theme."
+    },
+    {
+      "name": "decay",
+      "label": "Ring decay (s)",
+      "type": "number",
+      "defaultValue": 1.4,
+      "min": 0.2,
+      "max": 6,
+      "step": 0.1,
+      "description": "Time for the secondary lens reflections to fade."
+    },
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.1,
+      "max": 4,
+      "step": 0.05,
+      "description": "Playback rate of the glass sequence. At 1, the logo reveal lasts 1.8 seconds; the optional wordmark sequence lasts 3.3 seconds."
+    },
+    {
+      "name": "loop",
+      "label": "Loop",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Restart after the finished artwork has held for Loop delay."
+    },
+    {
+      "name": "loopDelay",
+      "label": "Loop delay (s)",
+      "type": "number",
+      "defaultValue": 1.6,
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "description": "Seconds the finished artwork holds before the sequence restarts."
+    },
+    {
+      "name": "paused",
+      "label": "Paused",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the current frame."
+    }
+  ]
+}
