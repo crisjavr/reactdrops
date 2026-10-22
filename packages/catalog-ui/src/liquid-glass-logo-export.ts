@@ -38,6 +38,11 @@ type RecordOptions = {
   duration: number;
   background: string;
   backgroundImage?: string;
+  backgroundX?: number;
+  backgroundY?: number;
+  backgroundScale?: number;
+  backgroundTint?: string;
+  backgroundTintOpacity?: number;
   onProgress?: (fraction: number) => void;
 };
 
@@ -51,20 +56,23 @@ async function loadImage(src: string) {
   return image;
 }
 
-// Same framing as CSS `background-size: cover` centered.
+// Same cover framing, zoom and frame-relative translation as the preview.
 function drawCover(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
   width: number,
   height: number,
+  x: number,
+  y: number,
+  zoom: number,
 ) {
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * zoom;
   const drawWidth = image.naturalWidth * scale;
   const drawHeight = image.naturalHeight * scale;
   context.drawImage(
     image,
-    (width - drawWidth) / 2,
-    (height - drawHeight) / 2,
+    (width - drawWidth) / 2 + (width * x) / 100,
+    (height - drawHeight) / 2 + (height * y) / 100,
     drawWidth,
     drawHeight,
   );
@@ -80,6 +88,11 @@ export async function recordLiquidGlassLogoVideo({
   duration,
   background,
   backgroundImage,
+  backgroundX = 0,
+  backgroundY = 0,
+  backgroundScale = 1,
+  backgroundTint = '#000000',
+  backgroundTintOpacity = 0,
   onProgress,
 }: RecordOptions) {
   if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported(format.mimeType)) {
@@ -109,7 +122,22 @@ export async function recordLiquidGlassLogoVideo({
     seek(seconds);
     context.fillStyle = background;
     context.fillRect(0, 0, width, height);
-    if (image) drawCover(context, image, width, height);
+    if (image) {
+      drawCover(
+        context,
+        image,
+        width,
+        height,
+        Math.max(-100, Math.min(100, backgroundX)),
+        Math.max(-100, Math.min(100, backgroundY)),
+        Math.max(1, Math.min(3, backgroundScale)),
+      );
+      context.save();
+      context.globalAlpha = Math.max(0, Math.min(1, backgroundTintOpacity));
+      context.fillStyle = backgroundTint;
+      context.fillRect(0, 0, width, height);
+      context.restore();
+    }
     context.drawImage(source, 0, 0, width, height);
     track.requestFrame();
   };

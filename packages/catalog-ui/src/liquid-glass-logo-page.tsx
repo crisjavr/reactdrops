@@ -170,7 +170,51 @@ type ExportJob = {
 };
 const even = (value: number) => Math.max(2, Math.round(value / 2) * 2);
 
-function example(values: Values, logo: LogoChoice, backgroundImage = false) {
+const backgroundDefaults = {
+  backgroundX: 0,
+  backgroundY: 0,
+  backgroundScale: 1,
+  backgroundTint: '#000000',
+  backgroundTintOpacity: 0,
+};
+type BackgroundValues = typeof backgroundDefaults;
+const backgroundNumbers = [
+  {
+    name: 'backgroundX',
+    label: 'Position X',
+    min: -100,
+    max: 100,
+    step: 1,
+    description: 'Move the image left or right, as a percentage of the frame width.',
+  },
+  {
+    name: 'backgroundY',
+    label: 'Position Y',
+    min: -100,
+    max: 100,
+    step: 1,
+    description: 'Move the image up or down, as a percentage of the frame height.',
+  },
+  {
+    name: 'backgroundScale',
+    label: 'Zoom',
+    min: 1,
+    max: 3,
+    step: 0.05,
+    description: 'Enlarge the image to keep the frame covered while moving it.',
+  },
+  {
+    name: 'backgroundTintOpacity',
+    label: 'Tint intensity',
+    min: 0,
+    max: 1,
+    step: 0.05,
+    description:
+      'Use black to darken the background, or choose a tint color. Zero removes the tint.',
+  },
+] as const;
+
+function example(values: Values, logo: LogoChoice, background?: BackgroundValues) {
   // Colors that match the chosen theme are implied by it and stay out of the code.
   const base: Values = { ...defaults, ...liquidGlassLogoThemes[values.theme], theme: 'dark' };
   const props = Object.entries(values)
@@ -180,7 +224,15 @@ function example(values: Values, logo: LogoChoice, backgroundImage = false) {
         ? `      ${name}={${JSON.stringify(value)}}`
         : `      ${name}={${String(value)}}`,
     );
-  return `import { LiquidGlassLogo } from './components/liquid-glass-logo';\n\nexport function Example() {\n  return (\n    <LiquidGlassLogo\n      logo="${logo === 'upload' ? '/your-logo.svg' : '/logo.svg'}"\n      ending="logo"\n${backgroundImage ? '      backgroundImage="/your-background.jpg"\n' : ''}${props.join('\n')}${props.length ? '\n' : ''}      style={{ height: 480 }}\n    />\n  );\n}`;
+  if (background) {
+    props.push('      backgroundImage="/your-background.jpg"');
+    for (const [name, value] of Object.entries(background)) {
+      if (value !== backgroundDefaults[name as keyof BackgroundValues]) {
+        props.push(`      ${name}={${JSON.stringify(value)}}`);
+      }
+    }
+  }
+  return `import { LiquidGlassLogo } from './components/liquid-glass-logo';\n\nexport function Example() {\n  return (\n    <LiquidGlassLogo\n      logo="${logo === 'upload' ? '/your-logo.svg' : '/logo.svg'}"\n      ending="logo"\n${props.join('\n')}${props.length ? '\n' : ''}      style={{ height: 480 }}\n    />\n  );\n}`;
 }
 
 export function liquidGlassLogoMeta() {
@@ -202,6 +254,9 @@ export default function LiquidGlassLogoPage() {
   const [uploadName, setUploadName] = useState('');
   const [backgroundName, setBackgroundName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
+  const [backgroundValues, setBackgroundValues] = useState(backgroundDefaults);
+  const setBackground = <K extends keyof BackgroundValues>(key: K, value: BackgroundValues[K]) =>
+    setBackgroundValues((old) => ({ ...old, [key]: value }));
   const [exportAspect, setExportAspect] = useState<ExportAspect>('16:9');
   const [exportResolution, setExportResolution] =
     useState<(typeof exportResolutions)[number]>(1080);
@@ -273,6 +328,7 @@ export default function LiquidGlassLogoPage() {
     setUploadName('');
     setBackgroundImage('');
     setBackgroundName('');
+    setBackgroundValues(backgroundDefaults);
     ref.current?.replay();
   };
   // Renders the sequence off screen at the exact output size, framed like the
@@ -316,6 +372,7 @@ export default function LiquidGlassLogoPage() {
         duration: exportDuration,
         background: values.background,
         backgroundImage: backgroundImage || undefined,
+        ...backgroundValues,
         onProgress: setExportProgress,
       });
       const link = document.createElement('a');
@@ -330,7 +387,7 @@ export default function LiquidGlassLogoPage() {
     }
   };
   const logoSource = logo === 'upload' ? upload || liquidGlassLogoNoteLogo : logos[logo];
-  const usage = example(values, logo, !!backgroundImage);
+  const usage = example(values, logo, backgroundImage ? backgroundValues : undefined);
   const commands = Object.fromEntries(
     Object.entries({ npm: 'npx', pnpm: 'pnpm dlx', yarn: 'yarn dlx', bun: 'bunx --bun' }).map(
       ([manager, runner]) => [
@@ -424,6 +481,7 @@ export default function LiquidGlassLogoPage() {
               aria-label={logo === 'upload' ? 'Logo' : logoNames[logo]}
               logo={logoSource}
               backgroundImage={backgroundImage || undefined}
+              {...backgroundValues}
               style={{ height: '100%', minHeight: 0 }}
             />
           </div>
@@ -446,6 +504,7 @@ export default function LiquidGlassLogoPage() {
                 logoSize={exportJob.logoSize}
                 maxDpr={exportJob.pixelRatio}
                 backgroundImage={backgroundImage || undefined}
+                {...backgroundValues}
                 style={{ height: '100%', minHeight: 0 }}
               />
             </div>
@@ -466,10 +525,12 @@ export default function LiquidGlassLogoPage() {
               onFile={(file) => {
                 setBackgroundImage(URL.createObjectURL(file));
                 setBackgroundName(file.name);
+                setBackgroundValues(backgroundDefaults);
               }}
               onClear={() => {
                 setBackgroundImage('');
                 setBackgroundName('');
+                setBackgroundValues(backgroundDefaults);
               }}
             />
             <LiquidGlassLogoDropZone
@@ -504,6 +565,43 @@ export default function LiquidGlassLogoPage() {
               }}
             />
           </div>
+          {backgroundImage && (
+            <fieldset className="reveal-control-group">
+              <legend className="reveal-group-heading">
+                <h3>Background</h3>
+              </legend>
+              <div className="reveal-fields">
+                {backgroundNumbers.map(({ name, label, description, min, max, step }) => (
+                  <ControlField
+                    key={name}
+                    className="is-number"
+                    label={label}
+                    description={description}
+                  >
+                    <NumberControl
+                      label={label}
+                      value={backgroundValues[name]}
+                      min={min}
+                      max={max}
+                      step={step}
+                      onChange={(value) => setBackground(name, value)}
+                    />
+                  </ControlField>
+                ))}
+                <ControlField
+                  className="is-color"
+                  label="Tint color"
+                  description="Color layered over the background image, behind the glass and logo."
+                >
+                  <ColorControl
+                    label="Tint color"
+                    value={backgroundValues.backgroundTint}
+                    onChange={(value) => setBackground('backgroundTint', value)}
+                  />
+                </ControlField>
+              </div>
+            </fieldset>
+          )}
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
               <h3>Logo</h3>
@@ -729,6 +827,31 @@ export default function LiquidGlassLogoPage() {
           defaultValue: '—',
           description:
             'Image URL drawn behind the animation, covering the container. The plate turns see-through so the image shows through the glass.',
+        },
+        {
+          name: 'backgroundX / backgroundY',
+          type: 'number',
+          defaultValue: '0',
+          description: 'Image offsets from the center, from -100 to 100 percent of the frame size.',
+        },
+        {
+          name: 'backgroundScale',
+          type: 'number',
+          defaultValue: '1',
+          description: 'Zoom of the cover image, from 1 to 3.',
+        },
+        {
+          name: 'backgroundTint',
+          type: 'string',
+          defaultValue: '#000000',
+          description:
+            'Overlay color between the background image and the logo. Black darkens the image.',
+        },
+        {
+          name: 'backgroundTintOpacity',
+          type: 'number',
+          defaultValue: '0',
+          description: 'Opacity of the background tint, from 0 (off) to 1 (opaque).',
         },
         {
           name: 'maxDpr',

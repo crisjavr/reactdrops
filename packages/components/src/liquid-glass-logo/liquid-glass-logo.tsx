@@ -27,6 +27,14 @@ export type LiquidGlassLogoProps = Partial<LiquidGlassLogoTuning> & {
   height?: number | string;
   /** Image URL drawn behind the animation, covering the container. The plate turns see-through. */
   backgroundImage?: string;
+  /** Horizontal and vertical offsets as percentages of the frame; 0 centers the image. */
+  backgroundX?: number;
+  backgroundY?: number;
+  /** Scale of the cover image, from 1 to 3. */
+  backgroundScale?: number;
+  /** Color and opacity (0–1) of the overlay between the image and the logo. */
+  backgroundTint?: string;
+  backgroundTintOpacity?: number;
   className?: string;
   style?: CSSProperties;
   /** Accessible name; defaults to "Logo" or the visible wordmark text. */
@@ -35,7 +43,19 @@ export type LiquidGlassLogoProps = Partial<LiquidGlassLogoTuning> & {
 
 export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogoProps>(
   function LiquidGlassLogo(
-    { height, backgroundImage, className = '', style, 'aria-label': label, ...overrides },
+    {
+      height,
+      backgroundImage,
+      backgroundX = 0,
+      backgroundY = 0,
+      backgroundScale = 1,
+      backgroundTint = '#000000',
+      backgroundTintOpacity = 0,
+      className = '',
+      style,
+      'aria-label': label,
+      ...overrides
+    },
     ref,
   ) {
     const canvas = useRef<HTMLCanvasElement>(null);
@@ -89,15 +109,33 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
         className={`liquid-glass-logo ${className}`.trim()}
         style={{
           height,
-          background: backgroundImage
-            ? `url(${JSON.stringify(backgroundImage)}) center / cover no-repeat, ${tuning.background}`
-            : tuning.background,
+          background: tuning.background,
           ...style,
         }}
         role="img"
         aria-label={label ?? (tuning.ending === 'logo' ? 'Logo' : tuning.text)}
         data-liquid-glass-ready={ready || undefined}
       >
+        {backgroundImage && (
+          <>
+            <div
+              className="liquid-glass-logo-background"
+              aria-hidden="true"
+              style={{
+                background: `url(${JSON.stringify(backgroundImage)}) center / cover no-repeat`,
+                transform: `translate(${Math.max(-100, Math.min(100, backgroundX))}%, ${Math.max(-100, Math.min(100, backgroundY))}%) scale(${Math.max(1, Math.min(3, backgroundScale))})`,
+              }}
+            />
+            <div
+              className="liquid-glass-logo-background"
+              aria-hidden="true"
+              style={{
+                backgroundColor: backgroundTint,
+                opacity: Math.max(0, Math.min(1, backgroundTintOpacity)),
+              }}
+            />
+          </>
+        )}
         <canvas ref={canvas} aria-hidden="true" />
         {fallback && (
           <span

@@ -97,7 +97,7 @@
 /* Background and logo drop boxes, background first, above the control groups. */
 .liquid-glass-logo-drops {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
@@ -113,6 +113,7 @@
 .liquid-glass-logo-drop {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 0.875rem;
   min-height: 88px;
   padding: 0.875rem 2.75rem 0.875rem 0.875rem;
@@ -175,12 +176,15 @@
 }
 .liquid-glass-logo-drop-text {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1;
   gap: 0.25rem;
   min-width: 0;
 }
 .liquid-glass-logo-drop-text strong {
   font-size: 0.875rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .liquid-glass-logo-drop-text span {
   overflow: hidden;
