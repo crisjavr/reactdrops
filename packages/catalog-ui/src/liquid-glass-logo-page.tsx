@@ -55,6 +55,11 @@ const brandLogo = (viewBox: string, path: string) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="#fff"><path d="${path}" /></svg>`,
   )}`;
+// Note silhouette matched to the supplied app-icon reference.
+const noteLogo = brandLogo(
+  '0 0 190 252',
+  'M58 48C58 45 60 43 63 42L173 5C181 2 184 5 184 12V166C184 185 172 201 153 207C134 213 116 205 114 190C111 174 122 157 140 150C149 146 158 145 166 146C168 146 169 144 169 141V75C169 70 167 68 162 70L79 99C75 100 74 102 74 106V203C74 223 62 239 43 245C23 251 7 243 4 228C1 211 12 195 30 188C39 184 48 183 55 184C57 184 58 182 58 180V48Z',
+);
 const appleLogo = liquidGlassLogoReferenceMark;
 const spotifyLogo = brandLogo(
   '0 0 24 24',
@@ -70,7 +75,7 @@ const logos = {
   apple: appleLogo,
   spotify: spotifyLogo,
   github: githubLogo,
-  note: liquidGlassLogoNoteLogo,
+  note: noteLogo,
   drops: dropsLogo,
 } as const;
 const logoNames: Record<keyof typeof logos, string> = {
@@ -117,6 +122,31 @@ const defaults = Object.fromEntries(
   logoControls.map((name) => [name, liquidGlassLogoDefaults[name]]),
 ) as Values;
 
+const noteGlass = {
+  depth: 1.1,
+  dispersion: 2.5,
+  relief: 0.4,
+  caustics: 0.3,
+  highlights: 1.95,
+  echoTint: 0.5,
+  innerWallFocus: 0,
+  bloom: 1.15,
+} satisfies Partial<Values>;
+
+const logoGlass = (choice: LogoChoice) =>
+  choice === 'note'
+    ? noteGlass
+    : {
+        depth: choice === 'nike' ? 2.9 : defaults.depth,
+        dispersion: defaults.dispersion,
+        relief: defaults.relief,
+        caustics: defaults.caustics,
+        highlights: defaults.highlights,
+        echoTint: defaults.echoTint,
+        innerWallFocus: defaults.innerWallFocus,
+        bloom: defaults.bloom,
+      };
+
 // Video export: the short side of each resolution, the aspect ratios offered,
 // and how long the logo sequence runs before it settles (with a short hold).
 const exportResolutions = [720, 1080, 1440, 2160] as const;
@@ -162,13 +192,10 @@ export function liquidGlassLogoMeta() {
 
 export default function LiquidGlassLogoPage() {
   const ref = useRef<LiquidGlassLogoHandle>(null);
-  // The Nike sample reads best with a deeper lens; other logos use the default.
-  const logoDepth = (choice: LogoChoice) =>
-    choice === 'nike' ? 2.9 : liquidGlassLogoDefaults.depth;
-  const [values, setValues] = useState<Values>({ ...defaults, depth: logoDepth('nike') });
+  const [values, setValues] = useState<Values>({ ...defaults, ...logoGlass('nike') });
   const chooseLogo = (choice: LogoChoice) => {
     setLogo(choice);
-    setValues((old) => ({ ...old, depth: logoDepth(choice) }));
+    setValues((old) => ({ ...old, ...logoGlass(choice) }));
   };
   const [logo, setLogo] = useState<LogoChoice>('nike');
   const [upload, setUpload] = useState('');
@@ -240,7 +267,7 @@ export default function LiquidGlassLogoPage() {
   }, []);
   const reset = () => {
     const theme = pageTheme.current ?? 'dark';
-    setValues({ ...defaults, theme, ...liquidGlassLogoThemes[theme], depth: logoDepth('nike') });
+    setValues({ ...defaults, theme, ...liquidGlassLogoThemes[theme], ...logoGlass('nike') });
     setLogo('nike');
     setUpload('');
     setUploadName('');

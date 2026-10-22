@@ -10,7 +10,7 @@
   "access": "free",
   "status": "published",
   "visibility": "catalog",
-  "featured": false,
+  "featured": true,
   "drop": 30,
   "publishedAt": "2026-10-22",
   "styles": [
@@ -19,8 +19,7 @@
     "experimental"
   ],
   "types": [
-    "logo",
-    "text"
+    "logo"
   ],
   "interactions": [
     "automatic",

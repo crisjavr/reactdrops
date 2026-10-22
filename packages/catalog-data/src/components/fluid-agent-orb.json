@@ -10,7 +10,7 @@
   "access": "free",
   "status": "published",
   "visibility": "catalog",
-  "featured": true,
+  "featured": false,
   "drop": 1,
   "publishedAt": "2026-10-13",
   "styles": ["glass", "organic", "orb"],
