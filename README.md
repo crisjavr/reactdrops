@@ -1,6 +1,6 @@
 # ReactDrops — Creative React components
 
-Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics and Chromatic Button, with source, catalog previews, customizers and a shadcn registry.
+Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics, Chromatic Button and Liquid Glass Logo, with source, catalog previews, customizers and a shadcn registry.
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
@@ -13,6 +13,7 @@ npx shadcn@latest add https://reactdrops.dev/r/fan-gallery.json
 npx shadcn@latest add https://reactdrops.dev/r/shape-physics.json
 npx shadcn@latest add https://reactdrops.dev/r/topographic-flow.json
 npx shadcn@latest add https://reactdrops.dev/r/chromatic-button.json
+npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-logo.json
 ```
 
 The installer adds `liquid-glass-orb.tsx`, `liquid-glass-orb.css` and GSAP.
@@ -109,6 +110,23 @@ export function Example() {
 
 Use `depth="2d"` to keep the figures flat. A ref exposes `replay()`, `clear()`,
 `addShape()` and `shake()`.
+
+Liquid Glass Logo turns a droplet into a glass tile that refracts a logo through
+its chromatic bevel before clearing to the original image. It supports light and
+dark themes, custom SVG/PNG logos and background images. Its installer adds four
+source/style files and requires no runtime dependencies beyond React.
+
+```tsx
+import { LiquidGlassLogo } from './components/liquid-glass-logo';
+
+export function Example() {
+  return <LiquidGlassLogo logo="/logo.svg" ending="logo" style={{ height: 480 }} />;
+}
+```
+
+The catalog demo includes logo and background uploads, glass controls, aspect
+ratio and resolution choices, and MP4/WebM video export at 60 FPS by default.
+Available video formats depend on the browser.
 
 ## Development
 
