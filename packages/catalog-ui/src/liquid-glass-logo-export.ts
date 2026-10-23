@@ -1,9 +1,9 @@
-// Records the Liquid Glass Logo sequence to a video file in the browser. Each frame is
-// sought explicitly, so the result is the same at any resolution or frame rate;
-// frames are delivered in real time because MediaRecorder timestamps them as
-// they arrive.
+// Exports the Liquid Glass Logo as a still image or a video. Both use the same
+// background composition and explicitly seek the animation before copying it.
+// Video frames are delivered in real time for MediaRecorder's timestamps.
 
 export type LiquidGlassLogoVideoFormat = { mimeType: string; extension: 'mp4' | 'webm' };
+export type LiquidGlassLogoImageFormat = 'png' | 'jpeg' | 'webp';
 
 const formats: LiquidGlassLogoVideoFormat[] = [
   { mimeType: 'video/mp4;codecs=avc1.640033', extension: 'mp4' },
@@ -27,15 +27,12 @@ export function liquidGlassLogoVideoFormats(): LiquidGlassLogoVideoFormat[] {
   return supported;
 }
 
-type RecordOptions = {
+type FrameOptions = {
   /** The animation's WebGL canvas, already sized to width × height pixels. */
   source: HTMLCanvasElement;
   seek: (seconds: number) => void;
   width: number;
   height: number;
-  fps: number;
-  format: LiquidGlassLogoVideoFormat;
-  duration: number;
   background: string;
   backgroundImage?: string;
   backgroundX?: number;
@@ -43,6 +40,11 @@ type RecordOptions = {
   backgroundScale?: number;
   backgroundTint?: string;
   backgroundTintOpacity?: number;
+};
+type RecordOptions = FrameOptions & {
+  fps: number;
+  format: LiquidGlassLogoVideoFormat;
+  duration: number;
   onProgress?: (fraction: number) => void;
 };
 
@@ -78,50 +80,36 @@ function drawCover(
   );
 }
 
-export async function recordLiquidGlassLogoVideo({
-  source,
-  seek,
-  width,
-  height,
-  fps,
-  format,
-  duration,
-  background,
-  backgroundImage,
-  backgroundX = 0,
-  backgroundY = 0,
-  backgroundScale = 1,
-  backgroundTint = '#000000',
-  backgroundTintOpacity = 0,
-  onProgress,
-}: RecordOptions) {
-  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported(format.mimeType)) {
-    throw new Error(`This browser cannot record ${format.extension.toUpperCase()} video.`);
-  }
+async function createFramePainter(
+  {
+    source,
+    seek,
+    width,
+    height,
+    background,
+    backgroundImage,
+    backgroundX = 0,
+    backgroundY = 0,
+    backgroundScale = 1,
+    backgroundTint = '#000000',
+    backgroundTintOpacity = 0,
+  }: FrameOptions,
+  transparent = false,
+) {
   const frame = document.createElement('canvas');
   frame.width = width;
   frame.height = height;
   const context = frame.getContext('2d');
-  if (!context) throw new Error('Could not create the video canvas.');
-  const image = backgroundImage ? await loadImage(backgroundImage) : null;
-  const stream = frame.captureStream(0);
-  const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
-  const recorder = new MediaRecorder(stream, {
-    mimeType: format.mimeType,
-    videoBitsPerSecond: Math.round(width * height * fps * 0.12),
-  });
-  const chunks: Blob[] = [];
-  recorder.ondataavailable = (event) => {
-    if (event.data.size) chunks.push(event.data);
-  };
-  const stopped = new Promise<void>((resolve) => {
-    recorder.onstop = () => resolve();
-  });
+  if (!context) throw new Error('Could not create the export canvas.');
+  const image = !transparent && backgroundImage ? await loadImage(backgroundImage) : null;
   // The WebGL canvas does not keep its buffer, so it is copied right after each seek.
   const paint = (seconds: number) => {
     seek(seconds);
-    context.fillStyle = background;
-    context.fillRect(0, 0, width, height);
+    context.clearRect(0, 0, width, height);
+    if (!transparent) {
+      context.fillStyle = background;
+      context.fillRect(0, 0, width, height);
+    }
     if (image) {
       drawCover(
         context,
@@ -139,6 +127,60 @@ export async function recordLiquidGlassLogoVideo({
       context.restore();
     }
     context.drawImage(source, 0, 0, width, height);
+  };
+  return { frame, paint };
+}
+
+/** Export a selected animation frame; transparent PNG omits all background layers. */
+export async function exportLiquidGlassLogoImage(
+  options: FrameOptions & {
+    format: LiquidGlassLogoImageFormat;
+    seconds: number;
+    transparent?: boolean;
+  },
+) {
+  const { frame, paint } = await createFramePainter(
+    options,
+    options.format === 'png' && options.transparent,
+  );
+  paint(options.seconds);
+  const mimeType = `image/${options.format}`;
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    frame.toBlob(
+      (blob) => {
+        if (!blob) reject(new Error('Could not create the image.'));
+        else if (blob.type !== mimeType)
+          reject(new Error('This browser cannot export that image format.'));
+        else resolve(blob);
+      },
+      mimeType,
+      0.95,
+    );
+  });
+  return { blob, extension: options.format === 'jpeg' ? 'jpg' : options.format };
+}
+
+export async function recordLiquidGlassLogoVideo(options: RecordOptions) {
+  const { width, height, fps, format, duration, onProgress } = options;
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported(format.mimeType)) {
+    throw new Error(`This browser cannot record ${format.extension.toUpperCase()} video.`);
+  }
+  const { frame, paint: paintFrame } = await createFramePainter(options);
+  const stream = frame.captureStream(0);
+  const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
+  const recorder = new MediaRecorder(stream, {
+    mimeType: format.mimeType,
+    videoBitsPerSecond: Math.round(width * height * fps * 0.12),
+  });
+  const chunks: Blob[] = [];
+  recorder.ondataavailable = (event) => {
+    if (event.data.size) chunks.push(event.data);
+  };
+  const stopped = new Promise<void>((resolve) => {
+    recorder.onstop = () => resolve();
+  });
+  const paint = (seconds: number) => {
+    paintFrame(seconds);
     track.requestFrame();
   };
   paint(0);

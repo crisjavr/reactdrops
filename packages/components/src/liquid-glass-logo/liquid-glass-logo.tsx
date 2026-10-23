@@ -3,6 +3,7 @@
 import {
   forwardRef,
   useEffect,
+  useLayoutEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -102,7 +103,8 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
         engine.current = null;
       };
     }, []);
-    useEffect(() => engine.current?.update(latest.current), [key]);
+    // Apply size and DPR changes before the resized canvas can be painted.
+    useLayoutEffect(() => engine.current?.update(latest.current), [key]);
     const markSource = tuning.mark === 'logo' ? tuning.logo : tuning.mark;
     return (
       <div

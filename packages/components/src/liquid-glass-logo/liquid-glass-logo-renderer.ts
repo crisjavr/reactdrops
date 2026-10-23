@@ -588,7 +588,6 @@ export function createLiquidGlassLogoRenderer(
   let dpr = 1;
   let width = 1;
   let height = 1;
-  let logoBox: [number, number] = [1, 1];
   let textBox: [number, number] = [1, 1];
   let textWidth = 0;
   let loaded = false;
@@ -627,7 +626,9 @@ export function createLiquidGlassLogoRenderer(
     gl.uniform2f(uniform('uResolution'), canvas.width, canvas.height);
     gl.uniform1f(uniform('uDpr'), canvas.width / width);
     gl.uniform1f(uniform('uUnit'), tuning.logoSize * scale);
-    gl.uniform2f(uniform('uLogoBox'), logoBox[0] * scale, logoBox[1] * scale);
+    // The logo always occupies one plate edge. Its bounds must follow the
+    // current size immediately, even while a sharper texture loads asynchronously.
+    gl.uniform2f(uniform('uLogoBox'), tuning.logoSize * scale, tuning.logoSize * scale);
     gl.uniform2f(uniform('uTextBox'), textBox[0] * scale, textBox[1] * scale);
     gl.uniform1f(uniform('uTextWidth'), textWidth * scale);
     const finishTime = tuning.ending === 'logo' ? logoFinishTime : liquidGlassLogoDuration;
@@ -760,7 +761,6 @@ export function createLiquidGlassLogoRenderer(
     const textRaster = rasterText(markSource ? markImage : null, options, dpr);
     upload(logoTexture, logoRaster.canvas);
     upload(textTexture, textRaster.canvas);
-    logoBox = logoRaster.box;
     textBox = textRaster.box;
     textWidth = textRaster.contentWidth;
     if (!loaded) {
@@ -796,9 +796,11 @@ export function createLiquidGlassLogoRenderer(
   }
 
   const resize = () => {
-    const rect = canvas.getBoundingClientRect();
-    width = Math.max(1, rect.width);
-    height = Math.max(1, rect.height);
+    // CSS transforms can move and scale the preview without changing its layout.
+    // Keep WebGL coordinates tied to that layout throughout the animation.
+    const style = getComputedStyle(canvas);
+    width = Math.max(1, Number.parseFloat(style.width) || canvas.clientWidth);
+    height = Math.max(1, Number.parseFloat(style.height) || canvas.clientHeight);
     const nextDpr = Math.min(window.devicePixelRatio || 1, tuning.maxDpr);
     canvas.width = Math.max(1, Math.round(width * nextDpr));
     canvas.height = Math.max(1, Math.round(height * nextDpr));

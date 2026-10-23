@@ -21,7 +21,9 @@ import { NumberControl, SelectControl, SwitchControl } from './customizer-contro
 import { ColorControl } from './color-control';
 import {
   liquidGlassLogoVideoFormats,
+  exportLiquidGlassLogoImage,
   recordLiquidGlassLogoVideo,
+  type LiquidGlassLogoImageFormat,
   type LiquidGlassLogoVideoFormat,
 } from './liquid-glass-logo-export';
 import { LiquidGlassLogoDropZone } from './liquid-glass-logo-dropzone';
@@ -147,7 +149,7 @@ const logoGlass = (choice: LogoChoice) =>
         bloom: defaults.bloom,
       };
 
-// Video export: the short side of each resolution, the aspect ratios offered,
+// Export: the short side of each resolution, the aspect ratios offered,
 // and how long the logo sequence runs before it settles (with a short hold).
 const exportResolutions = [720, 1080, 1440, 2160] as const;
 const exportAspects = {
@@ -255,12 +257,18 @@ export default function LiquidGlassLogoPage() {
   const [backgroundName, setBackgroundName] = useState('');
   const [backgroundImage, setBackgroundImage] = useState('');
   const [backgroundValues, setBackgroundValues] = useState(backgroundDefaults);
-  const setBackground = <K extends keyof BackgroundValues>(key: K, value: BackgroundValues[K]) =>
+  const setBackground = <K extends keyof BackgroundValues>(key: K, value: BackgroundValues[K]) => {
     setBackgroundValues((old) => ({ ...old, [key]: value }));
+  };
   const [exportAspect, setExportAspect] = useState<ExportAspect>('16:9');
   const [exportResolution, setExportResolution] =
     useState<(typeof exportResolutions)[number]>(1080);
   const [exportFps, setExportFps] = useState(60);
+  const [exportType, setExportType] = useState<'video' | 'image'>('video');
+  const [imageFormat, setImageFormat] = useState<LiquidGlassLogoImageFormat>('png');
+  const [imageTime, setImageTime] = useState(0.9);
+  const [transparentBackground, setTransparentBackground] = useState(false);
+  const transparentImage = exportType === 'image' && imageFormat === 'png' && transparentBackground;
   const [exportFormat, setExportFormat] = useState<LiquidGlassLogoVideoFormat['extension']>('mp4');
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
   const [exportProgress, setExportProgress] = useState(0);
@@ -270,8 +278,9 @@ export default function LiquidGlassLogoPage() {
   const demo = useRef<HTMLDivElement>(null);
   const exportHost = useRef<HTMLDivElement>(null);
   const exportRef = useRef<LiquidGlassLogoHandle>(null);
-  const set = <K extends keyof Values>(key: K, value: Values[K]) =>
+  const set = <K extends keyof Values>(key: K, value: Values[K]) => {
     setValues((old) => ({ ...old, [key]: value }));
+  };
   useEffect(() => () => (upload ? URL.revokeObjectURL(upload) : undefined), [upload]);
   useEffect(
     () => () => (backgroundImage ? URL.revokeObjectURL(backgroundImage) : undefined),
@@ -333,8 +342,8 @@ export default function LiquidGlassLogoPage() {
   };
   // Renders the sequence off screen at the exact output size, framed like the
   // preview frame: the tile keeps its size relative to the frame's short side.
-  const exportVideo = async () => {
-    if (!videoFormat || exportJob) return;
+  const exportFile = async () => {
+    if ((exportType === 'video' && !videoFormat) || exportJob) return;
     const [across, down] = exportAspects[exportAspect];
     const width = even(across >= down ? (exportResolution * across) / down : exportResolution);
     const height = even(across >= down ? exportResolution : (exportResolution * down) / across);
@@ -362,22 +371,33 @@ export default function LiquidGlassLogoPage() {
       }
       const source = host.querySelector('canvas');
       if (!source) throw new Error('The export view has no canvas.');
-      const { blob, extension } = await recordLiquidGlassLogoVideo({
+      const options = {
         source,
-        seek: (seconds) => exportRef.current?.seek(seconds),
+        seek: (seconds: number) => exportRef.current?.seek(seconds),
         width,
         height,
-        fps: exportFps,
-        format: videoFormat,
-        duration: exportDuration,
         background: values.background,
         backgroundImage: backgroundImage || undefined,
         ...backgroundValues,
-        onProgress: setExportProgress,
-      });
+      };
+      const { blob, extension } =
+        exportType === 'image'
+          ? await exportLiquidGlassLogoImage({
+              ...options,
+              format: imageFormat,
+              seconds: imageTime,
+              transparent: transparentImage,
+            })
+          : await recordLiquidGlassLogoVideo({
+              ...options,
+              fps: exportFps,
+              format: videoFormat!,
+              duration: exportDuration,
+              onProgress: setExportProgress,
+            });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `liquid-glass-logo-${exportAspect.replace(':', 'x')}-${width}x${height}-${exportFps}fps.${extension}`;
+      link.download = `liquid-glass-logo-${exportAspect.replace(':', 'x')}-${width}x${height}-${exportType === 'video' ? `${exportFps}fps` : `${imageTime.toFixed(2)}s${transparentImage ? '-transparent' : ''}`}.${extension}`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(link.href), 10000);
     } catch (error) {
@@ -387,6 +407,12 @@ export default function LiquidGlassLogoPage() {
     }
   };
   const logoSource = logo === 'upload' ? upload || liquidGlassLogoNoteLogo : logos[logo];
+  useEffect(() => {
+    if (exportType === 'image') ref.current?.seek(imageTime);
+  }, [exportType, imageTime, values, logoSource]);
+  const replay = () => {
+    ref.current?.replay();
+  };
   const usage = example(values, logo, backgroundImage ? backgroundValues : undefined);
   const commands = Object.fromEntries(
     Object.entries({ npm: 'npx', pnpm: 'pnpm dlx', yarn: 'yarn dlx', bun: 'bunx --bun' }).map(
@@ -451,7 +477,7 @@ export default function LiquidGlassLogoPage() {
       prompt={prompt(usage)}
       defaultPrompt={prompt(example(defaults, 'note'))}
       sourceFiles={files}
-      onReplay={() => ref.current?.replay()}
+      onReplay={exportType === 'video' ? replay : undefined}
       controlsActions={
         <button className="liquid-glass-logo-reset-action" type="button" onClick={reset}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -465,24 +491,29 @@ export default function LiquidGlassLogoPage() {
           {/* The preview keeps its size and shows the export frame inside it. */}
           <div
             ref={demo}
-            className={`liquid-glass-logo-frame${exportAspect === '16:9' ? ' is-fill' : ''}`}
             style={
               {
                 '--frame-ratio': exportAspects[exportAspect][0] / exportAspects[exportAspect][1],
               } as CSSProperties
             }
+            className={`liquid-glass-logo-frame${exportAspect === '16:9' ? ' is-fill' : ''}${transparentImage ? ' is-transparent' : ''}`}
           >
             <LiquidGlassLogo
               ref={ref}
               {...values}
+              paused={exportType === 'image' || values.paused}
               ending="logo"
               text=""
               mark=""
               aria-label={logo === 'upload' ? 'Logo' : logoNames[logo]}
               logo={logoSource}
-              backgroundImage={backgroundImage || undefined}
+              backgroundImage={transparentImage ? undefined : backgroundImage || undefined}
               {...backgroundValues}
-              style={{ height: '100%', minHeight: 0 }}
+              style={{
+                height: '100%',
+                minHeight: 0,
+                ...(transparentImage ? { background: 'transparent' } : {}),
+              }}
             />
           </div>
           {exportJob && (
@@ -503,7 +534,7 @@ export default function LiquidGlassLogoPage() {
                 logo={logoSource}
                 logoSize={exportJob.logoSize}
                 maxDpr={exportJob.pixelRatio}
-                backgroundImage={backgroundImage || undefined}
+                backgroundImage={transparentImage ? undefined : backgroundImage || undefined}
                 {...backgroundValues}
                 style={{ height: '100%', minHeight: 0 }}
               />
@@ -726,28 +757,60 @@ export default function LiquidGlassLogoPage() {
           </fieldset>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
-              <h3>Export video</h3>
+              <h3>Export</h3>
             </legend>
             <div className="reveal-fields">
-              {videoFormats.length > 0 && (
+              <ControlField
+                label="Type"
+                description="Export the animation as a video or a single frame as an image."
+              >
+                <SelectControl
+                  label="Type"
+                  value={exportType}
+                  options={[
+                    { value: 'video', label: 'Video' },
+                    { value: 'image', label: 'Image' },
+                  ]}
+                  onChange={(value) => {
+                    setExportType(value as 'video' | 'image');
+                    setExportError('');
+                  }}
+                />
+              </ControlField>
+              {(exportType === 'image' || videoFormats.length > 0) && (
                 <ControlField
                   label="Format"
-                  description="Video file format. Available formats depend on your browser."
+                  description={
+                    exportType === 'image'
+                      ? 'Image file format. PNG supports a transparent background.'
+                      : 'Video file format. Available formats depend on your browser.'
+                  }
                 >
                   <SelectControl
                     label="Format"
-                    value={exportFormat}
-                    options={videoFormats.map(({ extension }) => ({
-                      value: extension,
-                      label: extension === 'mp4' ? 'MP4' : 'WebM',
-                    }))}
-                    onChange={(value) =>
-                      setExportFormat(value as LiquidGlassLogoVideoFormat['extension'])
+                    value={exportType === 'image' ? imageFormat : exportFormat}
+                    options={
+                      exportType === 'image'
+                        ? [
+                            { value: 'png', label: 'PNG' },
+                            { value: 'jpeg', label: 'JPEG' },
+                            { value: 'webp', label: 'WebP' },
+                          ]
+                        : videoFormats.map(({ extension }) => ({
+                            value: extension,
+                            label: extension === 'mp4' ? 'MP4' : 'WebM',
+                          }))
                     }
+                    onChange={(value) => {
+                      setExportError('');
+                      if (exportType === 'image')
+                        setImageFormat(value as LiquidGlassLogoImageFormat);
+                      else setExportFormat(value as LiquidGlassLogoVideoFormat['extension']);
+                    }}
                   />
                 </ControlField>
               )}
-              <ControlField label="Aspect ratio" description="Frame shape of the exported video.">
+              <ControlField label="Aspect ratio" description="Frame shape of the exported file.">
                 <SelectControl
                   label="Aspect ratio"
                   value={exportAspect}
@@ -768,33 +831,69 @@ export default function LiquidGlassLogoPage() {
                   }
                 />
               </ControlField>
-              <ControlField label="Frame rate" description="Frames per second.">
-                <SelectControl
-                  label="Frame rate"
-                  value={String(exportFps)}
-                  options={[
-                    { value: '30', label: '30 fps' },
-                    { value: '60', label: '60 fps' },
-                  ]}
-                  onChange={(value) => setExportFps(Number(value))}
-                />
-              </ControlField>
+              {exportType === 'video' ? (
+                <ControlField label="Frame rate" description="Frames per second.">
+                  <SelectControl
+                    label="Frame rate"
+                    value={String(exportFps)}
+                    options={[
+                      { value: '30', label: '30 fps' },
+                      { value: '60', label: '60 fps' },
+                    ]}
+                    onChange={(value) => setExportFps(Number(value))}
+                  />
+                </ControlField>
+              ) : (
+                <ControlField
+                  className="is-number"
+                  label="Frame (s)"
+                  description="Choose the moment in the animation to export. The preview shows this frame."
+                >
+                  <NumberControl
+                    label="Frame (s)"
+                    value={imageTime}
+                    min={0}
+                    max={exportDuration}
+                    step={0.01}
+                    onChange={(value) => setImageTime(value)}
+                  />
+                </ControlField>
+              )}
+              {exportType === 'image' && imageFormat === 'png' && (
+                <ControlField
+                  className="is-boolean"
+                  label="Transparent background"
+                  description="Remove the background color, uploaded image and tint. Keep only the glass and logo in the PNG."
+                >
+                  <SwitchControl
+                    label="Transparent background"
+                    checked={transparentBackground}
+                    onChange={setTransparentBackground}
+                  />
+                </ControlField>
+              )}
               <ControlField
                 className="is-wide"
                 label="Download"
                 description={
-                  videoFormat
-                    ? `Records the ${exportDuration}-second sequence as ${videoFormat.extension.toUpperCase()} with the current settings, background and logo. Keep this tab open while it records.`
-                    : 'This browser cannot record video.'
+                  exportType === 'image'
+                    ? `Save the selected frame as ${imageFormat.toUpperCase()}${transparentImage ? ' with a transparent background' : ' with the current background and tint'}.`
+                    : videoFormat
+                      ? `Records the ${exportDuration}-second sequence as ${videoFormat.extension.toUpperCase()} with the current settings, background and logo. Keep this tab open while it records.`
+                      : 'This browser cannot record video.'
                 }
               >
                 <button
                   className="liquid-glass-logo-reset liquid-glass-logo-export"
                   type="button"
-                  disabled={!videoFormat || !!exportJob}
-                  onClick={exportVideo}
+                  disabled={(exportType === 'video' && !videoFormat) || !!exportJob}
+                  onClick={exportFile}
                 >
-                  {exportJob ? `Exporting… ${Math.round(exportProgress * 100)}%` : 'Export video'}
+                  {exportJob
+                    ? exportType === 'image'
+                      ? 'Exporting…'
+                      : `Exporting… ${Math.round(exportProgress * 100)}%`
+                    : `Export ${exportType}`}
                 </button>
                 {exportError && (
                   <p className="liquid-glass-logo-export-error" role="alert">

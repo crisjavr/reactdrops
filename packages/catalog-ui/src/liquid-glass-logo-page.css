@@ -35,7 +35,7 @@
   outline-offset: 3px;
 }
 
-/* Off-screen stage the video export renders into at the exact output size. */
+/* Off-screen stage used for video and image export at the exact output size. */
 .liquid-glass-logo-export-stage {
   position: fixed;
   left: -100000px;
@@ -240,9 +240,7 @@
   height: min(100cqh, 100cqw / var(--frame-ratio, 1.7778));
   overflow: hidden;
   outline: 1px solid var(--theme-border);
-  transition:
-    width 220ms ease,
-    height 220ms ease;
+  transition: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .liquid-glass-logo-frame {
@@ -256,4 +254,7 @@
   width: 100%;
   height: 100%;
   outline: none;
+}
+.liquid-glass-logo-frame.is-transparent {
+  background: repeating-conic-gradient(#292929 0% 25%, #393939 0% 50%) 0 0 / 20px 20px;
 }
