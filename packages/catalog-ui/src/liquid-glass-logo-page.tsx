@@ -120,6 +120,23 @@ const controlNames = new Set<string>(logoControls);
 type Values = Pick<LiquidGlassLogoTuning, (typeof logoControls)[number]>;
 type NumericKey = { [K in keyof Values]: Values[K] extends number ? K : never }[keyof Values];
 type ColorKey = 'logoColor' | 'tileColor' | 'background';
+const glassPreviewTime = 0.9;
+const glassPreviewControls = new Set<keyof Values>([
+  'depth',
+  'dispersion',
+  'relief',
+  'caustics',
+  'highlights',
+  'echoTint',
+  'innerWallFocus',
+  'bloom',
+  'logoColor',
+  'tileColor',
+  'background',
+  'logoRelief',
+  'tile',
+  'dropStrength',
+]);
 const defaults = Object.fromEntries(
   logoControls.map((name) => [name, liquidGlassLogoDefaults[name]]),
 ) as Values;
@@ -322,6 +339,7 @@ export function liquidGlassLogoMeta() {
 export default function LiquidGlassLogoPage() {
   const ref = useRef<LiquidGlassLogoHandle>(null);
   const [values, setValues] = useState<Values>({ ...defaults, ...logoGlass('nike') });
+  const [inspectingGlass, setInspectingGlass] = useState(false);
   const chooseLogo = (choice: LogoChoice) => {
     setLogo(choice);
     setValues((old) => ({ ...old, ...logoGlass(choice) }));
@@ -368,6 +386,7 @@ export default function LiquidGlassLogoPage() {
   const exportHost = useRef<HTMLDivElement>(null);
   const exportRef = useRef<LiquidGlassLogoHandle>(null);
   const set = <K extends keyof Values>(key: K, value: Values[K]) => {
+    setInspectingGlass(exportType === 'video' && glassPreviewControls.has(key));
     setValues((old) => ({ ...old, [key]: value }));
   };
   useEffect(() => () => (upload ? URL.revokeObjectURL(upload) : undefined), [upload]);
@@ -427,7 +446,7 @@ export default function LiquidGlassLogoPage() {
     setBackgroundImage('');
     setBackgroundName('');
     setBackgroundValues(backgroundDefaults);
-    ref.current?.replay();
+    replay();
   };
   // Renders the sequence off screen at the exact output size, framed like the
   // preview frame: the tile keeps its size relative to the frame's short side.
@@ -514,9 +533,12 @@ export default function LiquidGlassLogoPage() {
   const logoSource = logo === 'upload' ? upload || liquidGlassLogoNoteLogo : logos[logo];
   useEffect(() => {
     if (exportType === 'image') ref.current?.seek(imageTime);
-  }, [exportType, imageTime, values, logoSource]);
+    else if (inspectingGlass) ref.current?.seek(glassPreviewTime);
+  }, [exportType, imageTime, values, logoSource, inspectingGlass]);
   const replay = () => {
+    setInspectingGlass(false);
     ref.current?.replay();
+    if (!values.paused) ref.current?.play();
   };
   const usage = example(values, logo, backgroundImage ? backgroundValues : undefined);
   const commands = Object.fromEntries(
@@ -606,7 +628,7 @@ export default function LiquidGlassLogoPage() {
             <LiquidGlassLogo
               ref={ref}
               {...values}
-              paused={exportType === 'image' || values.paused}
+              paused={exportType === 'image' || values.paused || inspectingGlass}
               ending="logo"
               text=""
               mark=""
@@ -691,13 +713,13 @@ export default function LiquidGlassLogoPage() {
                 setUpload(URL.createObjectURL(file));
                 setUploadName(file.name);
                 chooseLogo('upload');
-                ref.current?.replay();
+                replay();
               }}
               onClear={() => {
                 setUpload('');
                 setUploadName('');
                 chooseLogo('nike');
-                ref.current?.replay();
+                replay();
               }}
             />
           </div>
@@ -758,7 +780,7 @@ export default function LiquidGlassLogoPage() {
                     const selected = presets.find((item) => item.value === value);
                     if (!selected) return;
                     setValues((old) => ({ ...old, ...selected.settings }));
-                    if (exportType === 'video') ref.current?.replay();
+                    if (exportType === 'video') replay();
                   }}
                 />
               </ControlField>
@@ -775,7 +797,7 @@ export default function LiquidGlassLogoPage() {
                   ]}
                   onChange={(value) => {
                     applyTheme(value as Values['theme']);
-                    ref.current?.replay();
+                    replay();
                   }}
                 />
               </ControlField>
@@ -798,7 +820,7 @@ export default function LiquidGlassLogoPage() {
                   ]}
                   onChange={(value) => {
                     chooseLogo(value as LogoChoice);
-                    ref.current?.replay();
+                    replay();
                   }}
                 />
               </ControlField>
@@ -896,6 +918,7 @@ export default function LiquidGlassLogoPage() {
                     { value: 'image', label: 'Image' },
                   ]}
                   onChange={(value) => {
+                    setInspectingGlass(false);
                     setExportType(value as 'video' | 'image');
                     setExportError('');
                   }}
