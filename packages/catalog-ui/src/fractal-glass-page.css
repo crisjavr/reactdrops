@@ -14,8 +14,86 @@
 .fractal-glass-demo .fractal-glass {
   color: var(--theme-ink, #171717);
 }
-.fractal-glass-image-upload {
-  margin-bottom: 1.5rem;
+.reveal-field.fractal-glass-image-upload {
+  grid-template-columns: calc(var(--reveal-control-height) - 8px) auto minmax(0, 1fr);
+  gap: 6px;
+  padding-inline: 4px 8px;
+}
+.reveal-field.fractal-glass-image-upload.has-file {
+  grid-template-columns: calc(var(--reveal-control-height) - 8px) auto minmax(0, 1fr) auto;
+}
+.fractal-glass-image-upload > span:first-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+.fractal-glass-image-upload > input[type='text'] {
+  grid-column: 3;
+  grid-row: 1;
+  text-overflow: ellipsis;
+}
+.fractal-glass-image-upload.has-file input::placeholder {
+  color: var(--theme-ink);
+  opacity: 1;
+}
+.fractal-glass-image-upload.is-dragging {
+  border-style: dashed;
+  border-color: var(--theme-ink-muted);
+  background: color-mix(in srgb, var(--theme-ink) 5%, transparent);
+}
+.fractal-glass-image-browse,
+.fractal-glass-image-clear {
+  display: grid;
+  place-items: center;
+  width: calc(var(--reveal-control-height) - 8px);
+  height: calc(var(--reveal-control-height) - 8px);
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--theme-ink) 4%, transparent);
+  color: var(--theme-ink-muted);
+  cursor: pointer;
+}
+.fractal-glass-image-browse {
+  grid-column: 1;
+  grid-row: 1;
+  border: 1px dashed var(--theme-border-strong);
+}
+.fractal-glass-image-browse:hover,
+.fractal-glass-image-clear:hover {
+  color: var(--theme-ink);
+  background: color-mix(in srgb, var(--theme-ink) 8%, transparent);
+}
+.fractal-glass-image-browse img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.fractal-glass-image-browse svg,
+.fractal-glass-image-clear svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fractal-glass-image-clear {
+  grid-column: 4;
+  grid-row: 1;
+  border-radius: 50%;
+  background: transparent;
+}
+.fractal-glass-image-upload button:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.fractal-glass-image-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #e5484d;
+  font-size: 12px;
 }
 .fractal-glass-export {
   display: flex;
