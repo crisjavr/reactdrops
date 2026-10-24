@@ -1,4 +1,5 @@
 import { useId, useRef, useState, type DragEvent } from 'react';
+import './liquid-glass-logo-dropzone.css';
 
 type DropZoneProps = {
   title: string;

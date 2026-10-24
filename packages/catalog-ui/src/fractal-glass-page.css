@@ -1,0 +1,76 @@
+.component-showcase:has(.fractal-glass-demo),
+.component-preview-canvas:has(.fractal-glass-demo) {
+  min-height: 0;
+}
+.component-showcase .component-preview-stage:has(> .fractal-glass-demo) {
+  padding: 0;
+  min-height: 0;
+  box-shadow: none;
+}
+.fractal-glass-demo {
+  width: 100%;
+  min-width: 0;
+}
+.fractal-glass-demo .fractal-glass {
+  color: var(--theme-ink, #171717);
+}
+.fractal-glass-image-upload {
+  margin-bottom: 1.5rem;
+}
+.fractal-glass-export {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--components-selection-background);
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fractal-glass-export:enabled:hover {
+  border-color: var(--theme-border-strong);
+  background: color-mix(in srgb, var(--components-selection-background) 88%, var(--theme-ink) 12%);
+}
+.fractal-glass-export:disabled {
+  cursor: wait;
+}
+.fractal-glass-export svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.fractal-glass-export-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: fractal-glass-export-spin 700ms linear infinite;
+}
+@keyframes fractal-glass-export-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.fractal-glass-export-error {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0 0;
+  color: #e5484d;
+  font-size: 0.8125rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fractal-glass-export-spinner {
+    animation: none;
+  }
+}

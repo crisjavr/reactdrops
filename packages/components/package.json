@@ -14,7 +14,8 @@
     "./shape-physics": "./src/shape-physics/index.ts",
     "./topographic-flow": "./src/topographic-flow/index.ts",
     "./chromatic-button": "./src/chromatic-button/index.ts",
-    "./liquid-glass-logo": "./src/liquid-glass-logo/index.ts"
+    "./liquid-glass-logo": "./src/liquid-glass-logo/index.ts",
+    "./fractal-glass": "./src/fractal-glass/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -56,6 +57,12 @@
     "src/fluid-glass-gradient/fluid-glass-gradient.css",
     "src/fluid-glass-gradient/fluid-glass-gradient.tsx",
     "src/fluid-glass-gradient/index.ts",
+    "src/fractal-glass/fractal-glass-model.ts",
+    "src/fractal-glass/fractal-glass-renderer.ts",
+    "src/fractal-glass/fractal-glass-shaders.ts",
+    "src/fractal-glass/fractal-glass.css",
+    "src/fractal-glass/fractal-glass.tsx",
+    "src/fractal-glass/index.ts",
     "src/liquid-glass-logo/index.ts",
     "src/liquid-glass-logo/liquid-glass-logo-renderer.ts",
     "src/liquid-glass-logo/liquid-glass-logo-shaders.ts",

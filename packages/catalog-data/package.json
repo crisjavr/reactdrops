@@ -12,7 +12,8 @@
     "./sources/topographic-flow": "./src/generated/topographic-flow-source.ts",
     "./sources/chromatic-button": "./src/generated/chromatic-button-source.ts",
     "./publication": "./src/publication.mjs",
-    "./sources/liquid-glass-logo": "./src/generated/liquid-glass-logo-source.ts"
+    "./sources/liquid-glass-logo": "./src/generated/liquid-glass-logo-source.ts",
+    "./sources/fractal-glass": "./src/generated/fractal-glass-source.ts"
   },
   "dependencies": {
     "@reactdrops/component-schema": "workspace:*"
@@ -22,6 +23,7 @@
     "src/components/chromatic-button.json",
     "src/components/fan-gallery.json",
     "src/components/fluid-agent-orb.json",
+    "src/components/fractal-glass.json",
     "src/components/liquid-glass-logo.json",
     "src/components/shape-physics.json",
     "src/components/topographic-flow.json",
@@ -29,6 +31,7 @@
     "src/generated/chromatic-button-source.ts",
     "src/generated/fan-gallery-source.ts",
     "src/generated/fluid-agent-orb-source.ts",
+    "src/generated/fractal-glass-source.ts",
     "src/generated/liquid-glass-logo-source.ts",
     "src/generated/shape-physics-source.ts",
     "src/generated/topographic-flow-source.ts",

@@ -20,3 +20,5 @@ export {
   default as LiquidGlassLogoCatalogPage,
   liquidGlassLogoMeta,
 } from './liquid-glass-logo-page';
+
+export { default as FractalGlassCatalogPage, fractalGlassMeta } from './fractal-glass-page';

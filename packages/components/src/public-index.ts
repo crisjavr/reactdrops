@@ -6,3 +6,5 @@ export * from './topographic-flow';
 export * from './chromatic-button';
 
 export * from './liquid-glass-logo';
+
+export * from './fractal-glass';

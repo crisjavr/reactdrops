@@ -1,6 +1,6 @@
 # ReactDrops — Creative React components
 
-Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics, Chromatic Button and Liquid Glass Logo, with source, catalog previews, customizers and a shadcn registry.
+Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics, Chromatic Button, Liquid Glass Logo and Fractal Glass, with source, catalog previews, customizers and a shadcn registry.
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
@@ -127,6 +127,25 @@ export function Example() {
 The catalog demo includes logo and background uploads, glass controls, aspect
 ratio and resolution choices, and MP4/WebM video export at 60 FPS by default.
 Available video formats depend on the browser.
+
+Fractal Glass refracts an image through striped glass, with blur, levels,
+optical rendering and hover/touch presets. Its catalog supports custom image
+uploads, a live miniature while editing, and PNG export of the current image.
+
+```sh
+npx shadcn@latest add https://reactdrops.dev/r/fractal-glass.json
+```
+
+```tsx
+import { useRef } from 'react';
+import { FractalGlass, type FractalGlassHandle } from './components/fractal-glass';
+
+export function Example() {
+  const glass = useRef<FractalGlassHandle>(null);
+  // Call await glass.current?.exportImage() to obtain a PNG Blob of the current frame.
+  return <FractalGlass ref={glass} src="/your-image.jpg" alt="Your image" height={480} />;
+}
+```
 
 ## Development
 

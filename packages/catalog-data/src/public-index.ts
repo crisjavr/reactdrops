@@ -19,3 +19,5 @@ export {
   liquidGlassLogoSourceFiles,
   liquidGlassLogoUsage,
 } from './generated/liquid-glass-logo-source';
+
+export { fractalGlassSourceFiles, fractalGlassUsage } from './generated/fractal-glass-source';

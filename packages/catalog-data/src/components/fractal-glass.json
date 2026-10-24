@@ -1,0 +1,413 @@
+{
+  "slug": "fractal-glass",
+  "name": "Fractal Glass",
+  "family": {
+    "slug": "image",
+    "name": "Image"
+  },
+  "version": "1.20.0",
+  "description": "Create a striped glass effect with Gaussian blur, a custom striped texture, clipping, monochromatic noise and levels.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 26,
+  "publishedAt": "2026-10-23",
+  "styles": [
+    "glass",
+    "experimental",
+    "grain"
+  ],
+  "types": [
+    "image"
+  ],
+  "interactions": [
+    "static",
+    "hover",
+    "focus",
+    "touch"
+  ],
+  "technologies": [
+    "react",
+    "webgl",
+    "css"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "responsive",
+    "reduced-motion",
+    "ssr-compatible"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "mode",
+      "label": "Rendering mode",
+      "type": "select",
+      "defaultValue": "default",
+      "options": [
+        "default",
+        "optical"
+      ],
+      "description": "Default combines blur, striped refraction, noise and levels. Optical preserves the rounded physical glass renderer."
+    },
+    {
+      "name": "smoothness",
+      "label": "Glass smoothness",
+      "type": "number",
+      "defaultValue": 7.3,
+      "min": 0,
+      "max": 15,
+      "step": 0.1,
+      "description": "Smooth the repeated gradient texture before deriving its refracting slope. Default mode only."
+    },
+    {
+      "name": "textureScale",
+      "label": "Texture scale (%)",
+      "type": "number",
+      "defaultValue": 103,
+      "min": 25,
+      "max": 400,
+      "step": 1,
+      "description": "Scale the repeated texture. 100% uses the base texture scale; larger values make wider strips."
+    },
+    {
+      "name": "blackPoint",
+      "label": "Levels black point",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 254,
+      "step": 1,
+      "description": "Input black point for the glass copy, after noise. Default mode only."
+    },
+    {
+      "name": "whitePoint",
+      "label": "Levels white point",
+      "type": "number",
+      "defaultValue": 232,
+      "min": 1,
+      "max": 255,
+      "step": 1,
+      "description": "Input white point for the glass copy. Default mode only."
+    },
+    {
+      "name": "gamma",
+      "label": "Levels gamma",
+      "type": "number",
+      "defaultValue": 0.78,
+      "min": 0.1,
+      "max": 3,
+      "step": 0.01,
+      "description": "Adjust glass midtones after noise. One preserves midtones; greater values brighten them."
+    },
+    {
+      "name": "edgeWidth",
+      "label": "Glass stroke (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 12,
+      "step": 0.1,
+      "description": "Optional inside stroke, scaled from a 1080px reference. Disabled by default for a clean glass boundary."
+    },
+    {
+      "name": "stripes",
+      "label": "Stripes",
+      "type": "number",
+      "defaultValue": 26,
+      "min": 1,
+      "max": 120,
+      "step": 1,
+      "description": "Repeated gradient strips across the full image. Default 26; texture scale adjusts their spacing."
+    },
+    {
+      "name": "distortion",
+      "label": "Distortion",
+      "type": "number",
+      "defaultValue": 24,
+      "min": 0,
+      "max": 200,
+      "step": 1,
+      "description": "Glass displacement strength. Default 24; optical mode measures displacement in CSS pixels."
+    },
+    {
+      "name": "refractionBias",
+      "label": "Refraction direction",
+      "type": "number",
+      "defaultValue": -0.1,
+      "min": -1,
+      "max": 1,
+      "step": 0.05,
+      "description": "Orient refraction within every strip: -1 left, 0 centered, 1 right. The source is offset back automatically to keep the image aligned. Intermediate values blend directions; horizontal strips use up/down."
+    },
+    {
+      "name": "blur",
+      "label": "Gaussian blur",
+      "type": "number",
+      "defaultValue": 20,
+      "min": 0,
+      "max": 80,
+      "step": 0.05,
+      "description": "Blur the image copy before Glass. Default mode pixels scale from a 1080px reference; optical mode uses CSS pixels."
+    },
+    {
+      "name": "relief",
+      "label": "Relief",
+      "type": "number",
+      "defaultValue": 1.25,
+      "min": 0,
+      "max": 4,
+      "step": 0.01,
+      "description": "Height of the rounded flutes. Analytic surface normals guide refraction and reflections."
+    },
+    {
+      "name": "refraction",
+      "label": "Refraction",
+      "type": "number",
+      "defaultValue": 1.1,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Strength of source-image refraction through the rounded surface, using IOR 1.46."
+    },
+    {
+      "name": "roughness",
+      "label": "Roughness",
+      "type": "number",
+      "defaultValue": 0.08,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Broaden studio highlights and soften transmission from polished to frosted glass."
+    },
+    {
+      "name": "reflection",
+      "label": "Reflection",
+      "type": "number",
+      "defaultValue": 1.15,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Strength of the soft environment reflections mixed with image transmission."
+    },
+    {
+      "name": "dispersion",
+      "label": "Dispersion",
+      "type": "number",
+      "defaultValue": 0.25,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Separate red and blue transmission along the refracted ray for subtle prism fringes."
+    },
+    {
+      "name": "caustics",
+      "label": "Caustics",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Concentrate or spread transmitted light where neighboring refracted rays converge or diverge. Disabled by default for clear glass."
+    },
+    {
+      "name": "grain",
+      "label": "Grain",
+      "type": "number",
+      "defaultValue": 0.005,
+      "min": 0,
+      "max": 0.15,
+      "step": 0.001,
+      "description": "Uniform monochromatic noise applied after Glass. Default 0.005 (0.5%); 0.02 applies 2% noise."
+    },
+    {
+      "name": "coverage",
+      "label": "Glass coverage",
+      "type": "number",
+      "defaultValue": 0.55,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Fraction covered by glass. Continuous clips freely; By stripe advances through whole divisions. Zero is clear; one covers the full image."
+    },
+    {
+      "name": "coverageMode",
+      "label": "Coverage mode",
+      "type": "select",
+      "defaultValue": "stripes",
+      "options": [
+        "continuous",
+        "stripes"
+      ],
+      "description": "Continuous preserves the free boundary. By stripe uses a hybrid of soft left-to-right sweeps within each strip and opacity controlled by Transition fade. Divisions keep independent animation clocks while dragging."
+    },
+    {
+      "name": "side",
+      "label": "Glass side",
+      "type": "select",
+      "defaultValue": "left",
+      "options": [
+        "left",
+        "right"
+      ],
+      "description": "Starting edge of the covered section. In Reveal on hover, Left reveals left to right and Right reveals right to left, including each strip\u2019s sweep. Horizontal By stripe coverage uses top/bottom."
+    },
+    {
+      "name": "direction",
+      "label": "Stripe direction",
+      "type": "select",
+      "defaultValue": "vertical",
+      "options": [
+        "vertical",
+        "horizontal"
+      ],
+      "description": "Choose vertical or horizontal glass flutes."
+    },
+    {
+      "name": "hoverPreset",
+      "label": "Hover preset",
+      "type": "select",
+      "defaultValue": "reveal-on-hover",
+      "options": [
+        "glass-on-hover",
+        "reveal-on-hover"
+      ],
+      "description": "Glass on hover starts clear and applies glass over the left 44%. Reveal on hover sets full coverage with Glass side Right: glass rests fully applied, hover reveals the original right to left, and recovery reverses direction by default. Both restore interaction defaults; coverage, side and recovery direction remain editable. Spread the exported fractalGlassPresets map to reuse the presets."
+    },
+    {
+      "name": "hoverEffect",
+      "label": "Hover effect",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Enable hover interaction. Procedural and Transition activate inside the covered section. Circular glass activates anywhere on the image. Keyboard focus and touch taps also activate the effect."
+    },
+    {
+      "name": "hoverAnimation",
+      "label": "Hover animation",
+      "type": "select",
+      "defaultValue": "procedural",
+      "options": [
+        "procedural",
+        "transition",
+        "circle"
+      ],
+      "description": "Procedural combines strip sweeps and opacity; Transition uses one global transition. Circular glass follows the pointer anywhere on the image, showing distortion only inside a soft circle, independently of coverage and Hover preset. Keyboard focus centers the circle; touch taps place and toggle it."
+    },
+    {
+      "name": "recoveryDirection",
+      "label": "Recovery direction",
+      "type": "select",
+      "defaultValue": "same",
+      "options": [
+        "reverse",
+        "same",
+        "left-to-right",
+        "right-to-left"
+      ],
+      "description": "Direction of glass restoration on exit from procedural Reveal on hover. Reverse reveal follows the opposite direction of Glass side; Same as reveal follows it. Explicit left-to-right/right-to-left settings work independently. Both the per-strip sweep and vertical curtain order follow the selection. Interrupted transitions blend from their current mask without resetting progress."
+    },
+    {
+      "name": "hoverDuration",
+      "label": "Hover stripe (ms)",
+      "type": "number",
+      "defaultValue": 880,
+      "min": 0,
+      "max": 2000,
+      "step": 10,
+      "description": "Time for each procedural strip transition or for the circular glass fade. Default 880ms; lower values move faster. Zero immediately shows the active state."
+    },
+    {
+      "name": "hoverRadius",
+      "label": "Circle radius (px)",
+      "type": "number",
+      "defaultValue": 120,
+      "min": 10,
+      "max": 600,
+      "step": 1,
+      "description": "Radius of the circular hover in CSS pixels. It stays circular across image sizes and pixel densities."
+    },
+    {
+      "name": "hoverFeather",
+      "label": "Circle softness (px)",
+      "type": "number",
+      "defaultValue": 16,
+      "min": 0,
+      "max": 300,
+      "step": 1,
+      "description": "Soft edge inside the circular hover, from 0 to 300 CSS pixels. Zero gives a sharp circle; larger values blend glass into the original, up to the circle radius."
+    },
+    {
+      "name": "disabled",
+      "label": "Disabled",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Show the original image and immediately stop the transition."
+    },
+    {
+      "name": "transitionBlend",
+      "label": "Transition fade",
+      "type": "number",
+      "defaultValue": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "Mix the soft left-to-right sweep within each strip with whole-strip opacity for By stripe coverage and Procedural hover. Zero emphasizes the sweep; one uses opacity only; 0.5 blends both."
+    },
+    {
+      "name": "duration",
+      "label": "Transition (ms)",
+      "type": "number",
+      "defaultValue": 570,
+      "min": 0,
+      "max": 2000,
+      "step": 10,
+      "description": "Duration of coverage wipes and Transition hover. Zero disables animation, including the procedural reveal. Reduced motion shows a static final state."
+    },
+    {
+      "name": "ease",
+      "label": "Easing curve",
+      "type": "select",
+      "defaultValue": "power4.out",
+      "options": [
+        "power4.out",
+        "power3.out",
+        "power2.out",
+        "power1.out",
+        "power4.inOut",
+        "power3.inOut",
+        "sine.out",
+        "sine.inOut",
+        "expo.out",
+        "smoothstep",
+        "none"
+      ],
+      "description": "Timing curve for coverage and both hover animations. Power4 out starts quickly and slows smoothly into place. Smoothstep retains the earlier hover curve; none is linear. Hover staggering adapts to the curve so strips remain closely overlapped. Changes keep independent clocks and current progress."
+    },
+    {
+      "name": "height",
+      "label": "Height (px)",
+      "type": "number",
+      "defaultValue": 480,
+      "min": 160,
+      "max": 900,
+      "step": 1,
+      "description": "Preview height. The component defaults to a responsive 1.5 aspect ratio when omitted."
+    },
+    {
+      "name": "borderRadius",
+      "label": "Border radius (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "description": "Clip the image, glass and foreground to the same rounded surface."
+    }
+  ]
+}

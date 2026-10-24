@@ -15,7 +15,8 @@
     "./pages/shape-physics": "./src/shape-physics-page.tsx",
     "./pages/topographic-flow": "./src/topographic-flow-page.tsx",
     "./pages/chromatic-button": "./src/chromatic-button-page.tsx",
-    "./pages/liquid-glass-logo": "./src/liquid-glass-logo-page.tsx"
+    "./pages/liquid-glass-logo": "./src/liquid-glass-logo-page.tsx",
+    "./pages/fractal-glass": "./src/fractal-glass-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -34,6 +35,7 @@
     "LICENSE",
     "src/assets/chromatic-button-preview.webp",
     "src/assets/fan-gallery-preview.webp",
+    "src/assets/fractal-glass-preview.webp",
     "src/assets/liquid-glass-logo-preview-dark.webp",
     "src/assets/liquid-glass-logo-preview-light.webp",
     "src/assets/liquid-glass-orb-preview.webp",
@@ -66,7 +68,10 @@
     "src/fluid-agent-orb-page.css",
     "src/fluid-agent-orb-page.tsx",
     "src/fluid-agent-orb-speech.ts",
+    "src/fractal-glass-page.css",
+    "src/fractal-glass-page.tsx",
     "src/highlighted-code.tsx",
+    "src/liquid-glass-logo-dropzone.css",
     "src/liquid-glass-logo-dropzone.tsx",
     "src/liquid-glass-logo-export.ts",
     "src/liquid-glass-logo-page.css",

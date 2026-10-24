@@ -12,6 +12,7 @@ import { packageShapePhysics } from './package-shape-physics.mjs';
 import { packageTopographicFlow } from './package-topographic-flow.mjs';
 import { packageLiquidGlassLogo } from './package-liquid-glass-logo.mjs';
 import { packageChromaticButton } from './package-chromatic-button.mjs';
+import { packageFractalGlass } from './package-fractal-glass.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -26,6 +27,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'fractal-glass': {
+    sourceSlug: 'fractal-glass',
+    symbol: 'FractalGlass',
+    prefix: 'fractalGlass',
+    package: () => packageFractalGlass(root),
+    element: '<FractalGlass src="/your-image.jpg" alt="Your image" height={480} />',
+  },
   'liquid-glass-logo': {
     sourceSlug: 'liquid-glass-logo',
     symbol: 'LiquidGlassLogo',

@@ -1,0 +1,36 @@
+.fractal-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  aspect-ratio: 1.5;
+  background: #dbe0e5;
+}
+.fractal-glass:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+.fractal-glass-image,
+.fractal-glass-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.fractal-glass-image {
+  object-fit: cover;
+}
+.fractal-glass-canvas {
+  opacity: 0;
+}
+.fractal-glass[data-renderer='webgl'] .fractal-glass-canvas {
+  opacity: 1;
+}
+.fractal-glass-content {
+  position: relative;
+  z-index: 1;
+}

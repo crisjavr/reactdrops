@@ -33,6 +33,7 @@
   "files": [
     "LICENSE",
     "index.html",
+    "public-release/assets/fractal-glass/mountain.webp",
     "public-release/assets/hero-artwork/02.webp",
     "public-release/assets/hero-artwork/04.webp",
     "public-release/assets/hero-artwork/05.webp",
@@ -41,6 +42,7 @@
     "public-release/license.txt",
     "public-release/r/chromatic-button.json",
     "public-release/r/fan-gallery.json",
+    "public-release/r/fractal-glass.json",
     "public-release/r/liquid-glass-logo.json",
     "public-release/r/liquid-glass-orb.json",
     "public-release/r/shape-physics.json",
