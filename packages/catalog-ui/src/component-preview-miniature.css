@@ -17,12 +17,9 @@
   width: 100%;
   min-width: 0;
 }
-.component-miniature-layer {
-  --miniature-top: max(4.5rem, env(safe-area-inset-top));
-  --miniature-navbar: max(3.5rem, env(safe-area-inset-top));
-  --miniature-gradient-height: calc(
-    var(--miniature-height) + var(--miniature-top) - var(--miniature-navbar) + 3rem
-  );
+.component-miniature-frame {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
 }
 .component-miniature-layer.is-pinned {
   display: block;
@@ -44,7 +41,7 @@
 .component-miniature-layer.is-pinned::before {
   content: '';
   position: fixed;
-  inset: var(--miniature-navbar) auto auto var(--miniature-backdrop-left);
+  inset: calc(var(--miniature-backdrop-top) + var(--miniature-gradient-height) * 0.1) auto auto var(--miniature-backdrop-left);
   width: var(--miniature-backdrop-width);
   height: calc(var(--miniature-gradient-height) * 0.9);
   pointer-events: auto;
@@ -53,15 +50,15 @@
 .component-miniature-layer.is-pinned .component-miniature-frame {
   display: block;
   position: fixed;
-  left: var(--miniature-center);
-  top: var(--miniature-top);
+  left: auto;
+  top: auto;
   overflow: hidden;
   box-sizing: border-box;
   border: 1px solid var(--theme-border-strong);
   border-radius: 12px;
   background: var(--theme-background);
   pointer-events: auto;
-  transform: translateX(-50%);
+  transform: none;
 }
 .component-miniature-layer.is-pinned .component-miniature-source {
   display: block;
@@ -77,11 +74,11 @@
 }
 .component-miniature-layer.is-pinned::backdrop {
   position: fixed;
-  inset: var(--miniature-navbar) auto auto var(--miniature-backdrop-left);
+  inset: var(--miniature-backdrop-top) auto auto var(--miniature-backdrop-left);
   width: var(--miniature-backdrop-width);
   height: var(--miniature-gradient-height);
   background: linear-gradient(
-    to bottom,
+    to top,
     var(--theme-background) 0%,
     var(--theme-background) 50%,
     color-mix(in srgb, var(--theme-background) 85%, transparent) 78%,
@@ -93,6 +90,9 @@
 }
 .component-miniature-layer.is-leaving::backdrop {
   animation: component-miniature-gradient-out 180ms ease-out both;
+}
+.component-miniature-layer.is-returning::backdrop {
+  animation: component-miniature-gradient-return var(--miniature-return-duration, 180ms) ease-in-out both;
 }
 .component-miniature-layer.is-leaving .component-miniature-frame,
 .component-miniature-layer.is-leaving::before {
@@ -125,7 +125,7 @@
 @keyframes component-miniature-gradient-in {
   from {
     opacity: 0;
-    transform: translateY(-16px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -139,7 +139,17 @@
   }
   to {
     opacity: 0;
-    transform: translateY(-16px);
+    transform: translateY(16px);
+  }
+}
+@keyframes component-miniature-gradient-return {
+  from {
+    opacity: var(--miniature-exit-opacity, 1);
+    transform: var(--miniature-exit-transform, translateY(0));
+  }
+  to {
+    opacity: 0;
+    transform: var(--miniature-exit-transform, translateY(0));
   }
 }
 @media (prefers-reduced-motion: reduce) {

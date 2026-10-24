@@ -27,7 +27,7 @@
   z-index: 10000;
   box-sizing: border-box;
   max-width: none;
-  border-radius: 16px;
+  border-radius: var(--radius-md, 8px);
   color: var(--theme-ink);
   font-family: inherit;
   font-size: 12px;
@@ -36,7 +36,6 @@
   pointer-events: none;
 }
 .reveal-color-panel {
-  container-type: inline-size;
   position: relative;
   border-radius: inherit;
 }
@@ -53,79 +52,59 @@
 .reveal-color-content {
   position: relative;
   box-sizing: border-box;
-  display: grid;
-  grid-template-columns: min(128px, 40cqi) minmax(0, 1fr);
-  column-gap: 12px;
-  row-gap: 10px;
-  align-items: center;
   overflow: visible;
-  padding: 6px 12px 12px;
+  padding: 12px;
   border: 1px solid transparent;
   border-radius: inherit;
 }
 
 .reveal-color-heading {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 0;
+  margin-bottom: 10px;
 }
 .reveal-color-heading strong {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
+  font-size: 12px;
+  font-weight: 500;
 }
 .reveal-color-heading button {
   border: 0;
-  border-radius: var(--radius-md, 8px);
-  background: var(--components-selection-background);
-  color: var(--theme-ink);
+  background: transparent;
+  color: var(--theme-ink-muted);
   font-size: 20px;
-  width: 20px;
-  height: 20px;
-  line-height: 20px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   cursor: pointer;
 }
-.reveal-color-wheel {
+.reveal-color-plane {
   position: relative;
-  grid-column: 1;
-  grid-row: 2 / span 3;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: 50%;
+  height: 144px;
+  border-radius: 5px;
   background-image:
-    radial-gradient(circle closest-side, #fff, transparent),
-    conic-gradient(from 30deg, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
-  box-shadow:
-    0 0 0 5px var(--theme-background),
-    0 0 0 6px var(--theme-border);
+    linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
   touch-action: none;
   cursor: crosshair;
 }
-.reveal-color-wheel > span {
+.reveal-color-plane > span {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border: 2px solid white;
   border-radius: 50%;
-  box-shadow: 0 1px 5px #0006;
+  box-shadow: 0 0 0 1px #0008;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 .reveal-color-channel {
-  grid-column: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
-  min-height: 34px;
+  gap: 12px;
+  margin-top: 14px;
 }
 .reveal-color-channel > span {
-  font-size: 11px;
+  width: 44px;
   color: var(--theme-ink-muted);
 }
 .reveal-color-channel input {
@@ -133,10 +112,13 @@
   -webkit-appearance: none;
   flex: 1;
   min-width: 0;
-  height: 8px;
+  height: 10px;
   margin: 0;
   border-radius: 8px;
   cursor: pointer;
+}
+.reveal-color-hue {
+  background: linear-gradient(to right, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
 }
 .reveal-color-channel input::-webkit-slider-thumb {
   appearance: none;
@@ -158,61 +140,61 @@
 .reveal-color-value input {
   box-sizing: border-box;
   width: 100%;
-  height: 26px;
-  margin: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md, 8px);
-  padding: 0 10px;
-  background: var(--components-selection-background);
+  height: 30px;
+  margin-top: 14px;
+  border: 1px solid var(--theme-border);
+  border-radius: 5px;
+  padding: 0 8px;
+  background: transparent;
   color: var(--theme-ink);
   font: inherit;
-  font-size: 11px;
 }
 .reveal-color-value input[aria-invalid='true'] {
   border-color: #ef4444;
 }
-.reveal-color-value-row {
-  grid-column: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 100px;
-  gap: 6px;
-  margin-top: 0;
+.reveal-color-swatches {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  margin-top: 12px;
 }
-.reveal-color-value,
-.reveal-color-mode {
+.reveal-color-swatches button {
+  flex: 0 1 18px;
   min-width: 0;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #8885;
+  border-radius: 5px;
+  cursor: pointer;
 }
-.reveal-color-value input {
-  font-variant-numeric: tabular-nums;
+.reveal-color-keywords {
+  display: flex;
+  gap: 5px;
+  margin-top: 12px;
 }
-.reveal-color-mode .reveal-select {
-  width: 100%;
-}
-.reveal-color-mode .reveal-select > button {
-  width: 100%;
-  height: 26px;
-  min-height: 26px;
-  box-sizing: border-box;
-  padding: 0 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md, 8px);
-  color: var(--theme-ink);
-  background: var(--components-selection-background);
-  font-size: 11px;
-}
-.reveal-color-mode .reveal-select > button > span {
+.reveal-color-keywords button {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--theme-border);
+  border-radius: 5px;
+  padding: 5px 2px;
+  background: transparent;
+  color: var(--theme-ink-muted);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
 }
-.reveal-color-heading button,
-.reveal-color-mode .reveal-select > button {
-  transition:
-    background-color 180ms ease-out,
-    color 180ms ease-out;
+.reveal-color-keywords.has-auto {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.reveal-color-heading button:hover,
-.reveal-color-mode .reveal-select > button:is(:hover, [aria-expanded='true']) {
-  background: color-mix(in srgb, var(--components-selection-background) 84%, var(--theme-ink) 16%);
+.reveal-color-popup button[aria-pressed='true'] {
+  outline: 1px solid var(--theme-ink);
+  outline-offset: 2px;
 }
 .reveal-color-popup :focus-visible,
 .reveal-field .reveal-color-trigger:focus-visible {
@@ -225,19 +207,6 @@
    is released with the popup, rather than at the last animation frame. */
 .reveal-color-content {
   will-change: transform;
-}
-
-@container (max-width: 330px) {
-  .reveal-color-content {
-    grid-template-columns: min(112px, 40cqi) minmax(0, 1fr);
-    column-gap: 14px;
-  }
-  .reveal-color-wheel {
-    grid-row: 2 / span 2;
-  }
-  .reveal-color-value-row {
-    grid-column: 1 / -1;
-  }
 }
 
 /* Native top-layer placement keeps editors above the floating preview. */

@@ -8,6 +8,8 @@ import {
 } from 'react';
 import './component-preview-miniature.css';
 
+const RETURN_FADE_MS = 320;
+
 /** Also reaches the page when a control's editor is portalled to document.body. */
 export function requestComponentPreview(control: HTMLElement | null) {
   control?.dispatchEvent(new CustomEvent('reactdrops:preview-interaction', { bubbles: true }));
@@ -21,11 +23,15 @@ type Dock = {
   width: number;
   height: number;
   centerX: number;
+  top: number;
+  backdropTop: number;
+  backdropHeight: number;
   backdropLeft: number;
   backdropWidth: number;
   clip: string;
   backdropClip: string;
   exiting: boolean;
+  returning: boolean;
 };
 
 type Bounds = { left: number; top: number; right: number; bottom: number };
@@ -145,9 +151,10 @@ export function ComponentPreviewMiniature({
     }
     copy.querySelectorAll('style, link, script').forEach((element) => element.remove());
     target.className =
-      'component-miniature-layer component-miniature-exit-layer is-pinned is-leaving';
+      'component-miniature-layer component-miniature-exit-layer is-pinned is-leaving is-returning';
     target.style.cssText = sourceLayer.style.cssText;
     const backdrop = getComputedStyle(sourceLayer, '::backdrop');
+    target.style.setProperty('--miniature-return-duration', `${RETURN_FADE_MS}ms`);
     target.style.setProperty('--miniature-exit-opacity', backdrop.opacity);
     target.style.setProperty('--miniature-exit-transform', backdrop.transform);
     if (sourceLayer.hasAttribute('data-wide')) target.setAttribute('data-wide', '');
@@ -156,10 +163,10 @@ export function ComponentPreviewMiniature({
     target.showPopover();
     const animation = copy.animate(
       [
-        { opacity: copy.style.opacity, transform: 'translateY(0)' },
-        { opacity: 0, transform: 'translateY(-6px)' },
+        { opacity: copy.style.opacity },
+        { opacity: 0 },
       ],
-      { duration: 180, easing: 'cubic-bezier(.22, 1, .36, 1)', fill: 'forwards' },
+      { duration: RETURN_FADE_MS, easing: 'ease-in-out', fill: 'forwards' },
     );
     exitMotion.current = animation;
     animation.finished.then(
@@ -180,29 +187,34 @@ export function ComponentPreviewMiniature({
       return;
     }
     let pending = 0;
+    let previousScroll = scrollY;
     let activeControl: HTMLElement | null = null;
     const update = (interaction = false) => {
       if (page.closest('.page-reveal-surface[inert]')) return;
       if (!interaction && !requested.current && !current.current) return;
       const bounds = element.getBoundingClientRect();
+      const scrollingUp = scrollY < previousScroll;
+      previousScroll = scrollY;
       const navbar = parseFloat(getComputedStyle(document.documentElement).fontSize) * 3.5;
       const controls = page.querySelector('#controls')?.getBoundingClientRect();
-      const end = page.querySelector('#properties, #usage')?.getBoundingClientRect();
       const visible = Math.max(
         0,
         Math.min(bounds.bottom, innerHeight) - Math.max(bounds.top, navbar),
       );
-      const returned = bounds.top >= navbar || visible / bounds.height > 0.22;
+      // Begin returning as soon as the main preview peeks back into view.
+      // Editing near the activation threshold must not trigger a return.
+      const returned =
+        bounds.top >= navbar ||
+        visible / bounds.height > 0.22 ||
+        (!!current.current && scrollingUp && visible / bounds.height > 0.02);
       const available =
+        !returned &&
         !element.closest('.component-showcase.is-fullscreen') &&
         bounds.width > 0 &&
         bounds.height > 0 &&
         bounds.top < navbar &&
         visible / bounds.height <= (current.current ? 0.22 : 0.2) &&
-        !!controls &&
-        controls.top < innerHeight &&
-        controls.bottom > navbar &&
-        (!end || end.top > innerHeight * 0.35 + (current.current ? 0 : 24));
+        !!controls;
       if (interaction) requested.current = available;
       if (!requested.current || !available) {
         requested.current = false;
@@ -214,31 +226,33 @@ export function ComponentPreviewMiniature({
           captureSnapshot()
         ) {
           setDock(null);
-        } else setDock((old) => (old && !old.exiting ? { ...old, exiting: true } : old));
+        } else
+          setDock((old) =>
+            old && !old.exiting ? { ...old, exiting: true, returning: returned } : old,
+          );
         return;
       }
       const mobile = innerWidth <= 640;
       const ratio = mobile ? 16 / 9 : bounds.width / bounds.height;
-      const width = Math.min(
+      let width = Math.min(
         mobile ? innerWidth - 32 : 336,
         innerWidth - 32,
         innerHeight * 0.28 * ratio,
       );
-      const pageBox = page.getBoundingClientRect();
-      const left = page.querySelector('.components-left-sidebar')?.getBoundingClientRect();
-      const right = page.querySelector('.components-right-sidebar')?.getBoundingClientRect();
-      const backdropLeft = Math.max(
-        0,
-        left?.width && left.right <= bounds.left + 1 ? left.right : pageBox.left,
-      );
-      const backdropRight = Math.min(
-        innerWidth,
-        right?.width && right.left >= bounds.right - 1 ? right.left : pageBox.right,
-      );
-      const centerX = bounds.left + bounds.width / 2;
+      const frameStyle = getComputedStyle(frame.current!);
+      const rightInset = Number.parseFloat(frameStyle.right) || 16;
+      const bottomInset = Number.parseFloat(frameStyle.bottom) || 16;
+      const columnRight = Math.max(bounds.right, controls?.right ?? bounds.right);
+      const railWidth = innerWidth - rightInset - columnRight - 32;
+      // Use the empty desktop rail, keeping a gap beside the controls.
+      // Narrow layouts retain the wide mobile preview above the page.
+      if (!mobile && railWidth >= 160) width = Math.min(width, railWidth);
+      const centerX = innerWidth - rightInset - width / 2;
       const height = width / ratio;
-      const miniatureTop =
-        Number.parseFloat(getComputedStyle(frame.current!).top) || navbar + navbar / 3.5;
+      const miniatureTop = innerHeight - bottomInset - height;
+      const backdropLeft = Math.max(0, centerX - width / 2 - 24);
+      const backdropRight = innerWidth;
+      const backdropTop = Math.max(navbar, miniatureTop - 32);
       const control =
         activeControl?.isConnected && activeControl.querySelector('input[type="range"]')
           ? activeControl.getBoundingClientRect()
@@ -250,7 +264,7 @@ export function ComponentPreviewMiniature({
         control.top < miniatureTop + height &&
         control.bottom > miniatureTop;
       const cutout = overlaps ? control : null;
-      const backdropHeight = height + miniatureTop - navbar + (navbar / 3.5) * 3;
+      const backdropHeight = innerHeight - backdropTop;
       const next: Dock = {
         sourceWidth: bounds.width,
         sourceHeight: bounds.height,
@@ -259,10 +273,13 @@ export function ComponentPreviewMiniature({
         width,
         height,
         centerX,
+        top: miniatureTop,
+        backdropTop,
+        backdropHeight,
         backdropLeft,
         backdropWidth: Math.max(0, backdropRight - backdropLeft),
         clip: clipAroundControl(
-          { left: backdropLeft, top: navbar, right: backdropRight, bottom: innerHeight },
+          { left: 0, top: navbar, right: innerWidth, bottom: innerHeight },
           cutout,
         ),
         backdropClip: clipAroundControl(
@@ -270,13 +287,14 @@ export function ComponentPreviewMiniature({
           cutout
             ? {
                 left: cutout.left - backdropLeft,
-                top: cutout.top - navbar,
+                top: cutout.top - backdropTop,
                 right: cutout.right - backdropLeft,
-                bottom: cutout.bottom - navbar,
+                bottom: cutout.bottom - backdropTop,
               }
             : null,
         ),
         exiting: false,
+        returning: false,
       };
       setDock((old) =>
         old && Object.keys(next).every((key) => old[key as keyof Dock] === next[key as keyof Dock])
@@ -375,7 +393,7 @@ export function ComponentPreviewMiniature({
     const interrupted =
       motion.current && previousPhase !== 'inline' ? getComputedStyle(element) : null;
     const from = {
-      transform: interrupted?.transform ?? 'translate3d(-50%, -6px, 0)',
+      transform: interrupted?.transform ?? 'translate3d(0, 6px, 0)',
       opacity: interrupted?.opacity ?? '0',
     };
     motion.current?.cancel();
@@ -386,13 +404,15 @@ export function ComponentPreviewMiniature({
       element.style.removeProperty('opacity');
       if (!reduce)
         motion.current = element.animate([{ opacity: 0 }, { opacity: 1 }], {
-          duration: 160,
-          easing: 'cubic-bezier(.22, 1, .36, 1)',
+          duration: RETURN_FADE_MS,
+          easing: 'ease-in-out',
         });
       return;
     }
     const to = {
-      transform: `translate3d(-50%, ${dock.exiting ? '-6px' : '0px'}, 0)`,
+      transform: dock.returning
+        ? from.transform
+        : `translate3d(0, ${dock.exiting ? '6px' : '0px'}, 0)`,
       opacity: dock.exiting ? '0' : '1',
     };
     if (!dock.exiting) clearSnapshot();
@@ -432,11 +452,14 @@ export function ComponentPreviewMiniature({
         ref={layer}
         data-popup-priority="preview"
         data-wide={dock?.mobile || undefined}
-        className={`component-miniature-layer${dock ? ' is-pinned' : ''}${exiting ? ' is-leaving' : ''}`}
+        className={`component-miniature-layer${dock ? ' is-pinned' : ''}${exiting ? ' is-leaving' : ''}${dock?.returning ? ' is-returning' : ''}`}
         style={
           dock
             ? ({
                 '--miniature-center': `${dock.centerX}px`,
+                '--miniature-top': `${dock.top}px`,
+                '--miniature-backdrop-top': `${dock.backdropTop}px`,
+                '--miniature-gradient-height': `${dock.backdropHeight}px`,
                 '--miniature-height': `${dock.height}px`,
                 '--miniature-backdrop-left': `${dock.backdropLeft}px`,
                 '--miniature-backdrop-width': `${dock.backdropWidth}px`,

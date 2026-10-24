@@ -2,10 +2,21 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent 
 import { createPortal } from 'react-dom';
 import './color-control.css';
 import { usePopupMotion } from './use-popup-motion';
-import { SelectControl } from './customizer-controls';
 import { requestComponentPreview } from './component-preview-miniature';
 
 type Color = { h: number; s: number; v: number; a: number };
+const swatches = [
+  '#2563eb',
+  '#7c3aed',
+  '#db2777',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#16a34a',
+  '#06b6d4',
+  '#171717',
+  '#ffffff',
+];
 const clamp = (n: number, max = 100) => Math.max(0, Math.min(max, n));
 function hex({ h, s, v, a }: Color) {
   const channel = (n: number) => {
@@ -215,14 +226,14 @@ export function ColorControl({
         );
       const choices = [
         ...ys.map((top) => fit(left, top)),
-        // If neither side fits a very short viewport, preserve the separation
-        // from the opener rather than clamping the editor across that field.
+        // Also consider the natural anchors before scoring viewport fit and
+        // separation from the opener. The large panel must stay on screen.
         { left, top: rect.bottom + gap },
         { left, top: rect.top - height - gap },
       ];
       const score = (point: { left: number; top: number }) => [
-        overlap(point, rect),
         Math.max(0, margin - point.top) + Math.max(0, point.top + height + margin - innerHeight),
+        overlap(point, rect),
         miniature ? overlap(point, miniature) : 0,
         gradient ? overlap(point, gradient) : 0,
         Math.hypot(
@@ -329,15 +340,12 @@ export function ColorControl({
   };
   const point = (event: PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - rect.left - rect.width / 2) / (rect.width / 2);
-    const y = (event.clientY - rect.top - rect.height / 2) / (rect.height / 2);
     change({
       ...color,
-      h: ((Math.atan2(x, -y) * 180) / Math.PI - 30 + 360) % 360,
-      s: clamp(Math.hypot(x, y) * 100),
+      s: clamp(((event.clientX - rect.left) / rect.width) * 100),
+      v: clamp(100 - ((event.clientY - rect.top) / rect.height) * 100),
     });
   };
-  const wheelAngle = ((color.h + 30) * Math.PI) / 180;
   const input = (inPopup = false) => (
     <input
       type="text"
@@ -414,14 +422,15 @@ export function ColorControl({
                   </button>
                 </div>
                 <div
-                  className="reveal-color-wheel"
+                  className="reveal-color-plane"
                   role="slider"
                   tabIndex={0}
-                  aria-label="Hue and saturation"
+                  aria-label="Saturation and brightness"
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={Math.round(color.s)}
-                  aria-valuetext={`${Math.round(color.h)} degrees hue, ${Math.round(color.s)}% saturation. Use left and right for hue, up and down for saturation; Page Up and Page Down for brightness.`}
+                  aria-valuetext={`${Math.round(color.s)}% saturation, ${Math.round(color.v)}% brightness. Use left and right for saturation, up and down for brightness.`}
+                  style={{ backgroundColor: `hsl(${color.h} 100% 50%)` }}
                   onPointerDown={(event) => {
                     event.preventDefault();
                     event.currentTarget.focus();
@@ -434,29 +443,13 @@ export function ColorControl({
                   onKeyDown={(event) => {
                     const step = event.shiftKey ? 10 : 1;
                     if (
-                      [
-                        'ArrowLeft',
-                        'ArrowRight',
-                        'ArrowUp',
-                        'ArrowDown',
-                        'Home',
-                        'End',
-                        'PageUp',
-                        'PageDown',
-                      ].includes(event.key)
+                      ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(
+                        event.key,
+                      )
                     ) {
                       event.preventDefault();
                       change({
                         ...color,
-                        h:
-                          (color.h +
-                            (event.key === 'ArrowRight'
-                              ? step
-                              : event.key === 'ArrowLeft'
-                                ? -step
-                                : 0) +
-                            360) %
-                          360,
                         s:
                           event.key === 'Home'
                             ? 0
@@ -464,42 +457,43 @@ export function ColorControl({
                               ? 100
                               : clamp(
                                   color.s +
-                                    (event.key === 'ArrowUp'
+                                    (event.key === 'ArrowRight'
                                       ? step
-                                      : event.key === 'ArrowDown'
+                                      : event.key === 'ArrowLeft'
                                         ? -step
                                         : 0),
                                 ),
-                        v:
-                          event.key === 'PageUp' || event.key === 'PageDown'
-                            ? clamp(color.v + (event.key === 'PageUp' ? step : -step))
-                            : color.v,
+                        v: clamp(
+                          color.v +
+                            (event.key === 'ArrowUp'
+                              ? step
+                              : event.key === 'ArrowDown'
+                                ? -step
+                                : 0),
+                        ),
                       });
                     }
                   }}
                 >
                   <span
                     style={{
-                      left: `${50 + (Math.sin(wheelAngle) * color.s) / 2}%`,
-                      top: `${50 - (Math.cos(wheelAngle) * color.s) / 2}%`,
+                      left: `${color.s}%`,
+                      top: `${100 - color.v}%`,
                       background: hex({ ...color, a: 1 }),
                     }}
                   />
                 </div>
                 <label className="reveal-color-channel">
-                  <span>Brightness</span>
+                  <span>Hue</span>
                   <input
-                    className="reveal-color-brightness"
-                    style={{
-                      background: `linear-gradient(to right, #000, ${hex({ ...color, v: 100, a: 1 })})`,
-                    }}
+                    className="reveal-color-hue"
                     type="range"
                     min="0"
-                    max="100"
+                    max="360"
                     step="1"
-                    aria-label="Brightness"
-                    value={color.v}
-                    onChange={(event) => change({ ...color, v: Number(event.target.value) })}
+                    aria-label="Hue"
+                    value={color.h}
+                    onChange={(event) => change({ ...color, h: Number(event.target.value) })}
                   />
                 </label>
                 <label className="reveal-color-channel">
@@ -518,30 +512,32 @@ export function ColorControl({
                     onChange={(event) => change({ ...color, a: Number(event.target.value) / 100 })}
                   />
                 </label>
-                <div className="reveal-color-value-row">
-                  <div className="reveal-color-value">{input(true)}</div>
-                  <div className="reveal-color-mode">
-                    <SelectControl
-                      label="Color mode"
-                      value={
-                        [
-                          'inherit',
-                          'currentColor',
-                          'transparent',
-                          ...(allowAuto ? ['auto'] : []),
-                        ].find((keyword) => keyword.toLowerCase() === value.trim().toLowerCase()) ??
-                        'custom'
-                      }
-                      options={[
-                        { value: 'custom', label: 'Custom' },
-                        { value: 'inherit', label: 'Inherit' },
-                        { value: 'currentColor', label: 'Current color' },
-                        { value: 'transparent', label: 'Transparent' },
-                        ...(allowAuto ? [{ value: 'auto', label: 'Auto' }] : []),
-                      ]}
-                      onChange={(mode) => edit(mode === 'custom' ? hex(color) : mode)}
+                <div className="reveal-color-value">{input(true)}</div>
+                <div className="reveal-color-swatches">
+                  {swatches.map((swatch) => (
+                    <button
+                      type="button"
+                      key={swatch}
+                      aria-label={`Use ${swatch}`}
+                      aria-pressed={value.toLowerCase() === swatch}
+                      style={{ background: swatch }}
+                      onClick={() => edit(swatch)}
                     />
-                  </div>
+                  ))}
+                </div>
+                <div className={`reveal-color-keywords${allowAuto ? ' has-auto' : ''}`}>
+                  {[...(allowAuto ? ['auto'] : []), 'inherit', 'currentColor', 'transparent'].map(
+                    (keyword) => (
+                      <button
+                        key={keyword}
+                        type="button"
+                        aria-pressed={value === keyword}
+                        onClick={() => edit(keyword)}
+                      >
+                        {keyword}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </div>
