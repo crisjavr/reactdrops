@@ -69,6 +69,18 @@ export function usePopupMotion({
     if (open) setPresent(true);
   }, [open]);
 
+  // Editors and nested menus must stay above a live preview in the top layer.
+  useLayoutEffect(() => {
+    const element = shell.current;
+    if (!present || !ready || !element || typeof element.showPopover !== 'function') return;
+    element.popover = 'manual';
+    element.showPopover();
+    return () => {
+      if (element.matches(':popover-open')) element.hidePopover();
+      element.removeAttribute('popover');
+    };
+  }, [present, ready, shell]);
+
   useLayoutEffect(() => {
     if (!present || !ready || !shell.current || !panel.current || !anchor.current) return;
     const preference = matchMedia('(prefers-reduced-motion: reduce)');

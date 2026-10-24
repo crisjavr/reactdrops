@@ -49,6 +49,8 @@
     "src/color-control.css",
     "src/color-control.tsx",
     "src/component-detail-layout.tsx",
+    "src/component-preview-miniature.css",
+    "src/component-preview-miniature.tsx",
     "src/component-preview-toolbar.tsx",
     "src/components-page.tsx",
     "src/control-help.tsx",

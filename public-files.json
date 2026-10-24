@@ -76,6 +76,8 @@
     "packages/catalog-ui/src/color-control.css",
     "packages/catalog-ui/src/color-control.tsx",
     "packages/catalog-ui/src/component-detail-layout.tsx",
+    "packages/catalog-ui/src/component-preview-miniature.css",
+    "packages/catalog-ui/src/component-preview-miniature.tsx",
     "packages/catalog-ui/src/component-preview-toolbar.tsx",
     "packages/catalog-ui/src/components-page.tsx",
     "packages/catalog-ui/src/control-help.tsx",

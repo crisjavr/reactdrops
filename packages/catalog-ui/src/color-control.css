@@ -27,7 +27,7 @@
   z-index: 10000;
   box-sizing: border-box;
   max-width: calc(100vw - 24px);
-  border-radius: var(--radius-md, 8px);
+  border-radius: 16px;
   color: var(--theme-ink);
   font-family: inherit;
   font-size: 12px;
@@ -36,6 +36,7 @@
   pointer-events: none;
 }
 .reveal-color-panel {
+  container-type: inline-size;
   position: relative;
   border-radius: inherit;
 }
@@ -52,60 +53,79 @@
 .reveal-color-content {
   position: relative;
   box-sizing: border-box;
-  max-height: calc(100dvh - 24px);
-  overflow: auto;
-  padding: 12px;
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 10px;
+  align-items: center;
+  overflow: visible;
+  padding: 6px 12px 12px;
   border: 1px solid transparent;
   border-radius: inherit;
 }
 
 .reveal-color-heading {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 0;
 }
 .reveal-color-heading strong {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
 }
 .reveal-color-heading button {
   border: 0;
-  background: transparent;
-  color: var(--theme-ink-muted);
+  border-radius: var(--radius-md, 8px);
+  background: var(--components-selection-background);
+  color: var(--theme-ink);
   font-size: 20px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
   padding: 0;
   cursor: pointer;
 }
-.reveal-color-plane {
+.reveal-color-wheel {
   position: relative;
-  height: 144px;
-  border-radius: 5px;
+  grid-column: 1;
+  grid-row: 2 / span 3;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
   background-image:
-    linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+    radial-gradient(circle closest-side, #fff, transparent),
+    conic-gradient(from 30deg, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
+  box-shadow:
+    0 0 0 5px var(--theme-background),
+    0 0 0 6px var(--theme-border);
   touch-action: none;
   cursor: crosshair;
 }
-.reveal-color-plane > span {
+.reveal-color-wheel > span {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border: 2px solid white;
   border-radius: 50%;
-  box-shadow: 0 0 0 1px #0008;
+  box-shadow: 0 1px 5px #0006;
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 .reveal-color-channel {
-  display: flex;
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 8px;
+  margin: 0;
+  min-height: 34px;
 }
 .reveal-color-channel > span {
-  width: 44px;
+  font-size: 11px;
   color: var(--theme-ink-muted);
 }
 .reveal-color-channel input {
@@ -113,13 +133,10 @@
   -webkit-appearance: none;
   flex: 1;
   min-width: 0;
-  height: 10px;
+  height: 8px;
   margin: 0;
   border-radius: 8px;
   cursor: pointer;
-}
-.reveal-color-hue {
-  background: linear-gradient(to right, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
 }
 .reveal-color-channel input::-webkit-slider-thumb {
   appearance: none;
@@ -141,55 +158,61 @@
 .reveal-color-value input {
   box-sizing: border-box;
   width: 100%;
-  height: 30px;
-  margin-top: 14px;
-  border: 1px solid var(--theme-border);
-  border-radius: 5px;
-  padding: 0 8px;
-  background: transparent;
+  height: 26px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 8px);
+  padding: 0 10px;
+  background: var(--components-selection-background);
   color: var(--theme-ink);
   font: inherit;
+  font-size: 11px;
 }
 .reveal-color-value input[aria-invalid='true'] {
   border-color: #ef4444;
 }
-.reveal-color-swatches {
-  display: flex;
-  justify-content: space-between;
-  gap: 5px;
-  margin-top: 12px;
-}
-.reveal-color-swatches button {
-  width: 18px;
-  height: 18px;
-  border: 1px solid #8885;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.reveal-color-keywords {
-  display: flex;
-  gap: 5px;
-  margin-top: 12px;
-}
-.reveal-color-keywords button {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--theme-border);
-  border-radius: 5px;
-  padding: 5px 2px;
-  background: transparent;
-  color: var(--theme-ink-muted);
-  font: inherit;
-  font-size: 10px;
-  cursor: pointer;
-}
-.reveal-color-keywords.has-auto {
+.reveal-color-value-row {
+  grid-column: 2;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) 100px;
+  gap: 6px;
+  margin-top: 0;
 }
-.reveal-color-popup button[aria-pressed='true'] {
-  outline: 1px solid var(--theme-ink);
-  outline-offset: 2px;
+.reveal-color-value,
+.reveal-color-mode {
+  min-width: 0;
+}
+.reveal-color-value input {
+  font-variant-numeric: tabular-nums;
+}
+.reveal-color-mode .reveal-select {
+  width: 100%;
+}
+.reveal-color-mode .reveal-select > button {
+  width: 100%;
+  height: 26px;
+  min-height: 26px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 8px);
+  color: var(--theme-ink);
+  background: var(--components-selection-background);
+  font-size: 11px;
+}
+.reveal-color-mode .reveal-select > button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reveal-color-heading button,
+.reveal-color-mode .reveal-select > button {
+  transition:
+    background-color 180ms ease-out,
+    color 180ms ease-out;
+}
+.reveal-color-heading button:hover,
+.reveal-color-mode .reveal-select > button:is(:hover, [aria-expanded='true']) {
+  background: color-mix(in srgb, var(--components-selection-background) 84%, var(--theme-ink) 16%);
 }
 .reveal-color-popup :focus-visible,
 .reveal-field .reveal-color-trigger:focus-visible {
@@ -201,5 +224,32 @@
    hint at rest can rerasterize glyphs with a visible change in weight. The layer
    is released with the popup, rather than at the last animation frame. */
 .reveal-color-content {
-  will-change: transform, filter;
+  will-change: transform;
+}
+
+@container (max-width: 330px) {
+  .reveal-color-content {
+    grid-template-columns: 112px minmax(0, 1fr);
+    column-gap: 14px;
+  }
+  .reveal-color-wheel {
+    grid-row: 2 / span 2;
+  }
+  .reveal-color-value-row {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Native top-layer placement keeps editors above the floating preview. */
+.reveal-color-popup[popover] {
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+}
+.reveal-color-popup::backdrop {
+  background: transparent;
+  pointer-events: none;
 }

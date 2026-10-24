@@ -8,6 +8,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { DropdownSurface } from './dropdown-surface';
+import { requestComponentPreview } from './component-preview-miniature';
 import './customizer-controls.css';
 import { useSwitchMotion } from './use-switch-motion';
 import { useNumberMotion } from './use-number-motion';
@@ -121,6 +122,7 @@ export function SelectControl({
     beginOpen();
   };
   const choose = (option: Option) => {
+    if (option.value !== value) requestComponentPreview(anchor.current);
     onChange(option.value);
     setOpen(false);
     (editable ? input.current : button.current)?.focus();
@@ -386,6 +388,7 @@ export function NumberControl({
       min ?? -Infinity,
       Math.min(max ?? Infinity, Number(normalized.toFixed(8))),
     );
+    if (bounded !== value) requestComponentPreview(numberRoot.current);
     onChange(bounded);
     setDraft(String(bounded));
   };
@@ -520,7 +523,10 @@ export function SwitchControl({
       role="switch"
       aria-label={label}
       aria-checked={checked}
-      onClick={() => onChange(!checked)}
+      onClick={(event) => {
+        requestComponentPreview(event.currentTarget);
+        onChange(!checked);
+      }}
     >
       <span className="reveal-switch-track" aria-hidden="true">
         <span ref={thumb} />

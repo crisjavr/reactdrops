@@ -1,0 +1,142 @@
+.component-miniature-slot {
+  width: 100%;
+}
+.component-miniature-layer {
+  display: contents;
+}
+.component-miniature-exit-layer {
+  display: none;
+}
+.component-miniature-exit-layer * {
+  animation: none !important;
+  transition: none !important;
+}
+.component-miniature-frame,
+.component-miniature-source {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.component-miniature-layer {
+  --miniature-top: max(4.5rem, env(safe-area-inset-top));
+  --miniature-navbar: max(3.5rem, env(safe-area-inset-top));
+}
+.component-miniature-layer.is-pinned {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  pointer-events: none;
+  clip-path: var(--miniature-clip);
+}
+.component-miniature-layer.is-pinned .component-miniature-frame {
+  display: block;
+  position: fixed;
+  left: var(--miniature-center);
+  top: var(--miniature-top);
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 12px;
+  background: var(--theme-background);
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+.component-miniature-layer.is-pinned .component-miniature-source {
+  display: block;
+  transform-origin: top left;
+}
+.component-showcase .component-miniature-layer[data-wide] .component-preview-canvas,
+.component-showcase .component-miniature-layer[data-wide] .component-preview-stage {
+  height: 100%;
+  min-height: 0;
+}
+.component-miniature-layer.is-pinned .component-preview-actions {
+  visibility: hidden;
+}
+.component-miniature-layer.is-pinned::backdrop {
+  position: fixed;
+  inset: var(--miniature-navbar) auto auto var(--miniature-backdrop-left);
+  width: var(--miniature-backdrop-width);
+  height: calc(var(--miniature-height) + var(--miniature-top) - var(--miniature-navbar) + 3rem);
+  background: linear-gradient(
+    to bottom,
+    var(--theme-background) 0%,
+    var(--theme-background) 50%,
+    color-mix(in srgb, var(--theme-background) 85%, transparent) 78%,
+    transparent 100%
+  );
+  pointer-events: none;
+  clip-path: var(--miniature-backdrop-clip);
+  animation: component-miniature-gradient-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.component-miniature-layer.is-leaving::backdrop {
+  animation: component-miniature-gradient-out 180ms ease-out both;
+}
+.component-miniature-layer.is-leaving .component-miniature-frame {
+  pointer-events: none;
+}
+.component-miniature-actions {
+  pointer-events: none;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.375rem;
+}
+.component-miniature-actions button {
+  appearance: none;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  background: var(--theme-background);
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 0.625rem;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.component-miniature-actions button:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+@keyframes component-miniature-gradient-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes component-miniature-gradient-out {
+  from {
+    opacity: var(--miniature-exit-opacity, 1);
+    transform: var(--miniature-exit-transform, translateY(0));
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .component-miniature-layer.is-pinned::backdrop {
+    animation: none;
+  }
+}
+
+.component-showcase.is-fullscreen .component-miniature-slot,
+.component-showcase.is-fullscreen .component-miniature-frame,
+.component-showcase.is-fullscreen .component-miniature-source {
+  height: 100%;
+}

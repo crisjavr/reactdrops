@@ -76,3 +76,17 @@
 .reveal-dropdown-content {
   will-change: transform, filter;
 }
+
+/* Native top-layer placement keeps editors above the floating preview. */
+.reveal-dropdown-shell[popover] {
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+}
+.reveal-dropdown-shell::backdrop {
+  background: transparent;
+  pointer-events: none;
+}

@@ -8,6 +8,7 @@ import {
 } from './component-preview-toolbar';
 import { HighlightedCode, type HighlightLanguage } from './highlighted-code';
 import { usePreviewFullscreen } from './use-preview-fullscreen';
+import { ComponentPreviewMiniature } from './component-preview-miniature';
 
 const StaticCatalogSidebar = memo(CatalogSidebar);
 
@@ -47,6 +48,8 @@ type ComponentDetailLayoutProps = {
   /** Disable when the preview component owns its playback triggers. */
   replayOnPreview?: boolean;
   previewActions?: ReactNode;
+  /** Disable for previews that already own their floating renderer. */
+  previewMiniature?: boolean;
 };
 
 type ExpandableCodeSurfaceProps = {
@@ -185,6 +188,7 @@ export function ComponentDetailLayout({
   onReplay,
   replayOnPreview = true,
   previewActions,
+  previewMiniature = true,
 }: ComponentDetailLayoutProps) {
   const [viewTab, setViewTab] = useState<ComponentViewTab>('preview');
   const [previewViewport, setPreviewViewport] = useState<PreviewViewport>('desktop');
@@ -309,31 +313,33 @@ export function ComponentDetailLayout({
           aria-labelledby={previewFullscreen.fullscreen ? undefined : `component-tab-${viewTab}`}
         >
           {viewTab === 'preview' && (
-            <div className={`component-preview-canvas is-${previewViewport}`}>
-              <div className="component-preview-stage">
-                <div className="component-preview-actions">
-                  {previewActions}
-                  {onReplay && (
-                    <button className="component-replay-button" type="button" onClick={onReplay}>
-                      <svg viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M15.5 7.2A6 6 0 1 0 16 11M15.5 7.2V3.7m0 3.5H12" />
-                      </svg>
-                      Replay
-                    </button>
-                  )}
-                  <PreviewFullscreenButton
-                    fullscreen={previewFullscreen.fullscreen}
-                    onClick={togglePreviewFullscreen}
-                    buttonRef={
-                      previewFullscreen.fullscreen
-                        ? previewFullscreen.minimize
-                        : previewFullscreen.trigger
-                    }
-                  />
+            <ComponentPreviewMiniature enabled={previewMiniature} onReplay={onReplay}>
+              <div className={`component-preview-canvas is-${previewViewport}`}>
+                <div className="component-preview-stage">
+                  <div className="component-preview-actions">
+                    {previewActions}
+                    {onReplay && (
+                      <button className="component-replay-button" type="button" onClick={onReplay}>
+                        <svg viewBox="0 0 20 20" aria-hidden="true">
+                          <path d="M15.5 7.2A6 6 0 1 0 16 11M15.5 7.2V3.7m0 3.5H12" />
+                        </svg>
+                        Replay
+                      </button>
+                    )}
+                    <PreviewFullscreenButton
+                      fullscreen={previewFullscreen.fullscreen}
+                      onClick={togglePreviewFullscreen}
+                      buttonRef={
+                        previewFullscreen.fullscreen
+                          ? previewFullscreen.minimize
+                          : previewFullscreen.trigger
+                      }
+                    />
+                  </div>
+                  {preview}
                 </div>
-                {preview}
               </div>
-            </div>
+            </ComponentPreviewMiniature>
           )}
 
           {viewTab === 'code' && (
