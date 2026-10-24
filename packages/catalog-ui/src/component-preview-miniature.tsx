@@ -202,7 +202,7 @@ export function ComponentPreviewMiniature({
         !!controls &&
         controls.top < innerHeight &&
         controls.bottom > navbar &&
-        (!end || end.top > innerHeight * 0.65 + (current.current ? 0 : 24));
+        (!end || end.top > innerHeight * 0.35 + (current.current ? 0 : 24));
       if (interaction) requested.current = available;
       if (!requested.current || !available) {
         requested.current = false;
