@@ -149,6 +149,81 @@ const logoGlass = (choice: LogoChoice) =>
         bloom: defaults.bloom,
       };
 
+const presetKeys = [
+  'depth',
+  'dispersion',
+  'relief',
+  'caustics',
+  'highlights',
+  'echoTint',
+  'innerWallFocus',
+  'bloom',
+  'dropStrength',
+  'decay',
+  'speed',
+  'loopDelay',
+] as const;
+const motionDefaults = {
+  dropStrength: defaults.dropStrength,
+  decay: defaults.decay,
+  speed: defaults.speed,
+  loopDelay: defaults.loopDelay,
+};
+const logoPresets = (choice: LogoChoice) => {
+  const base = { ...logoGlass(choice), ...motionDefaults };
+  return [
+    { value: 'default', label: 'Logo default', settings: base },
+    {
+      value: 'crystal-clear', label: 'Crystal clear',
+      settings: {
+        ...base, depth: 0.85, dispersion: 0, relief: 0.05, caustics: 0.1,
+        highlights: 0.65, echoTint: 1, innerWallFocus: 1, bloom: 0,
+        dropStrength: 0.45, decay: 0.8, speed: 1.2,
+      },
+    },
+    {
+      value: 'soft-glow', label: 'Soft glow',
+      settings: {
+        ...base, depth: 2.3, dispersion: 0.25, relief: 0.55, caustics: 2.3,
+        highlights: 2.6, echoTint: 0.2, innerWallFocus: 0, bloom: 1.9,
+        dropStrength: 1.6, decay: 2.4, speed: 0.65,
+      },
+    },
+    {
+      value: 'chromatic-edge', label: 'Chromatic edge',
+      settings: {
+        ...base, depth: 2.6, dispersion: 3, relief: 0.8, caustics: 1.6,
+        highlights: 1.65, echoTint: 0, innerWallFocus: 0.9, bloom: 0.35,
+        dropStrength: 1.35, decay: 1.6, speed: 0.85,
+      },
+    },
+    {
+      value: 'sculpted', label: 'Sculpted',
+      settings: {
+        ...base, depth: 3.6, dispersion: 0.65, relief: 2.7, caustics: 1.45,
+        highlights: 1.75, echoTint: 0.6, innerWallFocus: 0.35, bloom: 0.3,
+        dropStrength: 1.8, decay: 1.8, speed: 0.9,
+      },
+    },
+    {
+      value: 'slow-melt', label: 'Slow melt',
+      settings: {
+        ...base, depth: 2.4, dispersion: 1.45, relief: 1.2, caustics: 1.35,
+        highlights: 1.5, echoTint: 0.5, innerWallFocus: 0.15, bloom: 0.7,
+        dropStrength: 2.1, decay: 3, speed: 0.45, loopDelay: 2.4,
+      },
+    },
+    {
+      value: 'quick-snap', label: 'Quick snap',
+      settings: {
+        ...base, depth: 2.1, dispersion: 0.8, relief: 0.75, caustics: 1.1,
+        highlights: 1.4, echoTint: 0.3, innerWallFocus: 0.6, bloom: 0.25,
+        dropStrength: 1.3, decay: 0.8, speed: 1.8, loopDelay: 1,
+      },
+    },
+  ];
+};
+
 // Export: the short side of each resolution, the aspect ratios offered,
 // and how long the logo sequence runs before it settles (with a short hold).
 const exportResolutions = [720, 1080, 1440, 2160] as const;
@@ -252,6 +327,10 @@ export default function LiquidGlassLogoPage() {
     setValues((old) => ({ ...old, ...logoGlass(choice) }));
   };
   const [logo, setLogo] = useState<LogoChoice>('nike');
+  const presets = logoPresets(logo);
+  const preset = presets.find(({ settings }) =>
+    presetKeys.every((key) => values[key] === settings[key]),
+  )?.value ?? 'custom';
   const [upload, setUpload] = useState('');
   const [uploadName, setUploadName] = useState('');
   const [backgroundName, setBackgroundName] = useState('');
@@ -638,6 +717,25 @@ export default function LiquidGlassLogoPage() {
               <h3>Logo</h3>
             </legend>
             <div className="reveal-fields">
+              <ControlField
+                label="Preset"
+                description="Choose a glass and motion look. Editing its settings switches to Custom."
+              >
+                <SelectControl
+                  label="Logo preset"
+                  value={preset}
+                  options={[
+                    ...presets.map(({ value, label }) => ({ value, label })),
+                    ...(preset === 'custom' ? [{ value: 'custom', label: 'Custom' }] : []),
+                  ]}
+                  onChange={(value) => {
+                    const selected = presets.find((item) => item.value === value);
+                    if (!selected) return;
+                    setValues((old) => ({ ...old, ...selected.settings }));
+                    if (exportType === 'video') ref.current?.replay();
+                  }}
+                />
+              </ControlField>
               <ControlField
                 label="Theme"
                 description="Light or dark page, plate and logo colors. Follows the site theme; pick one here to override it."
