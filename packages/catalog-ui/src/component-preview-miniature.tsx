@@ -214,7 +214,8 @@ export function ComponentPreviewMiniature({
         bounds.height > 0 &&
         bounds.top < navbar &&
         visible / bounds.height <= (current.current ? 0.22 : 0.2) &&
-        !!controls;
+        !!controls &&
+        controls.bottom > navbar;
       if (interaction) requested.current = available;
       if (!requested.current || !available) {
         requested.current = false;
