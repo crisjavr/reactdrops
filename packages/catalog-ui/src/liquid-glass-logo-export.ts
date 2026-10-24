@@ -137,13 +137,20 @@ export async function exportLiquidGlassLogoImage(
     format: LiquidGlassLogoImageFormat;
     seconds: number;
     transparent?: boolean;
+    /** Completed preparation, frame composition and encoding stages. */
+    onProgress?: (fraction: number, stage: 'preparing' | 'rendering' | 'encoding') => void;
   },
 ) {
+  options.onProgress?.(0, 'preparing');
   const { frame, paint } = await createFramePainter(
     options,
     options.format === 'png' && options.transparent,
   );
+  options.onProgress?.(0.4, 'rendering');
+  // Let the progress update paint before composing a potentially large frame.
+  await new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
   paint(options.seconds);
+  options.onProgress?.(0.7, 'encoding');
   const mimeType = `image/${options.format}`;
   const blob = await new Promise<Blob>((resolve, reject) => {
     frame.toBlob(
@@ -157,6 +164,7 @@ export async function exportLiquidGlassLogoImage(
       0.95,
     );
   });
+  options.onProgress?.(1, 'encoding');
   return { blob, extension: options.format === 'jpeg' ? 'jpg' : options.format };
 }
 

@@ -151,13 +151,13 @@ export function ColorControl({
         const value = fieldStyle.getPropertyValue(token).trim();
         if (value) popup.current.style.setProperty(token, value);
       }
-      const width = Math.min(288, innerWidth - 24);
+      const width = rect.width;
       popup.current.style.width = `${width}px`;
       const height = popup.current.offsetHeight;
       const margin = 12,
         gap = 12;
       const fit = (left: number, top: number) => ({
-        left: Math.max(margin, Math.min(left, innerWidth - width - margin)),
+        left,
         top: Math.max(margin, Math.min(top, innerHeight - height - margin)),
       });
       // Keep the editor aligned with its field. Only its vertical placement

@@ -26,7 +26,7 @@
   position: fixed;
   z-index: 10000;
   box-sizing: border-box;
-  max-width: calc(100vw - 24px);
+  max-width: none;
   border-radius: 16px;
   color: var(--theme-ink);
   font-family: inherit;
@@ -54,7 +54,7 @@
   position: relative;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 128px minmax(0, 1fr);
+  grid-template-columns: min(128px, 40cqi) minmax(0, 1fr);
   column-gap: 12px;
   row-gap: 10px;
   align-items: center;
@@ -229,7 +229,7 @@
 
 @container (max-width: 330px) {
   .reveal-color-content {
-    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-columns: min(112px, 40cqi) minmax(0, 1fr);
     column-gap: 14px;
   }
   .reveal-color-wheel {

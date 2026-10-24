@@ -44,13 +44,95 @@
 }
 
 .liquid-glass-logo-export {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
+  min-height: 36px;
+  overflow: hidden;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md, 8px);
+  padding: 8px 12px;
+  background: var(--components-selection-background);
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 140ms,
+    border-color 140ms;
+}
+.liquid-glass-logo-export:enabled:hover {
+  border-color: var(--theme-border-strong);
+  background: color-mix(in srgb, var(--components-selection-background) 88%, var(--theme-ink) 12%);
 }
 .liquid-glass-logo-export:disabled {
+  cursor: wait;
+}
+.liquid-glass-logo-export:disabled:not([aria-busy='true']) {
   opacity: 0.55;
-  cursor: progress;
+  cursor: not-allowed;
+}
+.reveal-field .liquid-glass-logo-export:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.liquid-glass-logo-export > svg {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.liquid-glass-logo-export-progress {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--theme-ink) 12%, transparent);
+  transform-origin: left;
+  transition: transform 180ms ease-out;
+  pointer-events: none;
+}
+.liquid-glass-logo-export-label,
+.liquid-glass-logo-export-percent {
+  position: relative;
+}
+.liquid-glass-logo-export-percent {
+  min-width: 4ch;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.liquid-glass-logo-export-spinner {
+  position: relative;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: liquid-glass-logo-export-spin 700ms linear infinite;
+}
+@keyframes liquid-glass-logo-export-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-logo-export-progress {
+    transition: none;
+  }
+  .liquid-glass-logo-export-spinner {
+    animation: none;
+  }
 }
 .liquid-glass-logo-export-error {
+  grid-column: 1 / -1;
   margin: 0.5rem 0 0;
   font-size: 0.8125rem;
   color: #ff6b6b;

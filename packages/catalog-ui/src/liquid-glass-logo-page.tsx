@@ -328,9 +328,9 @@ export default function LiquidGlassLogoPage() {
   };
   const [logo, setLogo] = useState<LogoChoice>('nike');
   const presets = logoPresets(logo);
-  const preset = presets.find(({ settings }) =>
-    presetKeys.every((key) => values[key] === settings[key]),
-  )?.value ?? 'custom';
+  const preset =
+    presets.find(({ settings }) => presetKeys.every((key) => values[key] === settings[key]))
+      ?.value ?? 'custom';
   const [upload, setUpload] = useState('');
   const [uploadName, setUploadName] = useState('');
   const [backgroundName, setBackgroundName] = useState('');
@@ -351,6 +351,16 @@ export default function LiquidGlassLogoPage() {
   const [exportFormat, setExportFormat] = useState<LiquidGlassLogoVideoFormat['extension']>('mp4');
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
   const [exportProgress, setExportProgress] = useState(0);
+  const [exportPhase, setExportPhase] = useState<
+    'preparing' | 'rendering' | 'encoding' | 'ready' | null
+  >(null);
+  const exporting = useRef(false);
+  const exportBusy = exportPhase !== null && exportPhase !== 'ready';
+  useEffect(() => {
+    if (exportPhase !== 'ready') return;
+    const timer = window.setTimeout(() => setExportPhase(null), 1800);
+    return () => clearTimeout(timer);
+  }, [exportPhase]);
   const [exportError, setExportError] = useState('');
   const [videoFormats, setVideoFormats] = useState<LiquidGlassLogoVideoFormat[]>([]);
   const videoFormat = videoFormats.find((format) => format.extension === exportFormat) ?? null;
@@ -422,7 +432,8 @@ export default function LiquidGlassLogoPage() {
   // Renders the sequence off screen at the exact output size, framed like the
   // preview frame: the tile keeps its size relative to the frame's short side.
   const exportFile = async () => {
-    if ((exportType === 'video' && !videoFormat) || exportJob) return;
+    if ((exportType === 'video' && !videoFormat) || exporting.current) return;
+    exporting.current = true;
     const [across, down] = exportAspects[exportAspect];
     const width = even(across >= down ? (exportResolution * across) / down : exportResolution);
     const height = even(across >= down ? exportResolution : (exportResolution * down) / across);
@@ -437,10 +448,14 @@ export default function LiquidGlassLogoPage() {
     );
     setExportError('');
     setExportProgress(0);
-    flushSync(() =>
-      setExportJob({ width, height, cssWidth, cssHeight, pixelRatio, logoSize, fps: exportFps }),
-    );
+    setExportPhase('preparing');
     try {
+      // Paint immediate feedback before creating the full-resolution renderer.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+      flushSync(() =>
+        setExportJob({ width, height, cssWidth, cssHeight, pixelRatio, logoSize, fps: exportFps }),
+      );
+      setExportProgress(0.1);
       const host = exportHost.current;
       if (!host) throw new Error('The export view did not open.');
       const started = performance.now();
@@ -466,22 +481,33 @@ export default function LiquidGlassLogoPage() {
               format: imageFormat,
               seconds: imageTime,
               transparent: transparentImage,
+              onProgress: (fraction, phase) => {
+                setExportPhase(phase);
+                setExportProgress(0.15 + fraction * 0.8);
+              },
             })
           : await recordLiquidGlassLogoVideo({
               ...options,
               fps: exportFps,
               format: videoFormat!,
               duration: exportDuration,
-              onProgress: setExportProgress,
+              onProgress: (fraction) => {
+                setExportPhase('rendering');
+                setExportProgress(0.15 + fraction * 0.8);
+              },
             });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = `liquid-glass-logo-${exportAspect.replace(':', 'x')}-${width}x${height}-${exportType === 'video' ? `${exportFps}fps` : `${imageTime.toFixed(2)}s${transparentImage ? '-transparent' : ''}`}.${extension}`;
       link.click();
+      setExportProgress(1);
+      setExportPhase('ready');
       setTimeout(() => URL.revokeObjectURL(link.href), 10000);
     } catch (error) {
+      setExportPhase(null);
       setExportError(error instanceof Error ? error.message : String(error));
     } finally {
+      exporting.current = false;
       setExportJob(null);
     }
   };
@@ -853,7 +879,7 @@ export default function LiquidGlassLogoPage() {
               ))}
             </div>
           </fieldset>
-          <fieldset className="reveal-control-group">
+          <fieldset className="reveal-control-group" disabled={exportBusy}>
             <legend className="reveal-group-heading">
               <h3>Export</h3>
             </legend>
@@ -982,16 +1008,56 @@ export default function LiquidGlassLogoPage() {
                 }
               >
                 <button
-                  className="liquid-glass-logo-reset liquid-glass-logo-export"
+                  className="liquid-glass-logo-export"
                   type="button"
-                  disabled={(exportType === 'video' && !videoFormat) || !!exportJob}
+                  aria-label={`Export ${exportType}`}
+                  aria-busy={exportBusy}
+                  data-export-state={exportPhase ?? 'idle'}
+                  disabled={(exportType === 'video' && !videoFormat) || exportBusy}
                   onClick={exportFile}
                 >
-                  {exportJob
-                    ? exportType === 'image'
-                      ? 'Exporting…'
-                      : `Exporting… ${Math.round(exportProgress * 100)}%`
-                    : `Export ${exportType}`}
+                  {(exportBusy || exportPhase === 'ready') && (
+                    <span
+                      className="liquid-glass-logo-export-progress"
+                      role="progressbar"
+                      aria-label={`${exportType === 'image' ? 'Image' : 'Video'} export progress`}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(exportProgress * 100)}
+                      style={{ transform: `scaleX(${exportProgress})` }}
+                    />
+                  )}
+                  {exportBusy ? (
+                    <span className="liquid-glass-logo-export-spinner" aria-hidden="true" />
+                  ) : (
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                      <path
+                        d={
+                          exportPhase === 'ready'
+                            ? 'm4 10 4 4 8-8'
+                            : 'M10 3v9m-3-3 3 3 3-3M4 13v3h12v-3'
+                        }
+                      />
+                    </svg>
+                  )}
+                  <span className="liquid-glass-logo-export-label" role="status" aria-live="polite">
+                    {exportPhase === 'ready'
+                      ? `${exportType === 'image' ? 'Image' : 'Video'} ready`
+                      : exportBusy
+                        ? exportPhase === 'preparing'
+                          ? `Preparing ${exportType}…`
+                          : exportType === 'video'
+                            ? 'Exporting video…'
+                            : exportPhase === 'encoding'
+                              ? `Encoding ${imageFormat.toUpperCase()}…`
+                              : 'Rendering image…'
+                        : `Export ${exportType}`}
+                  </span>
+                  {exportBusy && (
+                    <span className="liquid-glass-logo-export-percent" aria-hidden="true">
+                      {Math.round(exportProgress * 100)}%
+                    </span>
+                  )}
                 </button>
                 {exportError && (
                   <p className="liquid-glass-logo-export-error" role="alert">
