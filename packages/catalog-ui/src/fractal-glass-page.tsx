@@ -236,27 +236,6 @@ export default function FractalGlassPage() {
       }
       controls={
         <>
-          <div className="fractal-glass-image-upload">
-            <LiquidGlassLogoDropZone
-              title="Image"
-              hint="Drop an image or click"
-              accept="image/*"
-              validate={(file) => (file.type.startsWith('image/') ? null : 'Use an image file.')}
-              preview={upload?.url ?? ''}
-              fileName={upload?.name ?? ''}
-              fit="cover"
-              onFile={(file) => {
-                const url = URL.createObjectURL(file);
-                setUpload({ url, name: file.name });
-                setSrc(url);
-              }}
-              onClear={() => {
-                setUpload(null);
-                setSrc(defaultImage);
-                setDraft(defaultImage);
-              }}
-            />
-          </div>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
               <h3>Glass</h3>
@@ -476,6 +455,27 @@ export default function FractalGlassPage() {
             <legend className="reveal-group-heading">
               <h3>Image &amp; appearance</h3>
             </legend>
+            <div className="fractal-glass-image-upload">
+              <LiquidGlassLogoDropZone
+                title="Image"
+                hint="Drop an image or click"
+                accept="image/*"
+                validate={(file) => (file.type.startsWith('image/') ? null : 'Use an image file.')}
+                preview={upload?.url ?? ''}
+                fileName={upload?.name ?? ''}
+                fit="cover"
+                onFile={(file) => {
+                  const url = URL.createObjectURL(file);
+                  setUpload({ url, name: file.name });
+                  setSrc(url);
+                }}
+                onClear={() => {
+                  setUpload(null);
+                  setSrc(defaultImage);
+                  setDraft(defaultImage);
+                }}
+              />
+            </div>
             <div className="reveal-fields">
               <ControlField
                 label="Image URL"
