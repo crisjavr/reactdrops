@@ -20,6 +20,9 @@
 .component-miniature-layer {
   --miniature-top: max(4.5rem, env(safe-area-inset-top));
   --miniature-navbar: max(3.5rem, env(safe-area-inset-top));
+  --miniature-gradient-height: calc(
+    var(--miniature-height) + var(--miniature-top) - var(--miniature-navbar) + 3rem
+  );
 }
 .component-miniature-layer.is-pinned {
   display: block;
@@ -37,6 +40,15 @@
   background: transparent;
   pointer-events: none;
   clip-path: var(--miniature-clip);
+}
+.component-miniature-layer.is-pinned::before {
+  content: '';
+  position: fixed;
+  inset: var(--miniature-navbar) auto auto var(--miniature-backdrop-left);
+  width: var(--miniature-backdrop-width);
+  height: calc(var(--miniature-gradient-height) * 0.9);
+  pointer-events: auto;
+  touch-action: pan-y;
 }
 .component-miniature-layer.is-pinned .component-miniature-frame {
   display: block;
@@ -67,7 +79,7 @@
   position: fixed;
   inset: var(--miniature-navbar) auto auto var(--miniature-backdrop-left);
   width: var(--miniature-backdrop-width);
-  height: calc(var(--miniature-height) + var(--miniature-top) - var(--miniature-navbar) + 3rem);
+  height: var(--miniature-gradient-height);
   background: linear-gradient(
     to bottom,
     var(--theme-background) 0%,
@@ -82,7 +94,8 @@
 .component-miniature-layer.is-leaving::backdrop {
   animation: component-miniature-gradient-out 180ms ease-out both;
 }
-.component-miniature-layer.is-leaving .component-miniature-frame {
+.component-miniature-layer.is-leaving .component-miniature-frame,
+.component-miniature-layer.is-leaving::before {
   pointer-events: none;
 }
 .component-miniature-actions {

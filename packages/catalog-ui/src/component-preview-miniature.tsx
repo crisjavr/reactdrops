@@ -30,7 +30,7 @@ type Dock = {
 
 type Bounds = { left: number; top: number; right: number; bottom: number };
 
-/** A hole lets the original control paint and receive input above the top layer. */
+/** Keep an ongoing control gesture usable until it ends beneath the top layer. */
 function clipAroundControl(outer: Bounds, control: Bounds | null) {
   const { left, top, right, bottom } = outer;
   const outline = `${left}px ${top}px, ${right}px ${top}px, ${right}px ${bottom}px, ${left}px ${bottom}px, ${left}px ${top}px`;
@@ -297,12 +297,33 @@ export function ComponentPreviewMiniature({
         !(event.target instanceof Element && event.target.closest('#controls .reveal-field'))
       )
         return;
-      activeControl =
+      update(true);
+    };
+    const beginControlGesture = (event: Event) => {
+      const field =
         event.target instanceof Element
           ? event.target.closest<HTMLElement>('#controls .reveal-field')
           : null;
-      update(true);
+      activeControl = field?.querySelector('input[type="range"]') ? field : null;
+      if (current.current) update();
     };
+    const endControlGesture = () => {
+      if (!activeControl) return;
+      activeControl = null;
+      update();
+    };
+    const leaveControl = (event: FocusEvent) => {
+      if (!(event.relatedTarget instanceof Node) || !activeControl?.contains(event.relatedTarget))
+        endControlGesture();
+    };
+    page.addEventListener('pointerdown', beginControlGesture, true);
+    page.addEventListener('keydown', beginControlGesture, true);
+    page.addEventListener('focusout', leaveControl);
+    window.addEventListener('pointerup', endControlGesture, true);
+    window.addEventListener('pointercancel', endControlGesture, true);
+    window.addEventListener('lostpointercapture', endControlGesture, true);
+    window.addEventListener('keyup', endControlGesture, true);
+    window.addEventListener('blur', endControlGesture);
     page.addEventListener('input', interaction);
     page.addEventListener('change', interaction);
     page.addEventListener('reactdrops:preview-interaction', interaction);
@@ -317,6 +338,14 @@ export function ComponentPreviewMiniature({
       cancelAnimationFrame(pending);
       resize.disconnect();
       mode.disconnect();
+      page.removeEventListener('pointerdown', beginControlGesture, true);
+      page.removeEventListener('keydown', beginControlGesture, true);
+      page.removeEventListener('focusout', leaveControl);
+      window.removeEventListener('pointerup', endControlGesture, true);
+      window.removeEventListener('pointercancel', endControlGesture, true);
+      window.removeEventListener('lostpointercapture', endControlGesture, true);
+      window.removeEventListener('keyup', endControlGesture, true);
+      window.removeEventListener('blur', endControlGesture);
       page.removeEventListener('input', interaction);
       page.removeEventListener('change', interaction);
       page.removeEventListener('reactdrops:preview-interaction', interaction);
