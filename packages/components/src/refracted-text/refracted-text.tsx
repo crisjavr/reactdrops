@@ -404,10 +404,25 @@ export function RefractedText({
       window.cancelAnimationFrame(fontFrame);
       fontFrame = window.requestAnimationFrame(() => resize(true));
     };
-    const onResize = () => resize();
+    // Rebuilding the glyph masks is synchronous CPU work (hundreds of ms on
+    // large, high-DPR canvases). Coalesce bursts from layout transitions and
+    // window resizing into one rebuild once the size settles; a pending
+    // rebuild is dropped if the page navigates away first.
+    let resizeTimer = 0;
+    // The observer also reports the initial size, which resize() below
+    // already applies; only a changed layout size schedules a rebuild.
+    let observedSize = `${canvas.clientWidth}x${canvas.clientHeight}`;
+    const onResize = () => {
+      const size = `${canvas.clientWidth}x${canvas.clientHeight}`;
+      if (size === observedSize) return;
+      observedSize = size;
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => resize(), 120);
+    };
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(onResize);
     if (observer) observer.observe(canvas);
     else window.addEventListener('resize', onResize);
+    // The first size is applied right away; only later changes are coalesced.
     resize();
     syncPlayback();
     if (document.fonts) {
@@ -434,6 +449,7 @@ export function RefractedText({
       requestRender.current = () => {};
       window.cancelAnimationFrame(frame);
       window.cancelAnimationFrame(fontFrame);
+      window.clearTimeout(resizeTimer);
       document.fonts?.removeEventListener('loadingdone', queueResize);
       observer?.disconnect();
       viewport?.disconnect();

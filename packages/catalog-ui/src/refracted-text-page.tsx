@@ -330,6 +330,18 @@ export default function RefractedTextPage() {
         <>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
+              <h3>Lettering</h3>
+            </legend>
+            <div className="reveal-fields">
+              {text('text')}
+              {text('fontSize')}
+              {text('fontFamily')}
+              {number('fontWeight')}
+              {text('letterSpacing')}
+            </div>
+          </fieldset>
+          <fieldset className="reveal-control-group">
+            <legend className="reveal-group-heading">
               <h3>Colors</h3>
             </legend>
             <div className="reveal-fields">
@@ -352,16 +364,6 @@ export default function RefractedTextPage() {
                   </ControlField>
                 );
               })}
-              <button
-                className="refracted-colors-reset"
-                type="button"
-                onClick={() => {
-                  setValues((old) => ({ ...old, topColor: 'auto', bottomColor: 'auto' }));
-                  setPreset('custom');
-                }}
-              >
-                Use theme colors
-              </button>
             </div>
           </fieldset>
           <fieldset className="reveal-control-group">
@@ -518,18 +520,6 @@ export default function RefractedTextPage() {
                   </ControlField>
                 </>
               )}
-            </div>
-          </fieldset>
-          <fieldset className="reveal-control-group">
-            <legend className="reveal-group-heading">
-              <h3>Lettering</h3>
-            </legend>
-            <div className="reveal-fields">
-              {text('text')}
-              {text('fontSize')}
-              {text('fontFamily')}
-              {number('fontWeight')}
-              {text('letterSpacing')}
             </div>
           </fieldset>
         </>

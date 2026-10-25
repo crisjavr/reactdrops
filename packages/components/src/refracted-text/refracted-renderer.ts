@@ -728,11 +728,15 @@ export function createRefractedRenderer(
 
   function resize(force = false) {
     if (disposed || gl.isContextLost()) return;
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+    // Layout size, not getBoundingClientRect: a CSS transform (such as the
+    // catalog miniature's scale) must not lower the backing resolution, since
+    // no resize event follows when the transform is removed.
+    const cssWidth = canvas.clientWidth;
+    const cssHeight = canvas.clientHeight;
+    if (!cssWidth || !cssHeight) return;
     const ratio = Math.min(2, window.devicePixelRatio || 1);
-    const width = Math.max(1, Math.round(rect.width * ratio));
-    const height = Math.max(1, Math.round(rect.height * ratio));
+    const width = Math.max(1, Math.round(cssWidth * ratio));
+    const height = Math.max(1, Math.round(cssHeight * ratio));
     // ResizeObserver and font events can report the same size repeatedly.
     // Only a changed backing size or an explicit font refresh needs new masks.
     if (

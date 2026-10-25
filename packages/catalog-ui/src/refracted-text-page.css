@@ -14,22 +14,6 @@
   transition: background-color 320ms ease;
 }
 
-.refracted-colors-reset {
-  grid-column: 1 / -1;
-  padding: 7px 10px;
-  border: 1px solid var(--theme-border);
-  border-radius: 7px;
-  background: var(--theme-surface-soft);
-  color: var(--theme-ink);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.refracted-colors-reset:focus-visible {
-  outline: 2px solid var(--theme-ink-muted);
-  outline-offset: 2px;
-}
-
 .component-showcase .component-preview-stage:has(> .refracted-text-demo[data-appearance='dark']),
 :root[data-theme='dark']
   .component-showcase
