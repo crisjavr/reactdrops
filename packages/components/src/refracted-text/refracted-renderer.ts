@@ -1,3 +1,5 @@
+import { roundGlyphCorners } from './refracted-glyph-rounding';
+
 const vertexSource = `#version 300 es
 in vec2 aPosition;
 out vec2 vUv;
@@ -535,6 +537,8 @@ export type RefractedRenderer = {
     fontFamily: string,
     fontWeight: number | string,
     letterSpacing: string,
+    extraBold?: number,
+    cornerRounding?: number,
   ) => void;
   resize: (force?: boolean) => void;
   render: (
@@ -601,6 +605,8 @@ export function createRefractedRenderer(
   fontFamily: string,
   fontWeight: number | string,
   letterSpacing: string,
+  extraBold = 0,
+  cornerRounding = 0,
 ): RefractedRenderer | null {
   const context = canvas.getContext('webgl2', {
     alpha: true,
@@ -705,19 +711,25 @@ export function createRefractedRenderer(
     nextFontFamily: string,
     nextFontWeight: number | string,
     nextLetterSpacing: string,
+    nextExtraBold = 0,
+    nextCornerRounding = 0,
   ) {
     if (
       disposed ||
       (nextText === text &&
         nextFontFamily === fontFamily &&
         nextFontWeight === fontWeight &&
-        nextLetterSpacing === letterSpacing)
+        nextLetterSpacing === letterSpacing &&
+        nextExtraBold === extraBold &&
+        nextCornerRounding === cornerRounding)
     )
       return;
     text = nextText;
     fontFamily = nextFontFamily;
     fontWeight = nextFontWeight;
     letterSpacing = nextLetterSpacing;
+    extraBold = nextExtraBold;
+    cornerRounding = nextCornerRounding;
     letters = Array.from(text);
     virtualWidth = Math.max(1, letters.length * 394);
     maskWidth = maskHeight = 0;
@@ -763,11 +775,23 @@ export function createRefractedRenderer(
     const capAscent = ctx.measureText('H').actualBoundingBoxAscent;
     const ascent = Math.max(capAscent, run.actualBoundingBoxAscent);
     const descent = Math.max(0, run.actualBoundingBoxDescent);
-    const scaleY = 278 / Math.max(1, ascent + descent);
-    const baseline = 20 + ascent * scaleY;
-    const inkWidth = run.actualBoundingBoxLeft + run.actualBoundingBoxRight;
+    const strokeRadius =
+      ((ascent + descent) *
+        (Number.isFinite(extraBold) ? Math.max(0, Math.min(6, extraBold)) : 0)) /
+      100;
+    const roundingRadius =
+      ((ascent + descent) *
+        (Number.isFinite(cornerRounding) ? Math.max(0, Math.min(8, cornerRounding)) : 0)) /
+      100;
+    ctx.strokeStyle = '#fff';
+    ctx.lineJoin = 'miter';
+    ctx.miterLimit = 10;
+    ctx.lineWidth = strokeRadius * 2;
+    const scaleY = 278 / Math.max(1, ascent + descent + strokeRadius * 2);
+    const baseline = 20 + (ascent + strokeRadius) * scaleY;
+    const inkWidth = run.actualBoundingBoxLeft + run.actualBoundingBoxRight + strokeRadius * 2;
     const scaleX = (virtualWidth - 60) / Math.max(1, inkWidth);
-    const drawX = 30 + run.actualBoundingBoxLeft * scaleX;
+    const drawX = 30 + (run.actualBoundingBoxLeft + strokeRadius) * scaleX;
     const pixels = ctx.createImageData(width, height);
     const data = pixels.data;
     const flowMarkers = new Uint8Array(width * height);
@@ -793,6 +817,7 @@ export function createRefractedRenderer(
       ctx.save();
       ctx.translate(drawX + origin * scaleX, baseline);
       ctx.scale(scaleX, scaleY);
+      if (strokeRadius > 0) ctx.strokeText(letter, 0, 0);
       ctx.fillText(letter, 0, 0);
       ctx.restore();
       // Read and scan only this glyph's columns, rather than the whole word
@@ -802,18 +827,29 @@ export function createRefractedRenderer(
         Math.min(
           width - 1,
           Math.floor(
-            ((drawX + (origin - metrics.actualBoundingBoxLeft) * scaleX) * width) / virtualWidth,
+            ((drawX + (origin - metrics.actualBoundingBoxLeft - strokeRadius * 10) * scaleX) *
+              width) /
+              virtualWidth,
           ) - 2,
         ),
       );
       const glyphEnd = Math.min(
         width,
         Math.ceil(
-          ((drawX + (origin + metrics.actualBoundingBoxRight) * scaleX) * width) / virtualWidth,
+          ((drawX + (origin + metrics.actualBoundingBoxRight + strokeRadius * 10) * scaleX) *
+            width) /
+            virtualWidth,
         ) + 2,
       );
       const glyphWidth = Math.max(1, glyphEnd - glyphStart);
       const glyph = ctx.getImageData(glyphStart, 0, glyphWidth, height).data;
+      roundGlyphCorners(
+        glyph,
+        glyphWidth,
+        height,
+        (roundingRadius * scaleX * width) / virtualWidth,
+        (roundingRadius * scaleY * height) / 318,
+      );
       const first = new Int32Array(height).fill(-1);
       const last = new Int32Array(height).fill(-1);
       let glyphLeft = width;

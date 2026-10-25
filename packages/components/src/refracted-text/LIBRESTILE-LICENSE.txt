@@ -2,6 +2,9 @@ Copyright (c) 2023, ocelothe2k1 (https://www.youtube.com/@OCELOTHE / https://www
 with Reserved Font Name "Librestile".
 
 
+ReactDrops Square Display is a renamed derivative with a squarer uppercase O.
+All other glyph outlines and character spacing are unchanged.
+
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
 https://openfontlicense.org

@@ -43,10 +43,16 @@ export type RefractedTextProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children
   /** The cursor bends the beam locally by default. Enable this to steer the whole beam. */
   cursorMovesBeam?: boolean;
   fontSize?: CSSProperties['fontSize'];
-  /** Defaults to the bundled Librestile Extended Bold face. */
+  /** Defaults to the bundled Square Display face with a squarer uppercase O. */
   fontFamily?: CSSProperties['fontFamily'];
   fontWeight?: CSSProperties['fontWeight'];
   letterSpacing?: CSSProperties['letterSpacing'];
+  /** Added outline weight as a percentage of cap height, from 0 to 6. Keeps angular joins. */
+  extraBold?: number;
+  /** Height of the lettering as a percentage, from 40 to 100. */
+  fontHeight?: number;
+  /** Independent corner softness as a percentage of cap height, from 0 to 8. */
+  cornerRounding?: number;
 };
 
 type OpticalStyle = CSSProperties & { '--refracted-width': string };
@@ -66,19 +72,22 @@ export function RefractedText({
   ease = 'power4.out',
   beamFollowsLift = false,
   animateBeam = true,
-  openingDuration = 4.9,
-  duration = 10.5,
-  intensity = 1,
+  openingDuration = 6.9,
+  duration = 13.2,
+  intensity = 1.2,
   dispersion = 1,
   colorIntensity = 1,
   beamPosition = 0.5,
   fixedBeam = false,
   paused = false,
   cursorMovesBeam = false,
-  fontSize = 'clamp(4rem, 42cqw, 23rem)',
-  fontFamily = "'ReactDrops Librestile', 'Arial Black', sans-serif",
+  fontSize = '400px',
+  fontFamily = "'ReactDrops Square Display', 'Arial Black', sans-serif",
   fontWeight = 900,
   letterSpacing = 'normal',
+  extraBold = 2.25,
+  fontHeight = 80,
+  cornerRounding = 1,
   className = '',
   style,
   ...props
@@ -94,6 +103,9 @@ export function RefractedText({
     fontFamily,
     fontWeight,
     letterSpacing,
+    extraBold,
+    fontHeight,
+    cornerRounding,
   });
   useEffect(() => {
     if (
@@ -101,14 +113,36 @@ export function RefractedText({
       fontSize === typography.fontSize &&
       fontFamily === typography.fontFamily &&
       fontWeight === typography.fontWeight &&
-      letterSpacing === typography.letterSpacing
+      letterSpacing === typography.letterSpacing &&
+      extraBold === typography.extraBold &&
+      fontHeight === typography.fontHeight &&
+      cornerRounding === typography.cornerRounding
     )
       return;
     const timeout = window.setTimeout(() => {
-      setTypography({ text, fontSize, fontFamily, fontWeight, letterSpacing });
+      setTypography({
+        text,
+        fontSize,
+        fontFamily,
+        fontWeight,
+        letterSpacing,
+        extraBold,
+        fontHeight,
+        cornerRounding,
+      });
     }, 350);
     return () => window.clearTimeout(timeout);
-  }, [text, fontSize, fontFamily, fontWeight, letterSpacing, typography]);
+  }, [
+    text,
+    fontSize,
+    fontFamily,
+    fontWeight,
+    letterSpacing,
+    extraBold,
+    fontHeight,
+    cornerRounding,
+    typography,
+  ]);
   const options = useRef({
     theme,
     topColor,
@@ -163,19 +197,35 @@ export function RefractedText({
   };
 
   useEffect(() => {
-    const { text, fontFamily, fontWeight, letterSpacing } = typography;
+    const { text, fontFamily, fontWeight, letterSpacing, extraBold, fontHeight, cornerRounding } =
+      typography;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const host = canvas.parentElement;
     const renderer =
       rendererRef.current ??
-      createRefractedRenderer(canvas, text, String(fontFamily), fontWeight, String(letterSpacing));
+      createRefractedRenderer(
+        canvas,
+        text,
+        String(fontFamily),
+        fontWeight,
+        String(letterSpacing),
+        extraBold,
+        cornerRounding,
+      );
     if (!renderer) {
       setFailed(true);
       return;
     }
     if (rendererRef.current)
-      renderer.setTypography(text, String(fontFamily), fontWeight, String(letterSpacing));
+      renderer.setTypography(
+        text,
+        String(fontFamily),
+        fontWeight,
+        String(letterSpacing),
+        extraBold,
+        cornerRounding,
+      );
     rendererRef.current = renderer;
     setFailed(false);
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -194,7 +244,19 @@ export function RefractedText({
       autoLightTheme = next;
       if (options.current.theme === 'auto') syncPlayback();
     };
-    const themeObserver = new MutationObserver(syncTheme);
+    // The site retains the outgoing page during its route reveal. Treat that
+    // inert surface as suspended immediately, rather than waiting to unmount.
+    const inactive = () => !!host?.closest('[inert], [aria-hidden="true"]');
+    let suspended = inactive();
+    const themeObserver = new MutationObserver(() => {
+      const next = inactive();
+      if (!next) syncTheme();
+      if (next !== suspended) {
+        suspended = next;
+        if (!next) onResize();
+        syncPlayback();
+      }
+    });
     for (
       let element: HTMLElement | null = canvas.parentElement;
       element;
@@ -202,7 +264,7 @@ export function RefractedText({
     ) {
       themeObserver.observe(element, {
         attributes: true,
-        attributeFilter: ['data-theme', 'class', 'style'],
+        attributeFilter: ['data-theme', 'class', 'style', 'inert', 'aria-hidden'],
       });
     }
     darkPreference.addEventListener('change', syncTheme);
@@ -245,7 +307,7 @@ export function RefractedText({
     host?.addEventListener('pointerleave', leavePointer);
     const tick = (now: number) => {
       frame = 0;
-      if (disposed || !inView || document.hidden || !fontReady) return;
+      if (disposed || inactive() || !inView || document.hidden || !fontReady) return;
       // Pointer events can arrive faster than frames. Measure layout once for
       // the latest event, instead of forcing a rect read on every mouse move.
       if (pointerDirty) {
@@ -362,7 +424,8 @@ export function RefractedText({
       else previous = 0;
     };
     const syncPlayback = () => {
-      if (disposed || !inView || document.hidden || !fontReady) {
+      if (disposed || inactive() || !inView || document.hidden || !fontReady) {
+        window.clearTimeout(resizeTimer);
         window.cancelAnimationFrame(frame);
         frame = 0;
         previous = 0;
@@ -379,8 +442,38 @@ export function RefractedText({
     viewport?.observe(canvas);
     document.addEventListener('visibilitychange', syncPlayback);
     motion.addEventListener('change', syncPlayback);
+    // Match the font's natural proportions before applying the requested
+    // height. The mask and pointer use this same rectangle, as in the studio.
+    let layoutReady = false;
     const resize = (force = false) => {
-      if (!disposed && fontReady) {
+      if (!disposed && !inactive() && fontReady) {
+        if (host && (!layoutReady || force)) {
+          const metrics = document.createElement('canvas').getContext('2d');
+          if (metrics) {
+            metrics.font = `${fontWeight} 342px ${fontFamily}`;
+            metrics.fontKerning = 'normal';
+            metrics.letterSpacing = String(letterSpacing);
+            const run = metrics.measureText(text);
+            const cap =
+              Math.max(
+                metrics.measureText('H').actualBoundingBoxAscent,
+                run.actualBoundingBoxAscent,
+              ) + Math.max(0, run.actualBoundingBoxDescent);
+            const stroke =
+              (cap * (Number.isFinite(extraBold) ? Math.max(0, Math.min(6, extraBold)) : 0)) / 100;
+            const inkWidth = Math.max(
+              1,
+              run.actualBoundingBoxLeft + run.actualBoundingBoxRight + stroke * 2,
+            );
+            const height =
+              ((((((virtualWidth - 60) * (cap + stroke * 2)) / inkWidth) * 318) / 278) *
+                (Number.isFinite(fontHeight) ? Math.max(40, Math.min(100, fontHeight)) : 100)) /
+              100;
+            host.style.aspectRatio = `${virtualWidth} / ${Math.max(1, height)}`;
+            layoutReady = true;
+          }
+        }
+        observedSize = `${canvas.clientWidth}x${canvas.clientHeight}`;
         renderer.resize(force);
         syncPlayback();
       }
@@ -413,6 +506,7 @@ export function RefractedText({
     // already applies; only a changed layout size schedules a rebuild.
     let observedSize = `${canvas.clientWidth}x${canvas.clientHeight}`;
     const onResize = () => {
+      if (inactive()) return;
       const size = `${canvas.clientWidth}x${canvas.clientHeight}`;
       if (size === observedSize) return;
       observedSize = size;
@@ -463,7 +557,15 @@ export function RefractedText({
       host?.removeEventListener('pointerdown', movePointer);
       host?.removeEventListener('pointerleave', leavePointer);
     };
-  }, [typography.text, typography.fontFamily, typography.fontWeight, typography.letterSpacing]);
+  }, [
+    typography.text,
+    typography.fontFamily,
+    typography.fontWeight,
+    typography.letterSpacing,
+    typography.extraBold,
+    typography.fontHeight,
+    typography.cornerRounding,
+  ]);
 
   useEffect(
     () => () => {

@@ -19,7 +19,9 @@ npx shadcn@latest add https://reactdrops.dev/r/refracted-text.json
 
 Refracted Text renders glass lettering with a character lift and a refracted light
 beam. Set `topColor`, `bottomColor`, `dispersion` and `colorIntensity` to customize
-the material and spectrum. Its three installation files include the font and its
+the material and spectrum. The default PRO uses a square O, 2.25% extra bold,
+80% height and 1% corner rounding, with independent typography controls. Its four
+installation files include the original and square-O fonts and their
 SIL Open Font License; it requires React and WebGL 2, with no extra runtime library.
 
 ```tsx

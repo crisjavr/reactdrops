@@ -5,7 +5,7 @@
     "slug": "text-effect",
     "name": "Text Effect"
   },
-  "version": "1.8.4",
+  "version": "1.8.5",
   "description": "Glass letters with an optional character lift, adjustable opening flow, customizable top and bottom colors, original font contours and a refracted beam.",
   "access": "free",
   "status": "published",
@@ -140,7 +140,7 @@
       "name": "openingDuration",
       "label": "Opening flow (s)",
       "type": "number",
-      "defaultValue": 4.9,
+      "defaultValue": 6.9,
       "min": 2.1,
       "max": 12,
       "step": 0.1,
@@ -150,7 +150,7 @@
       "name": "duration",
       "label": "Light cycle (s)",
       "type": "number",
-      "defaultValue": 10.5,
+      "defaultValue": 13.2,
       "min": 1,
       "max": 20,
       "step": 0.1,
@@ -160,7 +160,7 @@
       "name": "intensity",
       "label": "Refraction intensity",
       "type": "number",
-      "defaultValue": 1,
+      "defaultValue": 1.2,
       "min": 0,
       "max": 2,
       "step": 0.05,
@@ -221,16 +221,16 @@
       "name": "fontSize",
       "label": "Font size (CSS)",
       "type": "text",
-      "defaultValue": "clamp(4rem, 42cqw, 23rem)",
-      "description": "Responsive size of the letters.",
+      "defaultValue": "400px",
+      "description": "CSS size of the letters, constrained to the available width.",
       "target": "style"
     },
     {
       "name": "fontFamily",
       "label": "Font family",
       "type": "text",
-      "defaultValue": "'ReactDrops Librestile', 'Arial Black', sans-serif",
-      "description": "Librestile Extended Bold is bundled for the full alphabet.",
+      "defaultValue": "'ReactDrops Square Display', 'Arial Black', sans-serif",
+      "description": "Bundled Square Display preserves the original alphabet with a squarer uppercase O. The original Librestile face also remains available.",
       "target": "style"
     },
     {
@@ -242,6 +242,39 @@
       "max": 900,
       "step": 100,
       "description": "Weight of the lettering.",
+      "target": "style"
+    },
+    {
+      "name": "extraBold",
+      "label": "Extra bold (%)",
+      "type": "number",
+      "defaultValue": 2.25,
+      "min": 0,
+      "max": 6,
+      "step": 0.05,
+      "description": "Expand the actual glyph outline with angular joins; corner rounding remains independent.",
+      "target": "style"
+    },
+    {
+      "name": "fontHeight",
+      "label": "Font height (%)",
+      "type": "number",
+      "defaultValue": 80,
+      "min": 40,
+      "max": 100,
+      "step": 1,
+      "description": "Compress the natural height of the lettering without changing its width.",
+      "target": "style"
+    },
+    {
+      "name": "cornerRounding",
+      "label": "Corner rounding (%)",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 8,
+      "step": 0.1,
+      "description": "Soften the glyph corners independently of Extra bold.",
       "target": "style"
     },
     {

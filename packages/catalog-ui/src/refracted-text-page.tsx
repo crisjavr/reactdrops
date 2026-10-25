@@ -29,25 +29,35 @@ const defaults = {
   ease: 'power4.out' as RefractedLiftEase,
   beamFollowsLift: false,
   animateBeam: true,
-  openingDuration: 4.9,
-  duration: 10.5,
-  intensity: 1,
+  openingDuration: 6.9,
+  duration: 13.2,
+  intensity: 1.2,
   dispersion: 1,
   colorIntensity: 1,
   beamPosition: 0.5,
   fixedBeam: false,
   paused: false,
   cursorMovesBeam: false,
-  fontSize: 'clamp(4rem, 42cqw, 23rem)',
-  fontFamily: "'ReactDrops Librestile', 'Arial Black', sans-serif",
+  fontSize: '400px',
+  fontFamily: "'ReactDrops Square Display', 'Arial Black', sans-serif",
   fontWeight: 900,
   letterSpacing: 'normal',
+  extraBold: 2.25,
+  fontHeight: 80,
+  cornerRounding: 1,
 };
 
 type Values = typeof defaults;
 type PresetSettings = Partial<
   Pick<
     Values,
+    | 'fontSize'
+    | 'fontFamily'
+    | 'fontWeight'
+    | 'letterSpacing'
+    | 'extraBold'
+    | 'fontHeight'
+    | 'cornerRounding'
     | 'beamPosition'
     | 'fixedBeam'
     | 'cursorMovesBeam'
@@ -78,18 +88,19 @@ const presets: { value: string; label: string; settings: PresetSettings }[] = [
     value: 'original',
     label: 'Lift + flow',
     settings: {
+      ...defaults,
       theme: 'auto',
       reveal: true,
       stagger: 0.55,
       liftDuration: 1.75,
       beamFollowsLift: false,
       animateBeam: true,
-      openingDuration: 4.9,
+      openingDuration: 6.9,
       beamPosition: 0.5,
       fixedBeam: false,
       cursorMovesBeam: false,
-      duration: 10.5,
-      intensity: 1,
+      duration: 13.2,
+      intensity: 1.2,
     },
   },
   {
@@ -245,6 +256,9 @@ export default function RefractedTextPage() {
       | 'dispersion'
       | 'colorIntensity'
       | 'beamPosition'
+      | 'extraBold'
+      | 'fontHeight'
+      | 'cornerRounding'
       | 'fontWeight'
       | 'stagger',
   ) => {
@@ -337,6 +351,9 @@ export default function RefractedTextPage() {
               {text('fontSize')}
               {text('fontFamily')}
               {number('fontWeight')}
+              {number('extraBold')}
+              {number('fontHeight')}
+              {number('cornerRounding')}
               {text('letterSpacing')}
             </div>
           </fieldset>

@@ -2,7 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { withReactDropsLicense } from './registry-license.mjs';
 
-const modules = ['refracted-text.tsx', 'refracted-renderer.ts', 'refracted-text.css'];
+const modules = [
+  'refracted-text.tsx',
+  'refracted-renderer.ts',
+  'refracted-glyph-rounding.ts',
+  'refracted-text.css',
+];
 
 export async function packageRefractedText(root) {
   return Promise.all(

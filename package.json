@@ -203,6 +203,7 @@
     "packages/components/src/public-index.ts",
     "packages/components/src/refracted-text/LIBRESTILE-LICENSE.txt",
     "packages/components/src/refracted-text/index.ts",
+    "packages/components/src/refracted-text/refracted-glyph-rounding.ts",
     "packages/components/src/refracted-text/refracted-renderer.ts",
     "packages/components/src/refracted-text/refracted-text.css",
     "packages/components/src/refracted-text/refracted-text.tsx",

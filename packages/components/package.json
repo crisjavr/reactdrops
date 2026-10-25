@@ -74,6 +74,7 @@
     "src/public-index.ts",
     "src/refracted-text/LIBRESTILE-LICENSE.txt",
     "src/refracted-text/index.ts",
+    "src/refracted-text/refracted-glyph-rounding.ts",
     "src/refracted-text/refracted-renderer.ts",
     "src/refracted-text/refracted-text.css",
     "src/refracted-text/refracted-text.tsx",
