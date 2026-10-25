@@ -22,6 +22,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/liquid-glass-logo')),
   },
   {
+    path: '/components/text-effect/refracted-text',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/refracted-text')),
+  },
+  {
     path: '/components/background/shape-physics',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/shape-physics')),
   },

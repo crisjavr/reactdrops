@@ -13,6 +13,7 @@ import { packageTopographicFlow } from './package-topographic-flow.mjs';
 import { packageLiquidGlassLogo } from './package-liquid-glass-logo.mjs';
 import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { packageFractalGlass } from './package-fractal-glass.mjs';
+import { packageRefractedText } from './package-refracted-text.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -27,6 +28,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'refracted-text': {
+    sourceSlug: 'refracted-text',
+    symbol: 'RefractedText',
+    prefix: 'refractedText',
+    package: () => packageRefractedText(root),
+    element: '<RefractedText text="PRO" />',
+  },
   'fractal-glass': {
     sourceSlug: 'fractal-glass',
     symbol: 'FractalGlass',

@@ -22,3 +22,5 @@ export {
 } from './liquid-glass-logo-page';
 
 export { default as FractalGlassCatalogPage, fractalGlassMeta } from './fractal-glass-page';
+
+export { default as RefractedTextCatalogPage, refractedTextMeta } from './refracted-text-page';

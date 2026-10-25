@@ -21,3 +21,5 @@ export {
 } from './generated/liquid-glass-logo-source';
 
 export { fractalGlassSourceFiles, fractalGlassUsage } from './generated/fractal-glass-source';
+
+export { refractedTextSourceFiles, refractedTextUsage } from './generated/refracted-text-source';

@@ -17,7 +17,7 @@ import {
   type ComponentSourceFile,
 } from './component-detail-layout';
 import { ControlField } from './controls-panel';
-import { NumberControl, SelectControl, SwitchControl } from './customizer-controls';
+import { ExportButton, NumberControl, SelectControl, SwitchControl } from './customizer-controls';
 import { ColorControl } from './color-control';
 import {
   liquidGlassLogoVideoFormats,
@@ -26,7 +26,7 @@ import {
   type LiquidGlassLogoImageFormat,
   type LiquidGlassLogoVideoFormat,
 } from './liquid-glass-logo-export';
-import { LiquidGlassLogoDropZone } from './liquid-glass-logo-dropzone';
+import { ImageUploadControl } from './image-upload-control';
 import './catalog.css';
 import './liquid-glass-logo-page.css';
 
@@ -671,58 +671,63 @@ export default function LiquidGlassLogoPage() {
       }
       controls={
         <>
-          <div className="liquid-glass-logo-drops">
-            <LiquidGlassLogoDropZone
-              title="Background"
-              hint="Drop an image or click"
-              accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml"
-              validate={(file) => (file.type.startsWith('image/') ? null : 'Use an image file.')}
-              preview={backgroundImage}
-              fit="cover"
-              fileName={backgroundName}
-              onFile={(file) => {
-                setBackgroundImage(URL.createObjectURL(file));
-                setBackgroundName(file.name);
-                setBackgroundValues(backgroundDefaults);
-              }}
-              onClear={() => {
-                setBackgroundImage('');
-                setBackgroundName('');
-                setBackgroundValues(backgroundDefaults);
-              }}
-            />
-            <LiquidGlassLogoDropZone
-              title="Logo"
-              hint="SVG or PNG · drop or click"
-              accept=".svg,.png,image/svg+xml,image/png"
-              validate={(file) => {
-                // Other formats can fail to rasterize cleanly, so only SVG and PNG are taken.
-                const name = file.name.toLowerCase();
-                const supported =
-                  file.type === 'image/svg+xml' ||
-                  file.type === 'image/png' ||
-                  name.endsWith('.svg') ||
-                  name.endsWith('.png');
-                return supported ? null : 'Use an SVG or PNG file.';
-              }}
-              preview={upload}
-              fit="contain"
-              surface={values.background}
-              fileName={uploadName}
-              onFile={(file) => {
-                setUpload(URL.createObjectURL(file));
-                setUploadName(file.name);
-                chooseLogo('upload');
-                replay();
-              }}
-              onClear={() => {
-                setUpload('');
-                setUploadName('');
-                chooseLogo('nike');
-                replay();
-              }}
-            />
-          </div>
+          <fieldset className="reveal-control-group">
+            <legend className="reveal-group-heading">
+              <h3>Images</h3>
+            </legend>
+            <div className="reveal-fields liquid-glass-logo-image-fields">
+              <ImageUploadControl
+                label="Background"
+                description="Image behind the glass logo. Drop an image here or click to choose one."
+                accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml"
+                preview={backgroundImage}
+                fit="cover"
+                fileName={backgroundName}
+                onFile={(file) => {
+                  setBackgroundImage(URL.createObjectURL(file));
+                  setBackgroundName(file.name);
+                  setBackgroundValues(backgroundDefaults);
+                }}
+                onClear={() => {
+                  setBackgroundImage('');
+                  setBackgroundName('');
+                  setBackgroundValues(backgroundDefaults);
+                }}
+              />
+              <ImageUploadControl
+                label="Logo"
+                description="Your own logo for the glass. Use an SVG or PNG; drop it here or click to choose one."
+                hint="SVG or PNG · drop or click"
+                accept=".svg,.png,image/svg+xml,image/png"
+                validate={(file) => {
+                  // Other formats can fail to rasterize cleanly, so only SVG and PNG are taken.
+                  const name = file.name.toLowerCase();
+                  const supported =
+                    file.type === 'image/svg+xml' ||
+                    file.type === 'image/png' ||
+                    name.endsWith('.svg') ||
+                    name.endsWith('.png');
+                  return supported ? null : 'Use an SVG or PNG file.';
+                }}
+                preview={upload}
+                fit="contain"
+                surface={values.background}
+                fileName={uploadName}
+                onFile={(file) => {
+                  setUpload(URL.createObjectURL(file));
+                  setUploadName(file.name);
+                  chooseLogo('upload');
+                  replay();
+                }}
+                onClear={() => {
+                  setUpload('');
+                  setUploadName('');
+                  chooseLogo('nike');
+                  replay();
+                }}
+              />
+            </div>
+          </fieldset>
           {backgroundImage && (
             <fieldset className="reveal-control-group">
               <legend className="reveal-group-heading">
@@ -1019,75 +1024,36 @@ export default function LiquidGlassLogoPage() {
                   />
                 </ControlField>
               )}
-              <ControlField
-                className="is-wide"
-                label="Download"
-                description={
-                  exportType === 'image'
-                    ? `Save the selected frame as ${imageFormat.toUpperCase()}${transparentImage ? ' with a transparent background' : ' with the current background and tint'}.`
-                    : videoFormat
-                      ? `Records the ${exportDuration}-second sequence as ${videoFormat.extension.toUpperCase()} with the current settings, background and logo. Keep this tab open while it records.`
-                      : 'This browser cannot record video.'
-                }
-              >
-                <button
+              <div className="reveal-export-action">
+                <ExportButton
                   className="liquid-glass-logo-export"
-                  type="button"
                   aria-label={`Export ${exportType}`}
-                  aria-busy={exportBusy}
+                  busy={exportBusy}
+                  ready={exportPhase === 'ready'}
+                  progress={exportProgress}
+                  progressLabel={`${exportType === 'image' ? 'Image' : 'Video'} export progress`}
                   data-export-state={exportPhase ?? 'idle'}
                   disabled={(exportType === 'video' && !videoFormat) || exportBusy}
                   onClick={exportFile}
                 >
-                  {(exportBusy || exportPhase === 'ready') && (
-                    <span
-                      className="liquid-glass-logo-export-progress"
-                      role="progressbar"
-                      aria-label={`${exportType === 'image' ? 'Image' : 'Video'} export progress`}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.round(exportProgress * 100)}
-                      style={{ transform: `scaleX(${exportProgress})` }}
-                    />
-                  )}
-                  {exportBusy ? (
-                    <span className="liquid-glass-logo-export-spinner" aria-hidden="true" />
-                  ) : (
-                    <svg viewBox="0 0 20 20" aria-hidden="true">
-                      <path
-                        d={
-                          exportPhase === 'ready'
-                            ? 'm4 10 4 4 8-8'
-                            : 'M10 3v9m-3-3 3 3 3-3M4 13v3h12v-3'
-                        }
-                      />
-                    </svg>
-                  )}
-                  <span className="liquid-glass-logo-export-label" role="status" aria-live="polite">
-                    {exportPhase === 'ready'
-                      ? `${exportType === 'image' ? 'Image' : 'Video'} ready`
-                      : exportBusy
-                        ? exportPhase === 'preparing'
-                          ? `Preparing ${exportType}…`
-                          : exportType === 'video'
-                            ? 'Exporting video…'
-                            : exportPhase === 'encoding'
-                              ? `Encoding ${imageFormat.toUpperCase()}…`
-                              : 'Rendering image…'
-                        : `Export ${exportType}`}
-                  </span>
-                  {exportBusy && (
-                    <span className="liquid-glass-logo-export-percent" aria-hidden="true">
-                      {Math.round(exportProgress * 100)}%
-                    </span>
-                  )}
-                </button>
+                  {exportPhase === 'ready'
+                    ? `${exportType === 'image' ? 'Image' : 'Video'} ready`
+                    : exportBusy
+                      ? exportPhase === 'preparing'
+                        ? `Preparing ${exportType}…`
+                        : exportType === 'video'
+                          ? 'Exporting video…'
+                          : exportPhase === 'encoding'
+                            ? `Encoding ${imageFormat.toUpperCase()}…`
+                            : 'Rendering image…'
+                      : `Export ${exportType}`}
+                </ExportButton>
                 {exportError && (
                   <p className="liquid-glass-logo-export-error" role="alert">
                     {exportError}
                   </p>
                 )}
-              </ControlField>
+              </div>
             </div>
           </fieldset>
         </>

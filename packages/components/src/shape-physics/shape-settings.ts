@@ -41,7 +41,7 @@ export const shapeDefaults: ShapeSettings = {
   faceColor: '#ffffff',
   followCursor: true,
   cursorFollowRatio: 0.4,
-  count: 50,
+  count: 22,
   size: 50,
   sizeVariation: 0.15,
   spawnRate: 14,

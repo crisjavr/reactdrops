@@ -91,6 +91,141 @@
 .reveal-field.is-long-value {
   grid-template-columns: 85px minmax(0, 1fr);
 }
+/* Outlined action inside a field row (export, apply): it fits the row with
+   3px of inset, like the image upload thumbnail. */
+.reveal-action-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: calc(var(--reveal-control-height) - 6px);
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms,
+    border-color 140ms;
+}
+.reveal-action-button:enabled:hover {
+  border-color: var(--theme-ink-muted);
+  background: color-mix(in srgb, var(--theme-ink) 6%, transparent);
+}
+.reveal-action-button:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.reveal-action-button > svg {
+  position: relative;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.reveal-action-button.reveal-export-button {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  width: 100%;
+  height: var(--reveal-control-height, 42px);
+  padding: 0 10px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f3f3f3;
+  color: #171717;
+  background: light-dark(
+    color-mix(in srgb, var(--theme-background, #fff) 96%, var(--theme-ink, #171717)),
+    #242424
+  );
+  border-color: var(--theme-border-strong, #dcdcdc);
+  color: var(--theme-ink, #171717);
+}
+.reveal-export-action {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+.reveal-action-button.reveal-export-button:enabled:hover {
+  background: light-dark(
+    color-mix(in srgb, var(--theme-background, #fff) 91%, var(--theme-ink, #171717)),
+    #2e2e2e
+  );
+  border-color: var(--theme-border-strong, #dcdcdc);
+}
+.reveal-field > .reveal-action-button.reveal-export-button:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.reveal-export-button:disabled {
+  cursor: wait;
+}
+.reveal-export-button:disabled:not([aria-busy='true']) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.reveal-export-progress {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  transform-origin: left;
+  transition: transform 180ms ease-out;
+  pointer-events: none;
+}
+.reveal-export-label,
+.reveal-export-percent {
+  position: relative;
+}
+.reveal-export-percent {
+  min-width: 4ch;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.reveal-export-spinner {
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: reveal-export-spin 700ms linear infinite;
+}
+@keyframes reveal-export-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-export-progress {
+    transition: none;
+  }
+  .reveal-export-spinner {
+    animation: none;
+  }
+}
+.reveal-field:has(> .reveal-action-button:last-child) {
+  padding-inline-end: 3px;
+}
 .component-controls .reveal-field input,
 .reveal-select > button,
 .reveal-switch-field {

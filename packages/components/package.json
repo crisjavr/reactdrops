@@ -15,7 +15,8 @@
     "./topographic-flow": "./src/topographic-flow/index.ts",
     "./chromatic-button": "./src/chromatic-button/index.ts",
     "./liquid-glass-logo": "./src/liquid-glass-logo/index.ts",
-    "./fractal-glass": "./src/fractal-glass/index.ts"
+    "./fractal-glass": "./src/fractal-glass/index.ts",
+    "./refracted-text": "./src/refracted-text/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -71,6 +72,11 @@
     "src/liquid-glass-orb/index.ts",
     "src/liquid-glass-orb/liquid-glass-orb.tsx",
     "src/public-index.ts",
+    "src/refracted-text/LIBRESTILE-LICENSE.txt",
+    "src/refracted-text/index.ts",
+    "src/refracted-text/refracted-renderer.ts",
+    "src/refracted-text/refracted-text.css",
+    "src/refracted-text/refracted-text.tsx",
     "src/shape-physics/index.ts",
     "src/shape-physics/shape-physics.css",
     "src/shape-physics/shape-physics.tsx",

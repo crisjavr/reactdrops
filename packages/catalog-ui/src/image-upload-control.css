@@ -1,0 +1,194 @@
+.reveal-field.image-upload-control {
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: calc(var(--reveal-control-height) - 6px) auto minmax(0, 1fr);
+  gap: 8px;
+  padding-inline: 3px 10px;
+  border-style: dashed;
+  border-color: var(--theme-border-strong);
+  background: transparent;
+  cursor: pointer;
+}
+.component-controls .reveal-fields > .reveal-field.image-upload-control {
+  grid-column: 1 / -1;
+}
+.reveal-field.image-upload-control:hover,
+.reveal-field.image-upload-control:focus-within {
+  border-color: var(--theme-ink-muted);
+}
+/* Apply and remove fall into extra columns after the value. */
+.reveal-field.image-upload-control:has(
+    > .image-upload-control-apply,
+    > .image-upload-control-clear
+  ) {
+  padding-inline-end: 4px;
+}
+.reveal-field.image-upload-control.is-dragging {
+  border-style: dashed;
+  border-color: var(--theme-ink-muted);
+  background: color-mix(in srgb, var(--theme-ink) 5%, transparent);
+}
+.image-upload-control > span:first-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+.image-upload-control-thumb,
+.image-upload-control-clear {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  color: var(--theme-ink-muted);
+  cursor: pointer;
+}
+.image-upload-control-thumb {
+  grid-column: 1;
+  grid-row: 1;
+  width: calc(var(--reveal-control-height) - 6px);
+  height: calc(var(--reveal-control-height) - 6px);
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--theme-ink) 4%, transparent);
+}
+.image-upload-control-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.image-upload-control-thumb.is-contain img {
+  padding: 3px;
+  object-fit: contain;
+}
+.image-upload-control-thumb svg,
+.image-upload-control-clear svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.image-upload-control-value {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--theme-ink);
+  font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* URLs read from their start; file names and hints align like other values. */
+.component-controls .reveal-field.image-upload-control input.image-upload-control-value {
+  text-align: left;
+}
+.image-upload-control:not(.has-file) span.image-upload-control-value {
+  color: var(--theme-ink-muted);
+}
+.image-upload-control.has-file input.image-upload-control-value::placeholder {
+  color: var(--theme-ink);
+  opacity: 1;
+}
+.image-upload-control-apply {
+  grid-row: 1;
+}
+.image-upload-control-clear {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  color: var(--theme-ink-muted);
+  cursor: pointer;
+}
+.image-upload-control-thumb {
+  grid-column: 1;
+  grid-row: 1;
+  width: calc(var(--reveal-control-height) - 6px);
+  height: calc(var(--reveal-control-height) - 6px);
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--theme-ink) 4%, transparent);
+}
+.image-upload-control-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.image-upload-control-thumb.is-contain img {
+  padding: 3px;
+  object-fit: contain;
+}
+.image-upload-control-thumb svg,
+.image-upload-control-clear svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.image-upload-control-value {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--theme-ink);
+  font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* URLs read from their start; file names and hints align like other values. */
+.component-controls .reveal-field.image-upload-control input.image-upload-control-value {
+  text-align: left;
+}
+.image-upload-control:not(.has-file) span.image-upload-control-value {
+  color: var(--theme-ink-muted);
+}
+.image-upload-control.has-file input.image-upload-control-value::placeholder {
+  color: var(--theme-ink);
+  opacity: 1;
+}
+.image-upload-control-apply {
+  grid-row: 1;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--theme-ink) 6%, transparent);
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.image-upload-control-apply:hover {
+  background: color-mix(in srgb, var(--theme-ink) 12%, transparent);
+}
+.image-upload-control-clear {
+  grid-row: 1;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.image-upload-control-clear:hover {
+  background: color-mix(in srgb, var(--theme-ink) 8%, transparent);
+  color: var(--theme-ink);
+}
+.image-upload-control button:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.image-upload-control-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #e5484d;
+  font-size: 12px;
+}

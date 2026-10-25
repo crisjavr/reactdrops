@@ -2,6 +2,7 @@ import type { ComponentMetadata } from '@reactdrops/catalog-data/catalog';
 import { componentPath } from '@reactdrops/catalog-data/publication';
 import { Link } from 'react-router';
 import fractalGlassPreview from './assets/fractal-glass-preview.webp';
+import refractedTextPreview from './assets/refracted-text-preview.webp';
 import liquidGlassOrbPreview from './assets/liquid-glass-orb-preview.webp';
 import topographicTerrainPreview from './assets/topographic-terrain-preview.webp';
 import fanGalleryPreview from './assets/fan-gallery-preview.webp';
@@ -19,21 +20,23 @@ const themedPreviews: Record<string, { dark: string; light: string }> = {
 export function CatalogComponentCard({ component }: { component: ComponentMetadata }) {
   const isOrb = component.slug === 'liquid-glass-orb';
   const preview =
-    component.slug === 'fractal-glass'
-      ? fractalGlassPreview
-      : isOrb
-        ? liquidGlassOrbPreview
-        : component.slug === 'topographic-terrain'
-          ? topographicTerrainPreview
-          : component.slug === 'fan-gallery'
-            ? fanGalleryPreview
-            : component.slug === 'shape-physics'
-              ? shapePhysicsPreview
-              : component.slug === 'topographic-flow'
-                ? topographicFlowPreview
-                : component.slug === 'chromatic-button'
-                  ? chromaticButtonPreview
-                  : null;
+    component.slug === 'refracted-text'
+      ? refractedTextPreview
+      : component.slug === 'fractal-glass'
+        ? fractalGlassPreview
+        : isOrb
+          ? liquidGlassOrbPreview
+          : component.slug === 'topographic-terrain'
+            ? topographicTerrainPreview
+            : component.slug === 'fan-gallery'
+              ? fanGalleryPreview
+              : component.slug === 'shape-physics'
+                ? shapePhysicsPreview
+                : component.slug === 'topographic-flow'
+                  ? topographicFlowPreview
+                  : component.slug === 'chromatic-button'
+                    ? chromaticButtonPreview
+                    : null;
   const themed = themedPreviews[component.slug];
   return (
     <Link

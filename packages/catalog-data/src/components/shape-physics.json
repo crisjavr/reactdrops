@@ -98,7 +98,7 @@
       "name": "count",
       "label": "Object count",
       "type": "number",
-      "defaultValue": 50,
+      "defaultValue": 22,
       "min": 0,
       "max": 400,
       "step": 1,

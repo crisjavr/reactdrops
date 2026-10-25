@@ -1,0 +1,55 @@
+.component-showcase .component-preview-stage:has(> .refracted-text-demo) {
+  padding: 0;
+  background: #fff;
+}
+.refracted-text-demo {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 310px;
+  place-items: center;
+  overflow: hidden;
+  background: #fff;
+  container-type: inline-size;
+  transition: background-color 320ms ease;
+}
+
+.refracted-colors-reset {
+  grid-column: 1 / -1;
+  padding: 7px 10px;
+  border: 1px solid var(--theme-border);
+  border-radius: 7px;
+  background: var(--theme-surface-soft);
+  color: var(--theme-ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.refracted-colors-reset:focus-visible {
+  outline: 2px solid var(--theme-ink-muted);
+  outline-offset: 2px;
+}
+
+.component-showcase .component-preview-stage:has(> .refracted-text-demo[data-appearance='dark']),
+:root[data-theme='dark']
+  .component-showcase
+  .component-preview-stage:has(> .refracted-text-demo[data-appearance='auto']),
+.refracted-text-demo[data-appearance='dark'],
+:root[data-theme='dark'] .refracted-text-demo[data-appearance='auto'] {
+  background: #050505;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme])
+    .component-showcase
+    .component-preview-stage:has(> .refracted-text-demo[data-appearance='auto']),
+  :root:not([data-theme]) .refracted-text-demo[data-appearance='auto'] {
+    background: #050505;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refracted-text-demo {
+    transition: none;
+  }
+}

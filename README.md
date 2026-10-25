@@ -1,6 +1,6 @@
 # ReactDrops — Creative React components
 
-Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics, Chromatic Button, Liquid Glass Logo and Fractal Glass, with source, catalog previews, customizers and a shadcn registry.
+Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Physics, Chromatic Button, Liquid Glass Logo, Fractal Glass and Refracted Text, with source, catalog previews, customizers and a shadcn registry.
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
@@ -14,9 +14,23 @@ npx shadcn@latest add https://reactdrops.dev/r/shape-physics.json
 npx shadcn@latest add https://reactdrops.dev/r/topographic-flow.json
 npx shadcn@latest add https://reactdrops.dev/r/chromatic-button.json
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-logo.json
+npx shadcn@latest add https://reactdrops.dev/r/refracted-text.json
 ```
 
-The installer adds `liquid-glass-orb.tsx`, `liquid-glass-orb.css` and GSAP.
+Refracted Text renders glass lettering with a character lift and a refracted light
+beam. Set `topColor`, `bottomColor`, `dispersion` and `colorIntensity` to customize
+the material and spectrum. Its three installation files include the font and its
+SIL Open Font License; it requires React and WebGL 2, with no extra runtime library.
+
+```tsx
+import { RefractedText } from './components/refracted-text';
+
+export function Example() {
+  return <RefractedText text="PRO" />;
+}
+```
+
+The Liquid Glass Orb installer adds `liquid-glass-orb.tsx`, `liquid-glass-orb.css` and GSAP.
 
 ```tsx
 import { LiquidGlassOrb } from './components/liquid-glass-orb';

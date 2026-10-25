@@ -1,0 +1,256 @@
+{
+  "slug": "refracted-text",
+  "name": "Refracted Text",
+  "family": {
+    "slug": "text-effect",
+    "name": "Text Effect"
+  },
+  "version": "1.8.4",
+  "description": "Glass letters with an optional character lift, adjustable opening flow, customizable top and bottom colors, original font contours and a refracted beam.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 15,
+  "publishedAt": "2026-10-25",
+  "styles": [
+    "glass",
+    "glossy",
+    "light"
+  ],
+  "types": [
+    "text"
+  ],
+  "interactions": [
+    "automatic",
+    "pointer"
+  ],
+  "technologies": [
+    "webgl",
+    "dom",
+    "css"
+  ],
+  "scopes": [
+    "element",
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "typescript",
+    "responsive",
+    "reduced-motion",
+    "ssr-compatible"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "text",
+      "label": "Text",
+      "type": "text",
+      "defaultValue": "PRO",
+      "description": "A short word works best for large display lettering.",
+      "target": "content"
+    },
+    {
+      "name": "theme",
+      "label": "Theme",
+      "type": "select",
+      "defaultValue": "auto",
+      "options": [
+        "auto",
+        "light",
+        "dark"
+      ],
+      "description": "Auto follows the inherited color scheme; choose light or dark to match a custom surface."
+    },
+    {
+      "name": "topColor",
+      "label": "Top color",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "CSS color for the upper glass. Auto preserves the original theme palette. The beam and edge highlights keep their lighting."
+    },
+    {
+      "name": "bottomColor",
+      "label": "Bottom color",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "CSS color for the lower glass. Auto preserves the original theme palette. Colors blend through the middle of each letter."
+    },
+    {
+      "name": "reveal",
+      "label": "Character lift",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "On by default: lift each letter into place. Turn off to keep the text static while the original light flow plays."
+    },
+    {
+      "name": "liftDuration",
+      "label": "Lift duration (s)",
+      "type": "number",
+      "defaultValue": 1.75,
+      "min": 0.2,
+      "max": 5,
+      "step": 0.05,
+      "description": "Total time from the first letter starting to rise until the last letter settles. Includes the character stagger."
+    },
+    {
+      "name": "stagger",
+      "label": "Character stagger (s)",
+      "type": "number",
+      "defaultValue": 0.55,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "Total delay from the first letter to the last. The lift has no opacity fade."
+    },
+    {
+      "name": "ease",
+      "label": "Easing curve",
+      "type": "select",
+      "defaultValue": "power4.out",
+      "options": [
+        "power4.out",
+        "power3.out",
+        "power2.out",
+        "power1.out",
+        "expo.out",
+        "sine.out",
+        "sine.inOut",
+        "none"
+      ],
+      "description": "Curve for the upward lift of each character; the shader's light flow keeps its original timing."
+    },
+    {
+      "name": "beamFollowsLift",
+      "label": "Beam follows letters",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Off keeps the light beam fixed in the preview while letters rise. On moves the beam with each glyph, as in the previous lift."
+    },
+    {
+      "name": "animateBeam",
+      "label": "Animate beam",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Turn off the automatic beam flow and show its settled appearance immediately. Character lift and cursor interaction remain active."
+    },
+    {
+      "name": "openingDuration",
+      "label": "Opening flow (s)",
+      "type": "number",
+      "defaultValue": 4.9,
+      "min": 2.1,
+      "max": 12,
+      "step": 0.1,
+      "description": "One power4.out flow curve spans the whole word; it does not restart for each letter. Static flow (original) retains its continuous cycle."
+    },
+    {
+      "name": "duration",
+      "label": "Light cycle (s)",
+      "type": "number",
+      "defaultValue": 10.5,
+      "min": 1,
+      "max": 20,
+      "step": 0.1,
+      "description": "Time for the light cycle. With character lift it stops after the entrance; static flow keeps cycling."
+    },
+    {
+      "name": "intensity",
+      "label": "Refraction intensity",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "Brightness of the white ray and its spectral color. Use Color separation to widen the existing spectral colors."
+    },
+    {
+      "name": "dispersion",
+      "label": "Color separation",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Area covered by the original spectral colors, including amber and orange. One preserves the original refraction. Higher values widen those colors without boosting saturation or widening the white beam."
+    },
+    {
+      "name": "colorIntensity",
+      "label": "Color intensity",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "Strength of the original spectral colors. Changes only their chromatic contribution, independently of the white beam and Color separation coverage."
+    },
+    {
+      "name": "beamPosition",
+      "label": "Fixed beam height",
+      "type": "number",
+      "defaultValue": 0.5,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Same vertical position as the cursor in Cursor moves beam: 0 is the top edge and 1 is the bottom edge."
+    },
+    {
+      "name": "fixedBeam",
+      "label": "Fixed beam",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the beam at the chosen height until the cursor moves it."
+    },
+    {
+      "name": "paused",
+      "label": "Pause animation",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the automatic cycle; the cursor can still bend the ray."
+    },
+    {
+      "name": "cursorMovesBeam",
+      "label": "Cursor moves beam",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Steer the whole ray with the cursor. Off by default so the cursor bends it locally."
+    },
+    {
+      "name": "fontSize",
+      "label": "Font size (CSS)",
+      "type": "text",
+      "defaultValue": "clamp(4rem, 42cqw, 23rem)",
+      "description": "Responsive size of the letters.",
+      "target": "style"
+    },
+    {
+      "name": "fontFamily",
+      "label": "Font family",
+      "type": "text",
+      "defaultValue": "'ReactDrops Librestile', 'Arial Black', sans-serif",
+      "description": "Librestile Extended Bold is bundled for the full alphabet.",
+      "target": "style"
+    },
+    {
+      "name": "fontWeight",
+      "label": "Font weight",
+      "type": "number",
+      "defaultValue": 900,
+      "min": 400,
+      "max": 900,
+      "step": 100,
+      "description": "Weight of the lettering.",
+      "target": "style"
+    },
+    {
+      "name": "letterSpacing",
+      "label": "Letter spacing (CSS)",
+      "type": "text",
+      "defaultValue": "normal",
+      "description": "Uses the font's natural spacing unless you set a value.",
+      "target": "style"
+    }
+  ]
+}

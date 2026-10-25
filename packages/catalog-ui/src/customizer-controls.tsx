@@ -6,6 +6,7 @@ import {
   useState,
   type KeyboardEvent,
   type CSSProperties,
+  type ButtonHTMLAttributes,
 } from 'react';
 import { DropdownSurface } from './dropdown-surface';
 import { requestComponentPreview } from './component-preview-miniature';
@@ -15,6 +16,65 @@ import { useNumberMotion } from './use-number-motion';
 import { useNumberElasticity } from './use-number-elasticity';
 
 type Option = { value: string; label: string };
+
+/** Shared export action for image/video downloads throughout the catalog and lab. */
+export function ExportButton({
+  busy = false,
+  ready = false,
+  progress,
+  progressLabel = 'Export progress',
+  children,
+  className = '',
+  disabled,
+  type = 'button',
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  busy?: boolean;
+  ready?: boolean;
+  progress?: number;
+  progressLabel?: string;
+}) {
+  const fraction = Math.max(
+    0,
+    Math.min(1, typeof progress === 'number' && Number.isFinite(progress) ? progress : 0),
+  );
+  return (
+    <button
+      {...props}
+      type={type}
+      className={`reveal-action-button reveal-export-button ${className}`.trim()}
+      disabled={disabled || busy}
+      aria-busy={busy}
+    >
+      {progress !== undefined && (busy || ready) && (
+        <span
+          className="reveal-export-progress"
+          role="progressbar"
+          aria-label={progressLabel}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(fraction * 100)}
+          style={{ transform: `scaleX(${fraction})` }}
+        />
+      )}
+      {busy ? (
+        <span className="reveal-export-spinner" aria-hidden="true" />
+      ) : (
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d={ready ? 'm4 10 4 4 8-8' : 'M10 3v9m-3-3 3 3 3-3M4 13v3h12v-3'} />
+        </svg>
+      )}
+      <span className="reveal-export-label" role="status" aria-live="polite">
+        {children}
+      </span>
+      {busy && progress !== undefined && (
+        <span className="reveal-export-percent" aria-hidden="true">
+          {Math.round(fraction * 100)}%
+        </span>
+      )}
+    </button>
+  );
+}
 
 function Chevron() {
   return (

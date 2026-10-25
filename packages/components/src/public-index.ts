@@ -8,3 +8,5 @@ export * from './chromatic-button';
 export * from './liquid-glass-logo';
 
 export * from './fractal-glass';
+
+export * from './refracted-text';

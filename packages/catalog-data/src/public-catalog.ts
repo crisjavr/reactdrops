@@ -1,5 +1,6 @@
 import type { ComponentMetadata } from '@reactdrops/component-schema';
 import fractalGlassJson from './components/fractal-glass.json';
+import refractedTextJson from './components/refracted-text.json';
 import liquidGlassLogoJson from './components/liquid-glass-logo.json';
 import fluidAgentOrbJson from './components/fluid-agent-orb.json';
 import topographicTerrainJson from './components/topographic-terrain.json';
@@ -19,7 +20,9 @@ export const topographicFlow = topographicFlowJson as ComponentMetadata;
 export const chromaticButton = chromaticButtonJson as ComponentMetadata;
 export const liquidGlassLogo = liquidGlassLogoJson as ComponentMetadata;
 export const fractalGlass = fractalGlassJson as ComponentMetadata;
+export const refractedText = refractedTextJson as ComponentMetadata;
 export const components = [
+  refractedText,
   fractalGlass,
   liquidGlassLogo,
   fluidAgentOrb,

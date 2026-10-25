@@ -22,8 +22,8 @@ import {
   type ComponentSourceFile,
 } from './component-detail-layout';
 import { ControlField } from './controls-panel';
-import { requestComponentPreview } from './component-preview-miniature';
-import { NumberControl, SelectControl, SwitchControl } from './customizer-controls';
+import { ImageUploadControl } from './image-upload-control';
+import { ExportButton, NumberControl, SelectControl, SwitchControl } from './customizer-controls';
 import './catalog.css';
 import './fractal-glass-page.css';
 
@@ -102,28 +102,16 @@ export default function FractalGlassPage() {
   const [src, setSrc] = useState(defaultImage),
     [draft, setDraft] = useState(defaultImage);
   const [upload, setUpload] = useState<{ url: string; name: string } | null>(null);
-  const imageInput = useRef<HTMLInputElement>(null);
-  const [draggingImage, setDraggingImage] = useState(false);
-  const [imageError, setImageError] = useState('');
-  const takeImage = (file?: File) => {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setImageError('Use an image file.');
-      return;
-    }
-    setImageError('');
+  const takeImage = (file: File) => {
     const url = URL.createObjectURL(file);
     setUpload({ url, name: file.name });
     setSrc(url);
     setDraft('');
-    requestComponentPreview(imageInput.current);
   };
   const applyImage = () => {
     if (!draft.trim()) return;
-    setImageError('');
     setUpload(null);
     setSrc(draft.trim());
-    requestComponentPreview(imageInput.current);
   };
 
   useEffect(
@@ -475,109 +463,25 @@ export default function FractalGlassPage() {
               <h3>Image &amp; appearance</h3>
             </legend>
             <div className="reveal-fields">
-              <ControlField
-                className={`fractal-glass-image-upload${draggingImage ? ' is-dragging' : ''}${upload ? ' has-file' : ''}`}
+              <ImageUploadControl
                 label="Image URL"
                 description="Enter an image URL and apply it, or drop an image here or use the upload button."
-                onClick={(event) => {
-                  if (!(event.target as Element).closest('input, button'))
-                    imageInput.current?.click();
+                preview={upload?.url}
+                fileName={upload?.name}
+                url={{
+                  value: draft,
+                  placeholder: upload?.name,
+                  canApply: Boolean(draft.trim()) && (Boolean(upload) || draft.trim() !== src),
+                  onChange: setDraft,
+                  onApply: applyImage,
                 }}
-                onDragEnter={(event) => {
-                  if (event.dataTransfer.types.includes('Files')) {
-                    event.preventDefault();
-                    setDraggingImage(true);
-                  }
+                onFile={takeImage}
+                onClear={() => {
+                  setUpload(null);
+                  setSrc(defaultImage);
+                  setDraft(defaultImage);
                 }}
-                onDragOver={(event) => {
-                  if (event.dataTransfer.types.includes('Files')) event.preventDefault();
-                }}
-                onDragLeave={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-                    setDraggingImage(false);
-                }}
-                onDrop={(event) => {
-                  if (!event.dataTransfer.files.length) return;
-                  event.preventDefault();
-                  setDraggingImage(false);
-                  takeImage(event.dataTransfer.files[0]);
-                }}
-              >
-                <button
-                  className="fractal-glass-image-browse"
-                  type="button"
-                  aria-label="Upload image"
-                  title={upload ? 'Replace image' : 'Upload image'}
-                  onClick={() => imageInput.current?.click()}
-                >
-                  {upload ? (
-                    <img src={upload.url} alt="" />
-                  ) : (
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" />
-                    </svg>
-                  )}
-                </button>
-                <input
-                  type="text"
-                  inputMode="url"
-                  aria-label="Image URL"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={draft}
-                  placeholder={upload?.name ?? 'https://…'}
-                  title={upload?.name ?? draft}
-                  onChange={(event) => setDraft(event.target.value.replace(/[\r\n]/g, ' '))}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      applyImage();
-                    }
-                  }}
-                />
-                <input
-                  ref={imageInput}
-                  type="file"
-                  accept="image/*"
-                  aria-label="Choose image file"
-                  hidden
-                  onChange={(event) => {
-                    takeImage(event.target.files?.[0]);
-                    event.target.value = '';
-                  }}
-                />
-                {upload && (
-                  <button
-                    className="fractal-glass-image-clear"
-                    type="button"
-                    aria-label="Remove image"
-                    onClick={() => {
-                      setImageError('');
-                      setUpload(null);
-                      setSrc(defaultImage);
-                      setDraft(defaultImage);
-                      requestComponentPreview(imageInput.current);
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M6 6l12 12M18 6 6 18" />
-                    </svg>
-                  </button>
-                )}
-              </ControlField>
-              <button
-                className="component-replay-button"
-                type="button"
-                disabled={!draft.trim()}
-                onClick={applyImage}
-              >
-                Apply image
-              </button>
-              {imageError && (
-                <p className="fractal-glass-image-error" role="alert">
-                  {imageError}
-                </p>
-              )}
+              />
               {numbers(['height', 'borderRadius'])}
             </div>
           </fieldset>
@@ -586,41 +490,21 @@ export default function FractalGlassPage() {
               <h3>Export</h3>
             </legend>
             <div className="reveal-fields">
-              <ControlField
-                className="is-wide"
-                label="PNG image"
-                description="Download the current glass image with your settings, crop and rounded corners."
-              >
-                <button
-                  type="button"
+              <div className="reveal-export-action">
+                <ExportButton
                   className="fractal-glass-export"
                   aria-label="Export image"
-                  disabled={exportStatus === 'encoding'}
-                  aria-busy={exportStatus === 'encoding'}
+                  busy={exportStatus === 'encoding'}
+                  ready={exportStatus === 'ready'}
                   onClick={exportImage}
                 >
-                  {exportStatus === 'encoding' ? (
-                    <span className="fractal-glass-export-spinner" aria-hidden="true" />
-                  ) : (
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        d={
-                          exportStatus === 'ready'
-                            ? 'm5 12 4 4L19 6'
-                            : 'M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4'
-                        }
-                      />
-                    </svg>
-                  )}
-                  <span role="status">
-                    {exportStatus === 'encoding'
-                      ? 'Exporting PNG…'
-                      : exportStatus === 'ready'
-                        ? 'Image downloaded'
-                        : 'Export image'}
-                  </span>
-                </button>
-              </ControlField>
+                  {exportStatus === 'encoding'
+                    ? 'Exporting PNG…'
+                    : exportStatus === 'ready'
+                      ? 'Image ready'
+                      : 'Export image'}
+                </ExportButton>
+              </div>
               {exportError && (
                 <p className="fractal-glass-export-error" role="alert">
                   {exportError}
