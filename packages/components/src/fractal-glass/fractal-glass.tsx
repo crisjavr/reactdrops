@@ -44,6 +44,7 @@ export const FractalGlass = forwardRef<FractalGlassHandle, FractalGlassProps>(fu
     borderRadius = 0,
     className = '',
     style,
+    animateEntrance = fractalGlassDefaults.animateEntrance,
     mode = fractalGlassDefaults.mode,
     smoothness = fractalGlassDefaults.smoothness,
     textureScale = fractalGlassDefaults.textureScale,
@@ -147,6 +148,7 @@ export const FractalGlass = forwardRef<FractalGlassHandle, FractalGlassProps>(fu
     [],
   );
   const [ready, setReady] = useState(false);
+  const [loadedSource, setLoadedSource] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false),
     [focused, setFocused] = useState(false),
     [touched, setTouched] = useState(false);
@@ -154,6 +156,7 @@ export const FractalGlass = forwardRef<FractalGlassHandle, FractalGlassProps>(fu
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const pointerType = useRef('');
   const settings = normalizeFractalGlass({
+    animateEntrance,
     mode,
     smoothness,
     textureScale,
@@ -319,6 +322,8 @@ export const FractalGlass = forwardRef<FractalGlassHandle, FractalGlassProps>(fu
         ...style,
       }}
       data-renderer={ready ? 'webgl' : 'native'}
+      data-animate-entrance={animateEntrance}
+      data-image-ready={loadedSource === src}
       data-glass-mode={disabled ? 'disabled' : hoverEffect ? 'hover' : 'always'}
       data-hover-preset={hoverPreset}
       data-hover-animation={hoverAnimation}
@@ -380,7 +385,21 @@ export const FractalGlass = forwardRef<FractalGlassHandle, FractalGlassProps>(fu
         onBlur?.(event);
       }}
     >
-      <img className="fractal-glass-image" src={src || undefined} alt={alt} decoding="async" />
+      <img
+        className="fractal-glass-image"
+        src={src || undefined}
+        alt={alt}
+        decoding="async"
+        onLoad={(event) => {
+          const image = event.currentTarget;
+          void image
+            .decode()
+            .catch(() => {})
+            .then(() => {
+              if (image.isConnected && image.getAttribute('src') === src) setLoadedSource(src);
+            });
+        }}
+      />
       <canvas ref={canvas} className="fractal-glass-canvas" aria-hidden="true" />
       {children !== undefined && <div className="fractal-glass-content">{children}</div>}
     </div>

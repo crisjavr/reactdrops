@@ -5,7 +5,7 @@
     "slug": "background",
     "name": "Background"
   },
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Animated 3D topographic layers with adjustable perspective, material, bevel and lighting.",
   "access": "free",
   "status": "published",
@@ -80,7 +80,7 @@
     },
     {
       "name": "cameraTilt",
-      "label": "Camera tilt (°)",
+      "label": "Camera tilt (\u00b0)",
       "type": "number",
       "defaultValue": 38,
       "description": "Angle from the top-down view. Increase to reveal the sides of the terraced layers.",
@@ -90,7 +90,7 @@
     },
     {
       "name": "cameraRotation",
-      "label": "Camera rotation (°)",
+      "label": "Camera rotation (\u00b0)",
       "type": "number",
       "defaultValue": -20,
       "description": "Rotate the view around the terrain without rotating its material or grain.",
@@ -158,7 +158,7 @@
     },
     {
       "name": "lightDirection",
-      "label": "Light direction (°)",
+      "label": "Light direction (\u00b0)",
       "type": "number",
       "defaultValue": 315,
       "description": "Direction of the single light over the relief. Ambient illumination keeps unlit surfaces readable.",
@@ -340,6 +340,13 @@
       "type": "boolean",
       "defaultValue": false,
       "description": "Hold the current relief without resetting its animation clock."
+    },
+    {
+      "name": "animateEntrance",
+      "label": "Animate entrance",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Fade in over 800 ms after the first complete image or frame is ready. Set false for an immediate entrance. Respects prefers-reduced-motion."
     }
   ]
 }

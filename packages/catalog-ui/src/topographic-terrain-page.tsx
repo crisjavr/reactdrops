@@ -335,7 +335,20 @@ export default function TopographicTerrainPage() {
             <legend className="reveal-group-heading">
               <h3>Motion</h3>
             </legend>
-            <div className="reveal-fields">{numbers(['speed'])}</div>
+            <div className="reveal-fields">
+              <ControlField
+                className="is-boolean"
+                label="Animate entrance"
+                description="Fade in the first complete frame. Turn off for an immediate entrance. Reduced motion skips the fade."
+              >
+                <SwitchControl
+                  label="Animate entrance"
+                  checked={values.animateEntrance}
+                  onChange={(value) => set('animateEntrance', value)}
+                />
+              </ControlField>
+              {numbers(['speed'])}
+            </div>
           </fieldset>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">

@@ -88,8 +88,9 @@ export function createTopographicRenderer(
   host: HTMLElement,
   initial: TopographicConfig,
   surfaceFactory?: TopographicSurfaceFactory,
+  onReady?: () => void,
 ) {
-  const surface = createTopographicSurface(canvas, host, initial, surfaceFactory);
+  const surface = createTopographicSurface(canvas, host, initial, surfaceFactory, onReady);
   if (surface) return surface;
   const ctx = canvas.getContext('2d');
   if (!ctx) return { update: (_: TopographicConfig) => {}, reset: () => {}, destroy: () => {} };
@@ -289,6 +290,7 @@ export function createTopographicRenderer(
     compileDashes();
     rebuildGradient();
   };
+  let presented = false;
   const draw = () => {
     if (!width || !height || destroyed) return;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -411,6 +413,10 @@ export function createTopographicRenderer(
         ctx.drawImage(grainStamp, 0, 0, width, height);
         ctx.globalAlpha = 1;
       }
+    }
+    if (!presented) {
+      presented = true;
+      onReady?.();
     }
   };
   const tick = (now: number) => {

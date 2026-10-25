@@ -341,6 +341,24 @@ export default function FractalGlassPage() {
           </fieldset>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
+              <h3>Entrance</h3>
+            </legend>
+            <div className="reveal-fields">
+              <ControlField
+                className="is-boolean"
+                label="Animate entrance"
+                description="Fade in the first complete image. Turn off for an immediate entrance. Reduced motion skips the fade."
+              >
+                <SwitchControl
+                  label="Animate entrance"
+                  checked={values.animateEntrance}
+                  onChange={(value) => set('animateEntrance', value)}
+                />
+              </ControlField>
+            </div>
+          </fieldset>
+          <fieldset className="reveal-control-group">
+            <legend className="reveal-group-heading">
               <h3>Interaction</h3>
             </legend>
             <div className="reveal-fields">

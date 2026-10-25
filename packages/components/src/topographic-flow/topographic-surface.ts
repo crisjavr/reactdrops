@@ -335,6 +335,7 @@ export function createTopographicSurface(
   host: HTMLElement,
   initial: TopographicConfig,
   surfaceFactory?: TopographicSurfaceFactory,
+  onReady?: () => void,
 ) {
   const threeDimensional = !!surfaceFactory;
   const gl = canvas.getContext('webgl2', {
@@ -749,6 +750,12 @@ export function createTopographicSurface(
       cuts();
     }
   };
+  let presented = false;
+  const present = () => {
+    if (presented) return;
+    presented = true;
+    onReady?.();
+  };
   const draw = () => {
     if (!width || !height || destroyed || lost) return;
     const grain = finite(config.grain ?? 0, 0, 1, 0);
@@ -813,6 +820,7 @@ export function createTopographicSurface(
       terrainFrame.pointerStampCount = packStamps();
       terrainFrame.pointerRadius = hoverRadius();
       terraces.draw(terrainFrame);
+      present();
       return;
     }
     gl.useProgram(program);
@@ -855,6 +863,7 @@ export function createTopographicSurface(
     if (gradientColors.count >= 2)
       gl.uniform3fv(locations['uGradientColors[0]'], gradientColors.data);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    present();
   };
   const animate = () =>
     !destroyed &&

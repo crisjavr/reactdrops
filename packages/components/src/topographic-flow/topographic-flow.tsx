@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type ReactNode,
 } from 'react';
@@ -26,6 +27,8 @@ import './topographic-flow.css';
 
 export type TopographicFlowHandle = { reset: () => void };
 export type TopographicFlowProps = Partial<Omit<TopographicConfig, TopographicReliefProperties>> & {
+  /** Fade in the first complete frame. Disable for an immediate entrance. */
+  animateEntrance?: boolean;
   preset?: TopographicPreset;
   backgroundColor?: string;
   backgroundImage?: CSSProperties['backgroundImage'];
@@ -40,6 +43,7 @@ export type TopographicFlowProps = Partial<Omit<TopographicConfig, TopographicRe
 export const TopographicFlow = forwardRef<TopographicFlowHandle, TopographicFlowProps>(
   function TopographicFlow(
     {
+      animateEntrance = topographicDefaults.animateEntrance,
       preset = 'paper',
       backgroundColor,
       backgroundImage,
@@ -73,6 +77,7 @@ export const TopographicFlow = forwardRef<TopographicFlowHandle, TopographicFlow
   ) {
     const host = useRef<HTMLDivElement>(null),
       canvas = useRef<HTMLCanvasElement>(null);
+    const [ready, setReady] = useState(false);
     const renderer = useRef<ReturnType<typeof createTopographicRenderer> | null>(null);
     const palette = topographicPresets[preset] ?? topographicPresets.paper;
     const customImage = style?.backgroundImage ?? backgroundImage;
@@ -156,7 +161,13 @@ export const TopographicFlow = forwardRef<TopographicFlowHandle, TopographicFlow
     useImperativeHandle(ref, () => ({ reset: () => renderer.current?.reset() }), []);
     useEffect(() => {
       if (!canvas.current || !host.current) return;
-      const instance = createTopographicRenderer(canvas.current, host.current, latest.current);
+      const instance = createTopographicRenderer(
+        canvas.current,
+        host.current,
+        latest.current,
+        undefined,
+        () => setReady(true),
+      );
       renderer.current = instance;
       return () => {
         instance.destroy();
@@ -181,6 +192,8 @@ export const TopographicFlow = forwardRef<TopographicFlowHandle, TopographicFlow
     return (
       <div
         ref={host}
+        data-ready={ready}
+        data-animate-entrance={animateEntrance}
         className={`topographic-flow ${className}`}
         style={{
           height,

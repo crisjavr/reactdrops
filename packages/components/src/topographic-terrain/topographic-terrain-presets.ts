@@ -3,6 +3,7 @@ import type { TopographicGradientColors } from '../topographic-flow/topographic-
 export type TopographicTerrainGradientColors = TopographicGradientColors;
 
 export const topographicTerrainDefaults = {
+  animateEntrance: true,
   scale: 400,
   density: 6,
   speed: 1.5,

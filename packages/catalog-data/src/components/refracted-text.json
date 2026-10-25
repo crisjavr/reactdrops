@@ -5,7 +5,7 @@
     "slug": "text-effect",
     "name": "Text Effect"
   },
-  "version": "1.8.5",
+  "version": "1.8.6",
   "description": "Glass letters with an optional character lift, adjustable opening flow, customizable top and bottom colors, original font contours and a refracted beam.",
   "access": "free",
   "status": "published",
@@ -56,13 +56,13 @@
       "name": "theme",
       "label": "Theme",
       "type": "select",
-      "defaultValue": "auto",
+      "defaultValue": "dark",
       "options": [
         "auto",
         "light",
         "dark"
       ],
-      "description": "Auto follows the inherited color scheme; choose light or dark to match a custom surface."
+      "description": "Dark by default, independently of the page. Choose Light for a white surface, or Auto to follow the inherited color scheme."
     },
     {
       "name": "topColor",

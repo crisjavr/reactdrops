@@ -9,7 +9,7 @@ import './refracted-text.css';
 export type RefractedTextProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
   /** Typography edits are applied after 350ms of inactivity; the initial text renders immediately. */
   text: string;
-  /** Follow the inherited color scheme, or use a palette for a specific surface. */
+  /** Dark by default, independently of the site. Choose light explicitly, or auto to follow the site. */
   theme?: 'auto' | 'light' | 'dark';
   /** CSS color for the upper glass. "auto" keeps the theme's original palette. */
   topColor?: string;
@@ -63,7 +63,7 @@ function stillFrameTime(duration: number) {
 
 export function RefractedText({
   text,
-  theme = 'auto',
+  theme = 'dark',
   topColor = 'auto',
   bottomColor = 'auto',
   reveal = true,

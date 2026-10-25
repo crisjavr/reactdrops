@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type ReactNode,
 } from 'react';
@@ -26,6 +27,8 @@ export type TopographicTerrainHandle = { reset: () => void };
 export type TopographicTerrainProps = Partial<
   Omit<TopographicConfig, 'lineStyle' | 'dashLength' | 'dashGap'>
 > & {
+  /** Fade in the first complete frame. Disable for an immediate entrance. */
+  animateEntrance?: boolean;
   preset?: TopographicTerrainPreset;
   backgroundImage?: CSSProperties['backgroundImage'];
   height?: number | string;
@@ -37,6 +40,7 @@ export type TopographicTerrainProps = Partial<
 export const TopographicTerrain = forwardRef<TopographicTerrainHandle, TopographicTerrainProps>(
   function TopographicTerrain(
     {
+      animateEntrance = topographicTerrainDefaults.animateEntrance,
       preset = 'terraced',
       height,
       children,
@@ -78,6 +82,7 @@ export const TopographicTerrain = forwardRef<TopographicTerrainHandle, Topograph
   ) {
     const host = useRef<HTMLDivElement>(null),
       canvas = useRef<HTMLCanvasElement>(null);
+    const [ready, setReady] = useState(false);
     const renderer = useRef<ReturnType<typeof createTopographicRenderer> | null>(null);
     const palette = topographicTerrainPresets[preset] ?? topographicTerrainPresets.terraced;
     const followsTheme = preset === 'terraced' || preset === 'terraced-top';
@@ -177,6 +182,7 @@ export const TopographicTerrain = forwardRef<TopographicTerrainHandle, Topograph
         host.current,
         latest.current,
         createTopographicTerrainSurface,
+        () => setReady(true),
       );
       renderer.current = instance;
       return () => {
@@ -202,6 +208,8 @@ export const TopographicTerrain = forwardRef<TopographicTerrainHandle, Topograph
     return (
       <div
         ref={host}
+        data-ready={ready}
+        data-animate-entrance={animateEntrance}
         className={`topographic-terrain ${className}`}
         style={{
           height,

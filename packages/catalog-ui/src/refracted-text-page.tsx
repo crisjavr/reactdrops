@@ -20,7 +20,7 @@ import './refracted-text-page.css';
 
 const defaults = {
   text: 'PRO',
-  theme: 'auto' as 'auto' | 'light' | 'dark',
+  theme: 'dark' as 'auto' | 'light' | 'dark',
   topColor: 'auto',
   bottomColor: 'auto',
   reveal: true,
@@ -89,7 +89,7 @@ const presets: { value: string; label: string; settings: PresetSettings }[] = [
     label: 'Lift + flow',
     settings: {
       ...defaults,
-      theme: 'auto',
+      theme: 'dark',
       reveal: true,
       stagger: 0.55,
       liftDuration: 1.75,
@@ -107,7 +107,7 @@ const presets: { value: string; label: string; settings: PresetSettings }[] = [
     value: 'static',
     label: 'Static flow (original)',
     settings: {
-      theme: 'auto',
+      theme: 'dark',
       reveal: false,
       stagger: 0.55,
       liftDuration: 1.35,
@@ -398,7 +398,7 @@ export default function RefractedTextPage() {
               <ControlField
                 className="is-preset"
                 label="Theme"
-                description="Follow the site theme or preview the effect on a light or dark surface."
+                description="Dark by default, independently of the page. Select Light for a white surface, or Auto to follow the page theme."
               >
                 <SelectControl
                   label="Theme"
@@ -558,7 +558,7 @@ export default function RefractedTextPage() {
           type: 'string / CSSProperties',
           defaultValue: '—',
           description:
-            'Style the transparent outer element. The palette follows the inherited color scheme unless theme is set explicitly.',
+            'Style the transparent outer element. The palette defaults to dark. Choose light explicitly, or auto to follow the inherited color scheme.',
         },
       ]}
     />

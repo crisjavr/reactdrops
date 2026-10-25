@@ -5,7 +5,7 @@
     "slug": "background",
     "name": "Background"
   },
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Smoothly evolving topographic contours and elevation gradients with continuous or broken survey lines.",
   "access": "free",
   "status": "published",
@@ -267,6 +267,13 @@
       "type": "boolean",
       "defaultValue": false,
       "description": "Hold the current relief without resetting its animation clock."
+    },
+    {
+      "name": "animateEntrance",
+      "label": "Animate entrance",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Fade in over 800 ms after the first complete image or frame is ready. Set false for an immediate entrance. Respects prefers-reduced-motion."
     }
   ]
 }

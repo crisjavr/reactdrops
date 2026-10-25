@@ -21,6 +21,7 @@ export const fractalGlassEases = [
 export type FractalGlassEase = (typeof fractalGlassEases)[number];
 
 export const fractalGlassDefaults = {
+  animateEntrance: true,
   mode: 'default' as FractalGlassMode,
   stripes: 26,
   distortion: 24,
@@ -102,6 +103,7 @@ export function normalizeFractalGlass(settings: FractalGlassSettings): FractalGl
   const d = fractalGlassDefaults;
   return {
     ...settings,
+    animateEntrance: settings.animateEntrance !== false,
     stripes: Math.round(bounded(settings.stripes, d.stripes, 1, 200)),
     distortion: bounded(settings.distortion, d.distortion, 0, 300),
     refractionBias: bounded(settings.refractionBias, d.refractionBias, -1, 1),

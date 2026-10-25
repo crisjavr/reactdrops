@@ -5,7 +5,7 @@
     "slug": "image",
     "name": "Image"
   },
-  "version": "1.20.0",
+  "version": "1.20.1",
   "description": "Create a striped glass effect with Gaussian blur, a custom striped texture, clipping, monochromatic noise and levels.",
   "access": "free",
   "status": "published",
@@ -408,6 +408,13 @@
       "max": 120,
       "step": 1,
       "description": "Clip the image, glass and foreground to the same rounded surface."
+    },
+    {
+      "name": "animateEntrance",
+      "label": "Animate entrance",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Fade in over 800 ms after the first complete image or frame is ready. Set false for an immediate entrance. Respects prefers-reduced-motion."
     }
   ]
 }

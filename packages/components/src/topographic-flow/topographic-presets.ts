@@ -9,6 +9,7 @@ export type {
   TopographicLineStyle,
 } from './topographic-renderer';
 export const topographicDefaults = {
+  animateEntrance: true,
   scale: 480,
   density: 5,
   speed: 1.5,
