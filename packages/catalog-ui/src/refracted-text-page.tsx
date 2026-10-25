@@ -312,7 +312,7 @@ export default function RefractedTextPage() {
     return (
       <ControlField
         key={name}
-        className="is-wide"
+        className={name === 'text' ? 'refracted-quick-text' : 'is-wide'}
         label={control.label}
         description={control.description ?? ''}
       >
@@ -344,24 +344,9 @@ export default function RefractedTextPage() {
         <>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
-              <h3>Lettering</h3>
-            </legend>
-            <div className="reveal-fields">
-              {text('text')}
-              {text('fontSize')}
-              {text('fontFamily')}
-              {number('fontWeight')}
-              {number('extraBold')}
-              {number('fontHeight')}
-              {number('cornerRounding')}
-              {text('letterSpacing')}
-            </div>
-          </fieldset>
-          <fieldset className="reveal-control-group">
-            <legend className="reveal-group-heading">
               <h3>Colors</h3>
             </legend>
-            <div className="reveal-fields">
+            <div className="reveal-fields refracted-color-fields">
               {(['topColor', 'bottomColor'] as const).map((name) => {
                 const label = name === 'topColor' ? 'Top color' : 'Bottom color';
                 return (
@@ -381,6 +366,7 @@ export default function RefractedTextPage() {
                   </ControlField>
                 );
               })}
+              {text('text')}
             </div>
           </fieldset>
           <fieldset className="reveal-control-group">
@@ -537,6 +523,20 @@ export default function RefractedTextPage() {
                   </ControlField>
                 </>
               )}
+            </div>
+          </fieldset>
+          <fieldset className="reveal-control-group">
+            <legend className="reveal-group-heading">
+              <h3>Lettering</h3>
+            </legend>
+            <div className="reveal-fields">
+              {text('fontSize')}
+              {text('fontFamily')}
+              {number('fontWeight')}
+              {number('extraBold')}
+              {number('fontHeight')}
+              {number('cornerRounding')}
+              {text('letterSpacing')}
             </div>
           </fieldset>
         </>

@@ -37,3 +37,13 @@
     transition: none;
   }
 }
+
+@container (min-width: 600px) {
+  .component-controls .reveal-fields.refracted-color-fields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(9rem, 0.7fr);
+  }
+}
+
+.component-controls .refracted-quick-text {
+  grid-template-columns: auto minmax(0, 1fr);
+}
