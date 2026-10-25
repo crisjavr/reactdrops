@@ -5,7 +5,7 @@
     "slug": "background",
     "name": "Background"
   },
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Animated 3D topographic layers with adjustable perspective, material, bevel and lighting.",
   "access": "free",
   "status": "published",

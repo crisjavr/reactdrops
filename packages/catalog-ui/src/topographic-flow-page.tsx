@@ -56,7 +56,7 @@ export default function TopographicFlowPage() {
       const root = document.documentElement;
       const isDark = root.hasAttribute('data-theme')
         ? root.dataset.theme === 'dark'
-        : root.classList.contains('dark') || media.matches;
+        : root.classList.contains('dark') || (!root.classList.contains('light') && media.matches);
       setDark(isDark);
       if (followPaperTheme.current)
         setValues((old) => ({
@@ -168,7 +168,14 @@ export default function TopographicFlowPage() {
       onReplay={() => ref.current?.reset()}
       preview={
         <div className="topographic-flow-demo component-background-preview">
-          <TopographicFlow key={topographicFlow.version} ref={ref} {...values} />
+          <TopographicFlow
+            key={topographicFlow.version}
+            ref={ref}
+            {...values}
+            {...(followPaperTheme.current
+              ? { backgroundColor: undefined, lineColor: undefined, accentColor: undefined }
+              : {})}
+          />
         </div>
       }
       previewActions={

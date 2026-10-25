@@ -13,7 +13,7 @@
   --topographic-flow-ink: #000000;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']):not([data-theme='dark']) .topographic-flow {
+  :root:not([data-theme='light']):not([data-theme='dark']):not(.light) .topographic-flow {
     --topographic-flow-background: #000000;
     --topographic-flow-ink: #ffffff;
   }

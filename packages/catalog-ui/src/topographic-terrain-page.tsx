@@ -193,7 +193,22 @@ export default function TopographicTerrainPage() {
       onReplay={() => ref.current?.reset()}
       preview={
         <div className="topographic-terrain-demo component-background-preview">
-          <TopographicTerrain key={topographicTerrain.version} ref={ref} {...values} />
+          <TopographicTerrain
+            key={topographicTerrain.version}
+            ref={ref}
+            {...values}
+            {...(followTheme.current
+              ? {
+                  backgroundColor: undefined,
+                  surfaceColor: undefined,
+                  lineColor: undefined,
+                  accentColor: undefined,
+                }
+              : {})}
+            {...(followShadowTheme.current
+              ? { shadowColor: 'var(--topographic-terrain-shadow)' }
+              : {})}
+          />
         </div>
       }
       previewActions={
