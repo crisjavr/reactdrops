@@ -4,6 +4,10 @@ Liquid Glass Orb, Topographic Terrain, Topographic Flow, Fan Gallery, Shape Phys
 
 [Website](https://reactdrops.dev) · [Browse components](https://reactdrops.dev/components) · [GitHub](https://github.com/crisjavr/reactdrops)
 
+The primary website and authentication domain is **reactdrops.dev**;
+`reactdrops.com` is a secondary domain. Use `.dev` for bookmarks, sign-in and
+registry installation URLs.
+
 ## Install
 
 ```sh
