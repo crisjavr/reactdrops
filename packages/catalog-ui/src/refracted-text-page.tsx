@@ -96,7 +96,25 @@ const liftEases: RefractedLiftEase[] = [
   'none',
 ];
 
-const presets: { value: string; label: string; settings: PresetSettings }[] = [
+const colorKeys = [
+  'theme',
+  'topColor',
+  'bottomColor',
+  'beamColor',
+  'spectrumWarmColor',
+  'spectrumMiddleColor',
+  'spectrumCoolColor',
+  'dispersion',
+  'colorIntensity',
+] as const;
+const colorKeySet = new Set<keyof Values>(colorKeys);
+const colorSettings = (values: Values) =>
+  Object.fromEntries(colorKeys.map((name) => [name, values[name]])) as Pick<
+    Values,
+    (typeof colorKeys)[number]
+  >;
+
+const animationPresets: { value: string; label: string; settings: PresetSettings }[] = [
   {
     value: 'original',
     label: 'Lift + flow',
@@ -127,30 +145,6 @@ const presets: { value: string; label: string; settings: PresetSettings }[] = [
       beamFollowsLift: false,
       animateBeam: true,
       openingDuration: 2.1,
-      beamPosition: 0.5,
-      fixedBeam: false,
-      cursorMovesBeam: false,
-      duration: 10.5,
-      intensity: 1,
-    },
-  },
-  {
-    value: 'light',
-    label: 'Light',
-    settings: {
-      theme: 'light',
-      beamPosition: 0.5,
-      fixedBeam: false,
-      cursorMovesBeam: false,
-      duration: 10.5,
-      intensity: 1,
-    },
-  },
-  {
-    value: 'dark',
-    label: 'Dark',
-    settings: {
-      theme: 'dark',
       beamPosition: 0.5,
       fixedBeam: false,
       cursorMovesBeam: false,
@@ -213,98 +207,89 @@ const presets: { value: string; label: string; settings: PresetSettings }[] = [
       intensity: 1.4,
     },
   },
+];
+
+const colorPresets: { value: string; label: string; settings: PresetSettings }[] = [
+  { value: 'original', label: 'Original', settings: colorSettings(defaults) },
   ...[
     {
       value: 'arctic',
       label: 'Arctic cyan',
-      topColor: '#102b35',
+      topColor: '#061115',
       bottomColor: '#658d9c',
       beamColor: '#67e8f9',
-      spectrumWarmColor: '#9affda',
-      spectrumMiddleColor: '#67e8f9',
-      spectrumCoolColor: '#8e9cff',
+      spectrumWarmColor: '#efb39b',
+      spectrumMiddleColor: '#00d9ff',
+      spectrumCoolColor: '#12358f',
     },
     {
       value: 'amethyst',
       label: 'Amethyst',
-      topColor: '#241b38',
+      topColor: '#0e0a16',
       bottomColor: '#8d79aa',
       beamColor: '#c4a0ff',
-      spectrumWarmColor: '#ffa8db',
-      spectrumMiddleColor: '#c4a0ff',
-      spectrumCoolColor: '#88cfff',
+      spectrumWarmColor: '#ef9bc5',
+      spectrumMiddleColor: '#a45bff',
+      spectrumCoolColor: '#12328f',
     },
     {
       value: 'rose-quartz',
       label: 'Rose quartz',
-      topColor: '#341c2a',
+      topColor: '#140a10',
       bottomColor: '#ac7e93',
       beamColor: '#ff9dc6',
-      spectrumWarmColor: '#ffd29b',
-      spectrumMiddleColor: '#ff9dc6',
-      spectrumCoolColor: '#c49aff',
+      spectrumWarmColor: '#efb29b',
+      spectrumMiddleColor: '#ff3f8e',
+      spectrumCoolColor: '#39208f',
     },
     {
       value: 'ember',
       label: 'Ember gold',
-      topColor: '#332117',
+      topColor: '#140e08',
       bottomColor: '#ad8257',
       beamColor: '#ffbd70',
-      spectrumWarmColor: '#ff846b',
-      spectrumMiddleColor: '#ffd08a',
-      spectrumCoolColor: '#8bbdff',
+      spectrumWarmColor: '#ef8878',
+      spectrumMiddleColor: '#ffb300',
+      spectrumCoolColor: '#193b8f',
     },
     {
       value: 'jade',
       label: 'Jade',
-      topColor: '#132c25',
+      topColor: '#06120f',
       bottomColor: '#6e9c85',
       beamColor: '#79efbd',
-      spectrumWarmColor: '#e0ef9b',
-      spectrumMiddleColor: '#79efbd',
-      spectrumCoolColor: '#76d9ef',
+      spectrumWarmColor: '#ef9b9b',
+      spectrumMiddleColor: '#2fff00',
+      spectrumCoolColor: '#00328f',
     },
     {
       value: 'cobalt',
       label: 'Cobalt blue',
-      topColor: '#16243d',
+      topColor: '#080e18',
       bottomColor: '#718ab1',
       beamColor: '#7baaff',
-      spectrumWarmColor: '#d5a7ff',
-      spectrumMiddleColor: '#7baaff',
-      spectrumCoolColor: '#8aeee8',
+      spectrumWarmColor: '#d09bef',
+      spectrumMiddleColor: '#2979ff',
+      spectrumCoolColor: '#00328f',
     },
     {
       value: 'pearl',
       label: 'Pearl · light',
-      topColor: '#202333',
+      topColor: '#0d0f15',
       bottomColor: '#666b83',
       beamColor: '#b8b4ff',
-      spectrumWarmColor: '#f2c2b1',
-      spectrumMiddleColor: '#b8b4ff',
-      spectrumCoolColor: '#9bd9ed',
+      spectrumWarmColor: '#efb49b',
+      spectrumMiddleColor: '#9584ff',
+      spectrumCoolColor: '#193b8f',
       theme: 'light' as const,
-      intensity: 1.1,
     },
   ].map(({ value, label, ...palette }) => ({
     value,
     label,
     settings: {
-      theme: defaults.theme,
-      reveal: defaults.reveal,
-      stagger: defaults.stagger,
-      liftDuration: defaults.liftDuration,
-      beamFollowsLift: defaults.beamFollowsLift,
-      animateBeam: defaults.animateBeam,
-      openingDuration: defaults.openingDuration,
-      duration: defaults.duration,
-      intensity: defaults.intensity,
+      ...colorSettings(defaults),
       dispersion: 1.2,
-      colorIntensity: defaults.colorIntensity,
-      beamPosition: defaults.beamPosition,
-      fixedBeam: defaults.fixedBeam,
-      cursorMovesBeam: defaults.cursorMovesBeam,
-      paused: false,
+      colorIntensity: 1.4,
       ...palette,
     },
   })),
@@ -330,10 +315,12 @@ export function refractedTextMeta() {
 export default function RefractedTextPage() {
   const [values, setValues] = useState(defaults);
   const [preset, setPreset] = useState('original');
+  const [colorPreset, setColorPreset] = useState('original');
   const [replay, setReplay] = useState(0);
   const set = <K extends keyof Values>(name: K, value: Values[K]) => {
     setValues((old) => ({ ...old, [name]: value }));
-    setPreset('custom');
+    if (colorKeySet.has(name)) setColorPreset('custom');
+    else setPreset('custom');
   };
   const usage = example(values);
   const installCommands = Object.fromEntries(
@@ -455,6 +442,30 @@ export default function RefractedTextPage() {
               <h3>Colors</h3>
             </legend>
             <div className="reveal-fields refracted-color-fields">
+              <ControlField
+                className="is-wide"
+                label="Color preset"
+                description="Choose glass and beam colors without changing animation, beam position or typography. Original restores the original palette."
+              >
+                <SelectControl
+                  label="Color preset"
+                  value={colorPreset}
+                  options={[
+                    ...colorPresets.map(({ value, label }) => ({ value, label })),
+                    ...(colorPreset === 'custom' ? [{ value: 'custom', label: 'Custom' }] : []),
+                  ]}
+                  onChange={(value) => {
+                    const selected = colorPresets.find((item) => item.value === value);
+                    if (!selected) return;
+                    setValues((old) => ({
+                      ...old,
+                      ...colorSettings(defaults),
+                      ...selected.settings,
+                    }));
+                    setColorPreset(value);
+                  }}
+                />
+              </ControlField>
               {(['topColor', 'bottomColor', 'beamColor'] as const).map((name) => {
                 const label =
                   name === 'beamColor'
@@ -518,30 +529,23 @@ export default function RefractedTextPage() {
             <div className="reveal-fields">
               <ControlField
                 className="is-preset"
-                label="Preset"
-                description="Choose a color palette for the glass and beam, or a light animation. Color palettes keep your text and typography. Lift + flow restores the original palette."
+                label="Animation preset"
+                description="Choose light motion and beam position without changing your color palette."
               >
                 <SelectControl
-                  label="Preset"
+                  label="Animation preset"
                   value={preset}
                   options={[
-                    ...presets.map(({ value, label }) => ({ value, label })),
+                    ...animationPresets.map(({ value, label }) => ({ value, label })),
                     ...(preset === 'custom' ? [{ value: 'custom', label: 'Custom' }] : []),
                   ]}
                   onChange={(value) => {
-                    const selected = presets.find((item) => item.value === value);
+                    const selected = animationPresets.find((item) => item.value === value);
                     if (!selected) return;
                     setValues((old) => ({
                       ...old,
-                      topColor: defaults.topColor,
-                      bottomColor: defaults.bottomColor,
-                      beamColor: defaults.beamColor,
-                      spectrumWarmColor: defaults.spectrumWarmColor,
-                      spectrumMiddleColor: defaults.spectrumMiddleColor,
-                      spectrumCoolColor: defaults.spectrumCoolColor,
-                      dispersion: defaults.dispersion,
-                      colorIntensity: defaults.colorIntensity,
                       ...selected.settings,
+                      ...colorSettings(old),
                     }));
                     setPreset(value);
                     setReplay((old) => old + 1);
