@@ -23,6 +23,10 @@ const defaults = {
   theme: 'dark' as 'auto' | 'light' | 'dark',
   topColor: 'auto',
   bottomColor: 'auto',
+  beamColor: 'auto',
+  spectrumWarmColor: 'auto',
+  spectrumMiddleColor: 'auto',
+  spectrumCoolColor: 'auto',
   reveal: true,
   stagger: 0.55,
   liftDuration: 1.75,
@@ -64,6 +68,15 @@ type PresetSettings = Partial<
     | 'duration'
     | 'openingDuration'
     | 'intensity'
+    | 'topColor'
+    | 'bottomColor'
+    | 'beamColor'
+    | 'spectrumWarmColor'
+    | 'spectrumMiddleColor'
+    | 'spectrumCoolColor'
+    | 'dispersion'
+    | 'colorIntensity'
+    | 'paused'
     | 'theme'
     | 'reveal'
     | 'stagger'
@@ -200,6 +213,101 @@ const presets: { value: string; label: string; settings: PresetSettings }[] = [
       intensity: 1.4,
     },
   },
+  ...[
+    {
+      value: 'arctic',
+      label: 'Arctic cyan',
+      topColor: '#102b35',
+      bottomColor: '#658d9c',
+      beamColor: '#67e8f9',
+      spectrumWarmColor: '#9affda',
+      spectrumMiddleColor: '#67e8f9',
+      spectrumCoolColor: '#8e9cff',
+    },
+    {
+      value: 'amethyst',
+      label: 'Amethyst',
+      topColor: '#241b38',
+      bottomColor: '#8d79aa',
+      beamColor: '#c4a0ff',
+      spectrumWarmColor: '#ffa8db',
+      spectrumMiddleColor: '#c4a0ff',
+      spectrumCoolColor: '#88cfff',
+    },
+    {
+      value: 'rose-quartz',
+      label: 'Rose quartz',
+      topColor: '#341c2a',
+      bottomColor: '#ac7e93',
+      beamColor: '#ff9dc6',
+      spectrumWarmColor: '#ffd29b',
+      spectrumMiddleColor: '#ff9dc6',
+      spectrumCoolColor: '#c49aff',
+    },
+    {
+      value: 'ember',
+      label: 'Ember gold',
+      topColor: '#332117',
+      bottomColor: '#ad8257',
+      beamColor: '#ffbd70',
+      spectrumWarmColor: '#ff846b',
+      spectrumMiddleColor: '#ffd08a',
+      spectrumCoolColor: '#8bbdff',
+    },
+    {
+      value: 'jade',
+      label: 'Jade',
+      topColor: '#132c25',
+      bottomColor: '#6e9c85',
+      beamColor: '#79efbd',
+      spectrumWarmColor: '#e0ef9b',
+      spectrumMiddleColor: '#79efbd',
+      spectrumCoolColor: '#76d9ef',
+    },
+    {
+      value: 'cobalt',
+      label: 'Cobalt blue',
+      topColor: '#16243d',
+      bottomColor: '#718ab1',
+      beamColor: '#7baaff',
+      spectrumWarmColor: '#d5a7ff',
+      spectrumMiddleColor: '#7baaff',
+      spectrumCoolColor: '#8aeee8',
+    },
+    {
+      value: 'pearl',
+      label: 'Pearl · light',
+      topColor: '#202333',
+      bottomColor: '#666b83',
+      beamColor: '#b8b4ff',
+      spectrumWarmColor: '#f2c2b1',
+      spectrumMiddleColor: '#b8b4ff',
+      spectrumCoolColor: '#9bd9ed',
+      theme: 'light' as const,
+      intensity: 1.1,
+    },
+  ].map(({ value, label, ...palette }) => ({
+    value,
+    label,
+    settings: {
+      theme: defaults.theme,
+      reveal: defaults.reveal,
+      stagger: defaults.stagger,
+      liftDuration: defaults.liftDuration,
+      beamFollowsLift: defaults.beamFollowsLift,
+      animateBeam: defaults.animateBeam,
+      openingDuration: defaults.openingDuration,
+      duration: defaults.duration,
+      intensity: defaults.intensity,
+      dispersion: 1.2,
+      colorIntensity: defaults.colorIntensity,
+      beamPosition: defaults.beamPosition,
+      fixedBeam: defaults.fixedBeam,
+      cursorMovesBeam: defaults.cursorMovesBeam,
+      paused: false,
+      ...palette,
+    },
+  })),
 ];
 
 function example(values: Values = defaults) {
@@ -237,7 +345,7 @@ export default function RefractedTextPage() {
     ),
   ) as Record<ComponentPackageManager, string>;
   const prompt = (code: string) =>
-    `Install the existing ReactDrops component "Refracted Text" (ID: "refracted-text") using:\n\n${installCommands.npm}\n\nUse the installed source as the source of truth. Preserve the WebGL 2.0 shader, the optional character lift with configurable total duration, stagger and easing but no opacity fade, a beam anchored in canvas space by default during lift with an option to move it with each letter, an independent animateBeam toggle that holds the beam at its settled appearance without disabling character lift or cursor interaction, left-to-right light flow inside the letters, one shared power4.out beam-flow curve across the whole word rather than separate easing on each glyph, the static-text original-flow preset with its continuous cycle, a light pass that decelerates, varies illumination across broad sections, and subtly bends the beam, per-letter glass contours that bend and break the bright crossbar, fixedBeam presets that use the same path as Cursor moves beam, white, amber and steel-blue refraction, light contained inside the letters, a pure-white light preview, local cursor deformation with optional full beam steering, edge lighting, and reduced-motion fallback. Integrate it with this configuration:\n\n${code}`;
+    `Install the existing ReactDrops component "Refracted Text" (ID: "refracted-text") using:\n\n${installCommands.npm}\n\nUse the installed source as the source of truth. Preserve the WebGL 2.0 shader, the optional character lift with configurable total duration, stagger and easing but no opacity fade, a beam anchored in canvas space by default during lift with an option to move it with each letter, an independent animateBeam toggle that holds the beam at its settled appearance without disabling character lift or cursor interaction, left-to-right light flow inside the letters, one shared power4.out beam-flow curve across the whole word rather than separate easing on each glyph, the static-text original-flow preset with its continuous cycle, a light pass that decelerates, varies illumination across broad sections, and subtly bends the beam, per-letter glass contours that bend and break the bright crossbar, fixedBeam presets that use the same path as Cursor moves beam, white, amber and steel-blue refraction with an independent beamColor override and three customizable spectral ray colors controlled by dispersion, light contained inside the letters, a pure-white light preview, local cursor deformation with optional full beam steering, edge lighting, and reduced-motion fallback. Integrate it with this configuration:\n\n${code}`;
   const sourceFiles: ComponentSourceFile[] = [
     { id: 'usage', label: 'usage', code: usage, language: 'typescript' },
     ...refractedTextSourceFiles.map((file) => ({
@@ -347,13 +455,22 @@ export default function RefractedTextPage() {
               <h3>Colors</h3>
             </legend>
             <div className="reveal-fields refracted-color-fields">
-              {(['topColor', 'bottomColor'] as const).map((name) => {
-                const label = name === 'topColor' ? 'Top color' : 'Bottom color';
+              {(['topColor', 'bottomColor', 'beamColor'] as const).map((name) => {
+                const label =
+                  name === 'beamColor'
+                    ? 'Beam color'
+                    : name === 'topColor'
+                      ? 'Top color'
+                      : 'Bottom color';
                 return (
                   <ControlField
                     key={name}
                     label={label}
-                    description="Customize this part of the glass. Auto keeps the original theme color; the beam and edge highlights retain their lighting."
+                    description={
+                      name === 'beamColor'
+                        ? 'Customize the refracted beam and its bright highlights. Auto keeps the original spectral light.'
+                        : 'Customize this part of the glass. Auto keeps the original theme color; the beam and edge highlights retain their lighting.'
+                    }
                   >
                     <ColorControl
                       allowAuto
@@ -371,13 +488,38 @@ export default function RefractedTextPage() {
           </fieldset>
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
+              <h3>Color separation</h3>
+            </legend>
+            <div className="reveal-fields refracted-color-fields">
+              {(['spectrumWarmColor', 'spectrumMiddleColor', 'spectrumCoolColor'] as const).map(
+                (name, index) => (
+                  <ControlField
+                    key={name}
+                    label={`Beam color ${index + 1}`}
+                    description="Choose a color for this refracted ray. Auto keeps the beam palette. Increase Color separation to spread the chosen colors."
+                  >
+                    <ColorControl
+                      allowAuto
+                      label={`Beam color ${index + 1}`}
+                      value={values[name]}
+                      onChange={(value) => set(name, value)}
+                    />
+                  </ControlField>
+                ),
+              )}
+              {number('dispersion')}
+              {number('colorIntensity')}
+            </div>
+          </fieldset>
+          <fieldset className="reveal-control-group">
+            <legend className="reveal-group-heading">
               <h3>Light</h3>
             </legend>
             <div className="reveal-fields">
               <ControlField
                 className="is-preset"
                 label="Preset"
-                description="Lift + flow settles after the entrance. Static flow keeps the original continuous light cycle. Top and Bottom match Cursor moves beam."
+                description="Choose a color palette for the glass and beam, or a light animation. Color palettes keep your text and typography. Lift + flow restores the original palette."
               >
                 <SelectControl
                   label="Preset"
@@ -389,7 +531,18 @@ export default function RefractedTextPage() {
                   onChange={(value) => {
                     const selected = presets.find((item) => item.value === value);
                     if (!selected) return;
-                    setValues((old) => ({ ...old, ...selected.settings }));
+                    setValues((old) => ({
+                      ...old,
+                      topColor: defaults.topColor,
+                      bottomColor: defaults.bottomColor,
+                      beamColor: defaults.beamColor,
+                      spectrumWarmColor: defaults.spectrumWarmColor,
+                      spectrumMiddleColor: defaults.spectrumMiddleColor,
+                      spectrumCoolColor: defaults.spectrumCoolColor,
+                      dispersion: defaults.dispersion,
+                      colorIntensity: defaults.colorIntensity,
+                      ...selected.settings,
+                    }));
                     setPreset(value);
                     setReplay((old) => old + 1);
                   }}
@@ -415,8 +568,6 @@ export default function RefractedTextPage() {
               {number('openingDuration')}
               {number('duration')}
               {number('intensity')}
-              {number('dispersion')}
-              {number('colorIntensity')}
               <ControlField
                 className="is-boolean"
                 label="Animate beam"

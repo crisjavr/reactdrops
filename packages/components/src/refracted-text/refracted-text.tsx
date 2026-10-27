@@ -15,6 +15,14 @@ export type RefractedTextProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children
   topColor?: string;
   /** CSS color for the lower glass. "auto" keeps the theme's original palette. */
   bottomColor?: string;
+  /** CSS color for the refracted beam. "auto" preserves the original spectral light. */
+  beamColor?: string;
+  /** CSS color for spectral ray 1. "auto" keeps the beam's palette. */
+  spectrumWarmColor?: string;
+  /** CSS color for spectral ray 2. "auto" keeps the beam's palette. */
+  spectrumMiddleColor?: string;
+  /** CSS color for spectral ray 3. "auto" keeps the beam's palette. */
+  spectrumCoolColor?: string;
   /** Lift the characters into place. Enabled by default. */
   reveal?: boolean;
   /** Total delay in seconds between the first and last character, from 0 to 1. */
@@ -66,6 +74,10 @@ export function RefractedText({
   theme = 'dark',
   topColor = 'auto',
   bottomColor = 'auto',
+  beamColor = 'auto',
+  spectrumWarmColor = 'auto',
+  spectrumMiddleColor = 'auto',
+  spectrumCoolColor = 'auto',
   reveal = true,
   stagger = 0.55,
   liftDuration = 1.75,
@@ -147,6 +159,10 @@ export function RefractedText({
     theme,
     topColor,
     bottomColor,
+    beamColor,
+    spectrumWarmColor,
+    spectrumMiddleColor,
+    spectrumCoolColor,
     reveal,
     stagger,
     liftDuration,
@@ -168,6 +184,10 @@ export function RefractedText({
     theme,
     topColor,
     bottomColor,
+    beamColor,
+    spectrumWarmColor,
+    spectrumMiddleColor,
+    spectrumCoolColor,
     reveal,
     stagger,
     liftDuration,
@@ -323,6 +343,10 @@ export function RefractedText({
         theme,
         topColor,
         bottomColor,
+        beamColor,
+        spectrumWarmColor,
+        spectrumMiddleColor,
+        spectrumCoolColor,
         reveal,
         stagger,
         liftDuration,
@@ -405,6 +429,10 @@ export function RefractedText({
           bottomColor,
           dispersion,
           colorIntensity,
+          beamColor,
+          spectrumWarmColor,
+          spectrumMiddleColor,
+          spectrumCoolColor,
         );
       const totalLiftDuration = Number.isFinite(liftDuration)
         ? Math.max(0.2, Math.min(5, liftDuration))
@@ -581,6 +609,10 @@ export function RefractedText({
     theme,
     topColor,
     bottomColor,
+    beamColor,
+    spectrumWarmColor,
+    spectrumMiddleColor,
+    spectrumCoolColor,
     reveal,
     stagger,
     liftDuration,

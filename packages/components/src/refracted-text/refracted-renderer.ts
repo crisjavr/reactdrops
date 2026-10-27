@@ -35,10 +35,20 @@ uniform float uCursorMovesBeam;
 uniform float uLightTheme;
 uniform vec4 uTopColor;
 uniform vec4 uBottomColor;
+uniform vec4 uBeamColor;
+uniform vec4 uSpectrumWarmColor;
+uniform vec4 uSpectrumMiddleColor;
+uniform vec4 uSpectrumCoolColor;
 
 float gaussian(float x, float width) {
   float d = x / width;
   return exp(-.5 * d * d);
+}
+
+// Tint only the incident light, retaining its brightness variation and geometry.
+// Zero alpha keeps the original spectrum and highlights exactly.
+vec3 beamTint(vec3 light) {
+  return mix(light, uBeamColor.rgb * max(light.r, max(light.g, light.b)), uBeamColor.a);
 }
 
 // Preserve the original ray overlap and palette at any spectral coordinate.
@@ -59,6 +69,19 @@ vec4 spectralProfile(float y, float dispersion, float edgeResponse, float violet
     - min(refracted.r, min(refracted.g, refracted.b));
   vec3 warmReflection = vec3(dot(refracted, lumaWeights)) + champagneChroma * chromaRange * .85;
   refracted = mix(refracted, warmReflection, warmWeight);
+  refracted = beamTint(refracted);
+  // Custom rays replace chroma only. Keep neutral light at its original
+  // width so color separation never stretches the beam's bright core.
+  vec3 weights = vec3(redRay * uSpectrumWarmColor.a,
+    greenRay * uSpectrumMiddleColor.a, blueRay * uSpectrumCoolColor.a);
+  float weight = weights.r + weights.g + weights.b;
+  if (weight > 0.) {
+    vec3 palette = (uSpectrumWarmColor.rgb * weights.r
+      + uSpectrumMiddleColor.rgb * weights.g + uSpectrumCoolColor.rgb * weights.b) / weight;
+    vec3 chroma = palette - vec3(dot(palette, lumaWeights));
+    vec3 tinted = vec3(dot(refracted, lumaWeights)) + chroma * .75;
+    refracted = mix(refracted, tinted, max(weights.r, max(weights.g, weights.b)));
+  }
   return vec4(refracted, max(redRay, max(greenRay, blueRay)));
 }
 
@@ -345,19 +368,19 @@ void main() {
   float white = gaussian(beamY - lineY, .022 + .010 * whiteEdge)
     * sourceLight * (.025 + .38 * whiteEdge + .16 * fineEdge)
     * (.65 + .35 * surfaceFacing) * ignition;
-  color = mix(color, vec3(.96, .97, 1.), clamp(whiteBloom * .33, 0., .50));
-  color = mix(color, vec3(1., .998, .97), clamp(white * .9, 0., .70));
+  color = mix(color, beamTint(vec3(.96, .97, 1.)), clamp(whiteBloom * .33, 0., .50));
+  color = mix(color, beamTint(vec3(1., .998, .97)), clamp(white * .9, 0., .70));
   float entrySheen = entryStrength * gaussian(beamY - lineY, .11)
     * (.06 + .13 * edgeResponse);
-  color = mix(color, vec3(1., .99, .965), clamp(entrySheen, 0., .22));
+  color = mix(color, beamTint(vec3(1., .99, .965)), clamp(entrySheen, 0., .22));
   float sideGlint = (nearLeft + .55 * rightWhite) * gaussian(beamY - lineY, .14)
     * (.10 + .15 * surfaceFacing) * (lightPass + 1.15 * entryStrength)
     * ignition;
-  color = mix(color, vec3(.97, .975, .98), clamp(sideGlint, 0., .38));
+  color = mix(color, beamTint(vec3(.97, .975, .98)), clamp(sideGlint, 0., .38));
   float leftCore = pow(nearLeft, 2.2) * gaussian(beamY - lineY, .075) * .43;
   float rightCore = pow(rightWhite, 2.2) * gaussian(beamY - lineY, .10) * .25;
   float sideCore = (leftCore + rightCore) * uIntensity * ignition;
-  color = mix(color, vec3(.99, .995, 1.), clamp(sideCore, 0., .91));
+  color = mix(color, beamTint(vec3(.99, .995, 1.)), clamp(sideCore, 0., .91));
 
   // The blurred silhouette supplies a continuous normal and distance-like
   // falloff. One bevel follows every contour of every glyph, including the
@@ -419,7 +442,7 @@ void main() {
   // The narrow lower highlight follows the actual contour of every glyph.
   // It remains part of the same inner bevel on straight and curved bases.
   float lowerRim = bottomEdge * (.30 + .10 * lightPass) * uIntensity;
-  color = mix(color, vec3(.99, .995, 1.), clamp(lowerRim, 0., .44));
+  color = mix(color, beamTint(vec3(.99, .995, 1.)), clamp(lowerRim, 0., .44));
   // The refracted light belongs to the glass. Keep the surrounding black
   // transparent so the bright falloff stays inside each silhouette.
   outColor = vec4(color, alpha);
@@ -562,6 +585,10 @@ export type RefractedRenderer = {
     bottomColor?: string,
     dispersion?: number,
     colorIntensity?: number,
+    beamColor?: string,
+    spectrumWarmColor?: string,
+    spectrumMiddleColor?: string,
+    spectrumCoolColor?: string,
   ) => void;
   dispose: () => void;
 };
@@ -698,6 +725,14 @@ export function createRefractedRenderer(
   const lightThemeUniform = floatUniform('uLightTheme');
   const topColorUniform = colorUniform('uTopColor');
   const bottomColorUniform = colorUniform('uBottomColor');
+  const beamColorUniform = colorUniform('uBeamColor');
+  const resolveBeamColor = createMaterialColorResolver();
+  const spectrumWarmColorUniform = colorUniform('uSpectrumWarmColor');
+  const resolveSpectrumWarmColor = createMaterialColorResolver();
+  const spectrumMiddleColorUniform = colorUniform('uSpectrumMiddleColor');
+  const resolveSpectrumMiddleColor = createMaterialColorResolver();
+  const spectrumCoolColorUniform = colorUniform('uSpectrumCoolColor');
+  const resolveSpectrumCoolColor = createMaterialColorResolver();
   const resolveTopColor = createMaterialColorResolver();
   const resolveBottomColor = createMaterialColorResolver();
   gl.uniform1f(gl.getUniformLocation(program, 'uVirtualWidth'), virtualWidth);
@@ -964,6 +999,10 @@ export function createRefractedRenderer(
     bottomColor = 'auto',
     dispersion = 1,
     colorIntensity = 1,
+    beamColor = 'auto',
+    spectrumWarmColor = 'auto',
+    spectrumMiddleColor = 'auto',
+    spectrumCoolColor = 'auto',
   ) {
     if (disposed || !canvas.width || !canvas.height || gl.isContextLost()) return;
     gl.useProgram(program);
@@ -992,6 +1031,10 @@ export function createRefractedRenderer(
     lightThemeUniform(lightTheme);
     topColorUniform(resolveTopColor(topColor));
     bottomColorUniform(resolveBottomColor(bottomColor));
+    beamColorUniform(resolveBeamColor(beamColor));
+    spectrumWarmColorUniform(resolveSpectrumWarmColor(spectrumWarmColor));
+    spectrumMiddleColorUniform(resolveSpectrumMiddleColor(spectrumMiddleColor));
+    spectrumCoolColorUniform(resolveSpectrumCoolColor(spectrumCoolColor));
     beamFollowsLiftUniform(beamFollowsLift ? 1 : 0);
     const totalLiftDuration = Number.isFinite(liftDuration)
       ? Math.max(0.2, Math.min(5, liftDuration))

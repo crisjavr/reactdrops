@@ -6,7 +6,7 @@
     "name": "Text Effect"
   },
   "version": "1.8.6",
-  "description": "Glass letters with an optional character lift, adjustable opening flow, customizable top and bottom colors, original font contours and a refracted beam.",
+  "description": "Glass letters with an optional character lift, adjustable opening flow, customizable glass, beam and spectral colors, original font contours and a refracted beam.",
   "access": "free",
   "status": "published",
   "visibility": "catalog",
@@ -77,6 +77,13 @@
       "type": "color",
       "defaultValue": "auto",
       "description": "CSS color for the lower glass. Auto preserves the original theme palette. Colors blend through the middle of each letter."
+    },
+    {
+      "name": "beamColor",
+      "label": "Beam color",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "CSS color for the refracted beam and its bright highlights, independent of the glass colors. Auto preserves the original spectral light."
     },
     {
       "name": "reveal",
@@ -167,6 +174,27 @@
       "description": "Brightness of the white ray and its spectral color. Use Color separation to widen the existing spectral colors."
     },
     {
+      "name": "spectrumWarmColor",
+      "label": "Beam color 1",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "CSS color for this spectral ray. Auto keeps the beam palette. Color separation controls its coverage without widening the bright core."
+    },
+    {
+      "name": "spectrumMiddleColor",
+      "label": "Beam color 2",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "CSS color for this spectral ray. Auto keeps the beam palette. Color separation controls its coverage without widening the bright core."
+    },
+    {
+      "name": "spectrumCoolColor",
+      "label": "Beam color 3",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "CSS color for this spectral ray. Auto keeps the beam palette. Color separation controls its coverage without widening the bright core."
+    },
+    {
       "name": "dispersion",
       "label": "Color separation",
       "type": "number",
@@ -174,7 +202,7 @@
       "min": 0,
       "max": 3,
       "step": 0.05,
-      "description": "Area covered by the original spectral colors, including amber and orange. One preserves the original refraction. Higher values widen those colors without boosting saturation or widening the white beam."
+      "description": "Area covered by the three chosen spectral colors. Increase to spread them through the glass without widening the bright beam. Auto colors retain the original spectrum."
     },
     {
       "name": "colorIntensity",
@@ -184,7 +212,7 @@
       "min": 0,
       "max": 2,
       "step": 0.05,
-      "description": "Strength of the original spectral colors. Changes only their chromatic contribution, independently of the white beam and Color separation coverage."
+      "description": "Strength of the chosen spectral colors, independent of the bright beam and Color separation coverage."
     },
     {
       "name": "beamPosition",
