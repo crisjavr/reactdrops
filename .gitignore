@@ -22,6 +22,7 @@
 !/apps/catalog/public-release/r/fractal-glass.json
 !/apps/catalog/public-release/r/liquid-glass-logo.json
 !/apps/catalog/public-release/r/liquid-glass-orb.json
+!/apps/catalog/public-release/r/multiplayer-cursors.json
 !/apps/catalog/public-release/r/refracted-text.json
 !/apps/catalog/public-release/r/shape-physics.json
 !/apps/catalog/public-release/r/topographic-flow.json
@@ -39,6 +40,7 @@
 !/packages/catalog-data/src/components/fluid-agent-orb.json
 !/packages/catalog-data/src/components/fractal-glass.json
 !/packages/catalog-data/src/components/liquid-glass-logo.json
+!/packages/catalog-data/src/components/multiplayer-cursors.json
 !/packages/catalog-data/src/components/refracted-text.json
 !/packages/catalog-data/src/components/shape-physics.json
 !/packages/catalog-data/src/components/topographic-flow.json
@@ -48,6 +50,7 @@
 !/packages/catalog-data/src/generated/fluid-agent-orb-source.ts
 !/packages/catalog-data/src/generated/fractal-glass-source.ts
 !/packages/catalog-data/src/generated/liquid-glass-logo-source.ts
+!/packages/catalog-data/src/generated/multiplayer-cursors-source.ts
 !/packages/catalog-data/src/generated/refracted-text-source.ts
 !/packages/catalog-data/src/generated/shape-physics-source.ts
 !/packages/catalog-data/src/generated/topographic-flow-source.ts
@@ -64,6 +67,7 @@
 !/packages/catalog-ui/src/assets/liquid-glass-logo-preview-dark.webp
 !/packages/catalog-ui/src/assets/liquid-glass-logo-preview-light.webp
 !/packages/catalog-ui/src/assets/liquid-glass-orb-preview.webp
+!/packages/catalog-ui/src/assets/multiplayer-cursors-preview.svg
 !/packages/catalog-ui/src/assets/refracted-text-preview.webp
 !/packages/catalog-ui/src/assets/shape-physics-preview.webp
 !/packages/catalog-ui/src/assets/topographic-flow-preview.webp
@@ -104,6 +108,9 @@
 !/packages/catalog-ui/src/liquid-glass-logo-export.ts
 !/packages/catalog-ui/src/liquid-glass-logo-page.css
 !/packages/catalog-ui/src/liquid-glass-logo-page.tsx
+!/packages/catalog-ui/src/multiplayer-cursors-demos.tsx
+!/packages/catalog-ui/src/multiplayer-cursors-page.css
+!/packages/catalog-ui/src/multiplayer-cursors-page.tsx
 !/packages/catalog-ui/src/popup-motion-settings.ts
 !/packages/catalog-ui/src/public-index.ts
 !/packages/catalog-ui/src/refracted-text-page.css
@@ -167,6 +174,11 @@
 !/packages/components/src/liquid-glass-logo/liquid-glass-logo.tsx
 !/packages/components/src/liquid-glass-orb/index.ts
 !/packages/components/src/liquid-glass-orb/liquid-glass-orb.tsx
+!/packages/components/src/multiplayer-cursors/cursor-label.tsx
+!/packages/components/src/multiplayer-cursors/index.ts
+!/packages/components/src/multiplayer-cursors/multiplayer-cursors-motion.ts
+!/packages/components/src/multiplayer-cursors/multiplayer-cursors.css
+!/packages/components/src/multiplayer-cursors/multiplayer-cursors.tsx
 !/packages/components/src/public-index.ts
 !/packages/components/src/refracted-text/LIBRESTILE-LICENSE.txt
 !/packages/components/src/refracted-text/index.ts
@@ -205,6 +217,7 @@
 !/registry/fractal-glass.json
 !/registry/liquid-glass-logo.json
 !/registry/liquid-glass-orb.json
+!/registry/multiplayer-cursors.json
 !/registry/refracted-text.json
 !/registry/shape-physics.json
 !/registry/topographic-flow.json
@@ -219,6 +232,7 @@
 !/scripts/package-fractal-glass.mjs
 !/scripts/package-liquid-glass-logo.mjs
 !/scripts/package-liquid-glass-orb.mjs
+!/scripts/package-multiplayer-cursors.mjs
 !/scripts/package-refracted-text.mjs
 !/scripts/package-shape-physics.mjs
 !/scripts/package-topographic-flow.mjs

@@ -14,6 +14,10 @@ import { packageLiquidGlassLogo } from './package-liquid-glass-logo.mjs';
 import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { packageFractalGlass } from './package-fractal-glass.mjs';
 import { packageRefractedText } from './package-refracted-text.mjs';
+import {
+  packageMultiplayerCursors,
+  multiplayerCursorsUsage,
+} from './package-multiplayer-cursors.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -28,6 +32,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'multiplayer-cursors': {
+    sourceSlug: 'multiplayer-cursors',
+    symbol: 'MultiplayerCursors',
+    prefix: 'multiplayerCursors',
+    package: () => packageMultiplayerCursors(root),
+    usage: multiplayerCursorsUsage,
+  },
   'refracted-text': {
     sourceSlug: 'refracted-text',
     symbol: 'RefractedText',
@@ -96,7 +107,9 @@ for (const { metadata, sourceSlug } of entries) {
   assert.ok(release, `No reviewed package builder for ${metadata.slug}`);
   assert.equal(sourceSlug, release.sourceSlug);
   const files = await release.package();
-  const usage = `import { ${release.symbol} } from './components/${metadata.slug}';\n\nexport function Example() {\n  return ${release.element ?? `<${release.symbol} />`};\n}`;
+  const usage =
+    release.usage ??
+    `import { ${release.symbol} } from './components/${metadata.slug}';\n\nexport function Example() {\n  return ${release.element ?? `<${release.symbol} />`};\n}`;
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
     name: metadata.slug,

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" fill="none">
+  <defs>
+    <filter id="arrow-shadow" x="-100%" y="-100%" width="300%" height="350%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000" flood-opacity=".22"/>
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000" flood-opacity=".14"/>
+    </filter>
+    <filter id="label-shadow" x="-50%" y="-100%" width="200%" height="350%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000" flood-opacity=".14"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0d99ff" flood-opacity=".25"/>
+    </filter>
+  </defs>
+  <g transform="translate(488 252) scale(4)">
+    <svg x="-5" y="-4" width="28" height="28" viewBox="0 0 24 24" overflow="visible" filter="url(#arrow-shadow)">
+      <path d="M4.2 3.3 20.1 9.6 13.3 12.3 10.6 19.2Z" fill="#fff" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M4.2 3.3 20.1 9.6 13.3 12.3 10.6 19.2Z" fill="#0d99ff" stroke="#0d99ff" stroke-width="1.4" stroke-linejoin="round"/>
+    </svg>
+    <g filter="url(#label-shadow)">
+      <rect x="19" y="27" width="57" height="27" rx="8.4" fill="#0d99ff"/>
+      <text x="28.24" y="45" fill="#fff" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" letter-spacing="-.07">Kubai</text>
+    </g>
+  </g>
+</svg>

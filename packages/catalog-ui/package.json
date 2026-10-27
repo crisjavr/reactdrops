@@ -17,7 +17,8 @@
     "./pages/chromatic-button": "./src/chromatic-button-page.tsx",
     "./pages/liquid-glass-logo": "./src/liquid-glass-logo-page.tsx",
     "./pages/fractal-glass": "./src/fractal-glass-page.tsx",
-    "./pages/refracted-text": "./src/refracted-text-page.tsx"
+    "./pages/refracted-text": "./src/refracted-text-page.tsx",
+    "./pages/multiplayer-cursors": "./src/multiplayer-cursors-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -40,6 +41,7 @@
     "src/assets/liquid-glass-logo-preview-dark.webp",
     "src/assets/liquid-glass-logo-preview-light.webp",
     "src/assets/liquid-glass-orb-preview.webp",
+    "src/assets/multiplayer-cursors-preview.svg",
     "src/assets/refracted-text-preview.webp",
     "src/assets/shape-physics-preview.webp",
     "src/assets/topographic-flow-preview.webp",
@@ -80,6 +82,9 @@
     "src/liquid-glass-logo-export.ts",
     "src/liquid-glass-logo-page.css",
     "src/liquid-glass-logo-page.tsx",
+    "src/multiplayer-cursors-demos.tsx",
+    "src/multiplayer-cursors-page.css",
+    "src/multiplayer-cursors-page.tsx",
     "src/popup-motion-settings.ts",
     "src/public-index.ts",
     "src/refracted-text-page.css",

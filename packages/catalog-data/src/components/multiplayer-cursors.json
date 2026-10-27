@@ -1,0 +1,237 @@
+{
+  "slug": "multiplayer-cursors",
+  "name": "Multiplayer Cursors",
+  "family": {
+    "slug": "cursor",
+    "name": "Cursor"
+  },
+  "version": "0.1.0",
+  "description": "Named, colored cursors that move like teammates: hover, visually press, drag, select and type. Bring an interface to life without activating real clicks, links or forms.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 33,
+  "styles": [
+    "minimal",
+    "playful"
+  ],
+  "types": [
+    "cursor"
+  ],
+  "interactions": [
+    "hover",
+    "click",
+    "drag",
+    "select",
+    "pointer"
+  ],
+  "technologies": [
+    "react",
+    "gsap",
+    "css",
+    "dom"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "responsive",
+    "reduced-motion",
+    "ssr-compatible"
+  ],
+  "dependencies": [
+    "gsap",
+    "@gsap/react"
+  ],
+  "controls": [
+    {
+      "name": "demo",
+      "label": "Demo",
+      "type": "select",
+      "defaultValue": "together",
+      "options": [
+        "together",
+        "click",
+        "drag",
+        "select"
+      ],
+      "target": "preview",
+      "description": "Together runs three teammates at once. Click, Drag and Select show one interaction each."
+    },
+    {
+      "name": "labelAnimation",
+      "label": "Label animation",
+      "type": "select",
+      "defaultValue": "fade",
+      "options": [
+        "roll",
+        "masked-lift",
+        "fade",
+        "none"
+      ],
+      "description": "How the name label enters and changes when a cursor speaks. Wheel roll turns each letter on a drum; Masked Lift raises the text through a mask. Both use power4.out."
+    },
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.25,
+      "max": 3,
+      "step": 0.05,
+      "description": "Time scale for movement, pauses and typing. 2 plays the scripts twice as fast."
+    },
+    {
+      "name": "clickEffect",
+      "label": "Click effect",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Press the arrow and pulse a ring in the cursor color on every simulated press. Preview state can respond through onCursorPress; no native click is dispatched."
+    },
+    {
+      "name": "idleDrift",
+      "label": "Idle drift (px)",
+      "type": "number",
+      "defaultValue": 1.5,
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "description": "Gentle sway while a cursor rests, like a hand on a mouse. It fades out during moves, drags and selections."
+    },
+    {
+      "name": "labelLag",
+      "label": "Label trail",
+      "type": "number",
+      "defaultValue": 0.35,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How far the name label trails behind the arrow on a critically damped spring. 0 keeps it rigid; 1 lets it swing behind fast moves."
+    },
+    {
+      "name": "cursorSize",
+      "label": "Cursor size",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.75,
+      "max": 1.6,
+      "step": 0.05,
+      "description": "Scale of the arrow and label."
+    },
+    {
+      "name": "loop",
+      "label": "Loop",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Replay the scripts after every cursor finishes. Selections clear and onCycle resets the demo."
+    },
+    {
+      "name": "easing",
+      "label": "Easing",
+      "type": "select",
+      "defaultValue": "human",
+      "options": [
+        "human",
+        "ease-in-out",
+        "ease-out",
+        "linear"
+      ],
+      "description": "Velocity profile along each path. Human uses the minimum-jerk profile of real hand reaches: a smooth start, a fast middle and a gentle landing."
+    },
+    {
+      "name": "curvature",
+      "label": "Curvature",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Sideways bend of each path, like a wrist rotating. 0 moves in straight lines, 1 is natural and 2 or more draws wide arcs."
+    },
+    {
+      "name": "overshoot",
+      "label": "Overshoot",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Moves longer than 160 px pass the target slightly, then correct onto it, as hands do. 0 lands directly."
+    },
+    {
+      "name": "reachTime",
+      "label": "Reach time (ms)",
+      "type": "number",
+      "defaultValue": 240,
+      "min": 40,
+      "max": 1200,
+      "step": 10,
+      "description": "Fixed time of every move (the Fitts's law intercept). Higher values make every move slower."
+    },
+    {
+      "name": "reachScale",
+      "label": "Distance slowdown (ms)",
+      "type": "number",
+      "defaultValue": 150,
+      "min": 0,
+      "max": 600,
+      "step": 5,
+      "description": "Extra time per bit of difficulty, log2(1 + distance / target size) (the Fitts's law slope). Far or small targets take longer. 0 makes every move take the same time."
+    },
+    {
+      "name": "maxReach",
+      "label": "Longest move (ms)",
+      "type": "number",
+      "defaultValue": 1500,
+      "min": 200,
+      "max": 4000,
+      "step": 50,
+      "description": "Upper limit for one move, before the Speed time scale."
+    },
+    {
+      "name": "landingSpread",
+      "label": "Landing spread",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "How far from the target center the cursor lands, varying each time like a person. 0 always hits the exact center."
+    },
+    {
+      "name": "dragPace",
+      "label": "Drag pace",
+      "type": "number",
+      "defaultValue": 1.45,
+      "min": 0.5,
+      "max": 3,
+      "step": 0.05,
+      "description": "How many times slower drags and box selections move than free moves. Holding a button makes hands slower and more careful."
+    },
+    {
+      "name": "trail",
+      "label": "Cursor trail (ms)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1200,
+      "step": 10,
+      "description": "Length of a fading trail behind each arrow, in its color, measured in time. 0 draws no trail. The trail shrinks away while the cursor rests."
+    },
+    {
+      "name": "trailWidth",
+      "label": "Trail width (px)",
+      "type": "number",
+      "defaultValue": 3,
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "description": "Stroke width at the newest end of the trail; older parts taper and fade."
+    }
+  ],
+  "publishedAt": "2026-10-27"
+}
