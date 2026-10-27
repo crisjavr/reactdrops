@@ -296,7 +296,7 @@
 }
 
 .mpc-tile[data-cursor-selected] {
-  outline-color: var(--multiplayer-cursor-color);
+  outline-color: var(--showcase-pointer-cursor-color);
   transform: scale(0.94);
 }
 
@@ -469,7 +469,7 @@
 
 .mpc-comment:has(input:focus-visible),
 .mpc-comment:has(input[data-cursor-focus]) {
-  border-color: var(--multiplayer-cursor-color, var(--mpc-accent));
+  border-color: var(--showcase-pointer-cursor-color, var(--mpc-accent));
 }
 
 .mpc-comment input {
@@ -532,7 +532,7 @@
 }
 
 .mpc-comment-row b {
-  color: var(--multiplayer-cursor-color);
+  color: var(--showcase-pointer-cursor-color);
   font-weight: 500;
 }
 

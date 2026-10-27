@@ -19,10 +19,10 @@ npx shadcn@latest add https://reactdrops.dev/r/topographic-flow.json
 npx shadcn@latest add https://reactdrops.dev/r/chromatic-button.json
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-logo.json
 npx shadcn@latest add https://reactdrops.dev/r/refracted-text.json
-npx shadcn@latest add https://reactdrops.dev/r/multiplayer-cursors.json
+npx shadcn@latest add https://reactdrops.dev/r/showcase-pointer.json
 ```
 
-Multiplayer Cursors animates named, colored cursors over an interface. Labels use
+Showcase Pointer animates named, colored cursors over an interface. Labels use
 fade and scale by default. Scripted presses call `onCursorPress` for local UI
 responses without dispatching real clicks, submitting forms or following links.
 Its installer includes four source/style files and GSAP.

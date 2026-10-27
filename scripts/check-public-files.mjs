@@ -149,12 +149,12 @@ export function checkPublicFiles({ auditGit = true } = {}) {
     }
   }
   for (const file of allowed) checkSourceImports(file, readFileSync(resolve(root, file)));
-  function check(files, label) {
+  function check(files, label, approved = allowed) {
     // Secret files stay rejected even if someone adds them to the allowlist.
     for (const file of files) {
       assert.ok(!secretPathPattern.test(file), `Secret file in ${label}: ${file}`);
     }
-    const unexpected = files.filter((file) => file && !allowed.has(file));
+    const unexpected = files.filter((file) => file && !approved.has(file));
     assert.deepEqual(
       unexpected,
       [],
@@ -230,6 +230,22 @@ export function checkPublicFiles({ auditGit = true } = {}) {
         'Tracked/staged files',
       );
 
+      // Renamed release files remain in Git history. Audit those paths against
+      // previously reviewed manifests; the working tree and index still use
+      // only the current allowlist. Secret and content checks apply to both.
+      const historicalAllowed = new Set(allowed);
+      const manifestCommits = git(['log', '--all', '--format=%H', '--', 'public-files.json'])
+        .trim().split('\n').filter(Boolean);
+      for (const commit of manifestCommits) {
+        const previous = JSON.parse(git(['show', `${commit}:public-files.json`]));
+        assert.ok(Array.isArray(previous.files), 'Invalid historical public manifest');
+        for (const file of previous.files) {
+          assert.equal(typeof file, 'string', 'Invalid historical public path');
+          assert.ok(!secretPathPattern.test(file), `Secret path in historical manifest: ${file}`);
+          historicalAllowed.add(file);
+        }
+      }
+
       // Read index blobs instead of trusting a newer working copy of the file.
       function readObjects(records, label, history = false) {
         const contents = new Map();
@@ -250,7 +266,7 @@ export function checkPublicFiles({ auditGit = true } = {}) {
           offset = end + 1 + size + 1;
           if (type === 'blob') {
             assert.ok(file, `Unmapped blob in ${label}`);
-            check([file], label);
+            check([file], label, history ? historicalAllowed : allowed);
             checkContent(bytes, file, label);
             if (!history) contents.set(file, bytes);
           } else if (history && type === 'tag') {
@@ -269,7 +285,7 @@ export function checkPublicFiles({ auditGit = true } = {}) {
                 );
                 return path;
               });
-            check(entries, label);
+            check(entries, label, historicalAllowed);
             checkContent(bytes, 'commit metadata', label);
           }
         }

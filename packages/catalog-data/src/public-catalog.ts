@@ -8,7 +8,7 @@ import fanGalleryJson from './components/fan-gallery.json';
 import shapePhysicsJson from './components/shape-physics.json';
 import topographicFlowJson from './components/topographic-flow.json';
 import chromaticButtonJson from './components/chromatic-button.json';
-import multiplayerCursorsJson from './components/multiplayer-cursors.json';
+import showcasePointerJson from './components/showcase-pointer.json';
 import { isPublishedComponent } from './publication.mjs';
 export type { ComponentMetadata } from '@reactdrops/component-schema';
 export { isPublishedComponent, componentPath } from './publication.mjs';
@@ -22,9 +22,9 @@ export const chromaticButton = chromaticButtonJson as ComponentMetadata;
 export const liquidGlassLogo = liquidGlassLogoJson as ComponentMetadata;
 export const fractalGlass = fractalGlassJson as ComponentMetadata;
 export const refractedText = refractedTextJson as ComponentMetadata;
-export const multiplayerCursors = multiplayerCursorsJson as ComponentMetadata;
+export const showcasePointer = showcasePointerJson as ComponentMetadata;
 export const components = [
-  multiplayerCursors,
+  showcasePointer,
   refractedText,
   fractalGlass,
   liquidGlassLogo,

@@ -23,4 +23,4 @@ export {
 export { fractalGlassSourceFiles, fractalGlassUsage } from './generated/fractal-glass-source';
 
 export { refractedTextSourceFiles, refractedTextUsage } from './generated/refracted-text-source';
-export { multiplayerCursorsSourceFiles, multiplayerCursorsUsage } from './generated/multiplayer-cursors-source';
+export { showcasePointerSourceFiles, showcasePointerUsage } from './generated/showcase-pointer-source';

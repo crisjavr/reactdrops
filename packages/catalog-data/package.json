@@ -15,7 +15,7 @@
     "./sources/liquid-glass-logo": "./src/generated/liquid-glass-logo-source.ts",
     "./sources/fractal-glass": "./src/generated/fractal-glass-source.ts",
     "./sources/refracted-text": "./src/generated/refracted-text-source.ts",
-    "./sources/multiplayer-cursors": "./src/generated/multiplayer-cursors-source.ts"
+    "./sources/showcase-pointer": "./src/generated/showcase-pointer-source.ts"
   },
   "dependencies": {
     "@reactdrops/component-schema": "workspace:*"
@@ -27,9 +27,9 @@
     "src/components/fluid-agent-orb.json",
     "src/components/fractal-glass.json",
     "src/components/liquid-glass-logo.json",
-    "src/components/multiplayer-cursors.json",
     "src/components/refracted-text.json",
     "src/components/shape-physics.json",
+    "src/components/showcase-pointer.json",
     "src/components/topographic-flow.json",
     "src/components/topographic-terrain.json",
     "src/generated/chromatic-button-source.ts",
@@ -37,9 +37,9 @@
     "src/generated/fluid-agent-orb-source.ts",
     "src/generated/fractal-glass-source.ts",
     "src/generated/liquid-glass-logo-source.ts",
-    "src/generated/multiplayer-cursors-source.ts",
     "src/generated/refracted-text-source.ts",
     "src/generated/shape-physics-source.ts",
+    "src/generated/showcase-pointer-source.ts",
     "src/generated/topographic-flow-source.ts",
     "src/generated/topographic-terrain-source.ts",
     "src/public-catalog.ts",

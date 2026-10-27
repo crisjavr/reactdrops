@@ -4,9 +4,9 @@ import {
   type CursorEasing,
   type CursorLabelAnimation,
   type CursorMotion,
-} from '@reactdrops/components/multiplayer-cursors';
-import { multiplayerCursors } from '@reactdrops/catalog-data/catalog';
-import { multiplayerCursorsSourceFiles } from '@reactdrops/catalog-data/sources/multiplayer-cursors';
+} from '@reactdrops/components/showcase-pointer';
+import { showcasePointer } from '@reactdrops/catalog-data/catalog';
+import { showcasePointerSourceFiles } from '@reactdrops/catalog-data/sources/showcase-pointer';
 import {
   ComponentDetailLayout,
   type ComponentPackageManager,
@@ -21,12 +21,12 @@ import {
 } from './customizer-controls';
 import { ColorControl } from './color-control';
 import {
-  MultiplayerCursorsDemo,
+  ShowcasePointerDemo,
   type DemoCursor,
-  type MultiplayerDemo,
-} from './multiplayer-cursors-demos';
+  type ShowcaseDemo,
+} from './showcase-pointer-demos';
 import './catalog.css';
-import './multiplayer-cursors-page.css';
+import './showcase-pointer-page.css';
 
 const defaults = {
   labelAnimation: 'fade' as CursorLabelAnimation,
@@ -71,7 +71,7 @@ const labelOptions = [
   { value: 'fade', label: 'Fade and scale' },
   { value: 'none', label: 'None' },
 ];
-const control = (name: string) => multiplayerCursors.controls.find((item) => item.name === name)!;
+const control = (name: string) => showcasePointer.controls.find((item) => item.name === name)!;
 
 function example(
   values = defaults,
@@ -92,12 +92,12 @@ function example(
       : []),
   ].join('\n');
   return `import { useState } from 'react';
-import { MultiplayerCursors } from './components/multiplayer-cursors';
+import { ShowcasePointer } from './components/showcase-pointer';
 
 export function Example() {
   const [published, setPublished] = useState(false);
   return (
-    <MultiplayerCursors${props ? `\n${props}` : ''}
+    <ShowcasePointer${props ? `\n${props}` : ''}
       height={420}
       onCursorPress={({ target }) => {
         if (target.closest('#publish')) setPublished(true);
@@ -130,38 +130,38 @@ export function Example() {
       <button id="publish" type="button" onClick={() => setPublished(true)}>
         {published ? 'Published' : 'Publish'}
       </button>
-    </MultiplayerCursors>
+    </ShowcasePointer>
   );
 }`;
 }
 
-export function multiplayerCursorsMeta() {
+export function showcasePointerMeta() {
   return [
-    { title: 'Multiplayer Cursors — ReactDrops' },
-    { name: 'description', content: multiplayerCursors.description },
+    { title: 'Showcase Pointer — ReactDrops' },
+    { name: 'description', content: showcasePointer.description },
   ];
 }
 
-export default function MultiplayerCursorsPage() {
+export default function ShowcasePointerPage() {
   const [values, setValues] = useState(defaults);
   const [motion, setMotion] = useState<Required<CursorMotion>>(defaultCursorMotion);
   const [people, setPeople] = useState(defaultPeople);
-  const [demo, setDemo] = useState<MultiplayerDemo>('together');
+  const [demo, setDemo] = useState<ShowcaseDemo>('together');
   const [replay, setReplay] = useState(0);
   const usage = example(values, people, motion);
   const installCommands = Object.fromEntries(
     Object.entries({ npm: 'npx', pnpm: 'pnpm dlx', yarn: 'yarn dlx', bun: 'bunx --bun' }).map(
       ([manager, runner]) => [
         manager,
-        `${runner} shadcn@latest add https://reactdrops.dev/r/multiplayer-cursors.json`,
+        `${runner} shadcn@latest add https://reactdrops.dev/r/showcase-pointer.json`,
       ],
     ),
   ) as Record<ComponentPackageManager, string>;
   const prompt = (code: string) =>
-    `Install the existing ReactDrops component "Multiplayer Cursors" (ID: "multiplayer-cursors") using:\n\n${installCommands.npm}\n\nUse the installed source as the source of truth. Keep the pointer-transparent overlay, curved minimum-jerk movement, [data-cursor-hover], [data-cursor-press] and [data-cursor-selected] state attributes, and reduced-motion support. Scripted clicks are visual presses: use onCursorPress to update local preview state, never call .click() or dispatch click, pointerdown/up or mousedown/up events for those presses. Do not navigate, submit forms or invoke production actions from onCursorPress. Hover, drag, selection and typing retain their respective behavior. Reset preview state in onCycle. Apply this configuration:\n\n${code}`;
+    `Install the existing ReactDrops component "Showcase Pointer" (ID: "showcase-pointer") using:\n\n${installCommands.npm}\n\nBefore configuring the cursor, ask the user what action they want it to perform and which interface elements it should target. Wait for their answer before writing or changing the cursor script; do not choose actions or targets on their behalf. Use the installed source as the source of truth. Keep the pointer-transparent overlay, curved minimum-jerk movement, [data-cursor-hover], [data-cursor-press] and [data-cursor-selected] state attributes, and reduced-motion support. Scripted clicks are visual presses: use onCursorPress to update local preview state, never call .click() or dispatch click, pointerdown/up or mousedown/up events for those presses. Do not navigate, submit forms or invoke production actions from onCursorPress. Hover, drag, selection and typing retain their respective behavior. Reset preview state in onCycle. Apply this configuration:\n\n${code}`;
   const sourceFiles: ComponentSourceFile[] = [
     { id: 'usage', label: 'usage', code: usage, language: 'typescript' },
-    ...multiplayerCursorsSourceFiles.map((file) => ({
+    ...showcasePointerSourceFiles.map((file) => ({
       id: file.name,
       label: file.name,
       code: file.content,
@@ -177,9 +177,9 @@ export default function MultiplayerCursorsPage() {
 
   return (
     <ComponentDetailLayout
-      componentName="Multiplayer Cursors"
-      componentSlug="multiplayer-cursors"
-      description={multiplayerCursors.description}
+      componentName="Showcase Pointer"
+      componentSlug="showcase-pointer"
+      description={showcasePointer.description}
       prompt={prompt(usage)}
       defaultPrompt={prompt(example())}
       installCommands={installCommands}
@@ -187,7 +187,7 @@ export default function MultiplayerCursorsPage() {
       onReplay={() => setReplay((value) => value + 1)}
       preview={
         <div className="mpc-stage">
-          <MultiplayerCursorsDemo
+          <ShowcasePointerDemo
             key={`${demo}-${replay}`}
             demo={demo}
             people={people}
@@ -209,7 +209,7 @@ export default function MultiplayerCursorsPage() {
                   label="Demo"
                   value={demo}
                   options={demoOptions}
-                  onChange={(value) => setDemo(value as MultiplayerDemo)}
+                  onChange={(value) => setDemo(value as ShowcaseDemo)}
                 />
               </ControlField>
               <ControlField
@@ -389,7 +389,7 @@ export default function MultiplayerCursorsPage() {
         },
         {
           name: 'ref',
-          type: 'MultiplayerCursorsHandle',
+          type: 'ShowcasePointerHandle',
           defaultValue: '—',
           description:
             'cursor(id) returns moveTo, hover, click, drag, select, marquee, type, say, wait, enter, leave and clear, each a Promise. run(id, steps) and restart() are also available.',

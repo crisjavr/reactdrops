@@ -1,5 +1,5 @@
 export {
-  MultiplayerCursors,
+  ShowcasePointer,
   defaultCursorMotion,
   type CursorEasing,
   type CursorMotion,
@@ -9,6 +9,6 @@ export {
   type CursorLabelAnimation,
   type CursorStep,
   type CursorTarget,
-  type MultiplayerCursorsHandle,
-  type MultiplayerCursorsProps,
-} from './multiplayer-cursors';
+  type ShowcasePointerHandle,
+  type ShowcasePointerProps,
+} from './showcase-pointer';

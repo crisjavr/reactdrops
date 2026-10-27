@@ -1,9 +1,9 @@
-.multiplayer-cursors {
+.showcase-pointer {
   position: relative;
   isolation: isolate;
 }
 
-.multiplayer-cursors-overlay {
+.showcase-pointer-overlay {
   position: absolute;
   inset: 0;
   z-index: 20;
@@ -13,7 +13,7 @@
   -webkit-user-select: none;
 }
 
-.multiplayer-cursor {
+.showcase-pointer-cursor {
   position: absolute;
   top: 0;
   left: 0;
@@ -21,30 +21,30 @@
   will-change: transform;
 }
 
-.multiplayer-cursor-body {
+.showcase-pointer-cursor-body {
   opacity: 0;
-  transform: scale(calc(var(--multiplayer-cursor-scale, 1) * 0.6));
+  transform: scale(calc(var(--showcase-pointer-cursor-scale, 1) * 0.6));
   transform-origin: 0 0;
   transition:
     opacity 220ms ease-out,
     transform 260ms ease-out;
 }
 
-.multiplayer-cursor[data-visible] .multiplayer-cursor-body {
+.showcase-pointer-cursor[data-visible] .showcase-pointer-cursor-body {
   opacity: 1;
-  transform: scale(var(--multiplayer-cursor-scale, 1));
+  transform: scale(var(--showcase-pointer-cursor-scale, 1));
   transition: none;
-  animation: multiplayer-cursor-enter 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: showcase-pointer-cursor-enter 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes multiplayer-cursor-enter {
+@keyframes showcase-pointer-cursor-enter {
   from {
     opacity: 0;
-    transform: scale(calc(var(--multiplayer-cursor-scale, 1) * 0.4));
+    transform: scale(calc(var(--showcase-pointer-cursor-scale, 1) * 0.4));
   }
 }
 
-.multiplayer-cursor-arrow {
+.showcase-pointer-cursor-arrow {
   position: absolute;
   /* The arrow tip sits on the cursor position. */
   top: -4px;
@@ -56,25 +56,25 @@
   transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.multiplayer-cursor[data-pressed] .multiplayer-cursor-arrow {
+.showcase-pointer-cursor[data-pressed] .showcase-pointer-cursor-arrow {
   transform: scale(0.86);
 }
 
-.multiplayer-cursor-arrow-edge {
+.showcase-pointer-cursor-arrow-edge {
   fill: #fff;
   stroke: #fff;
   stroke-width: 5;
   stroke-linejoin: round;
 }
 
-.multiplayer-cursor-arrow-fill {
-  fill: var(--multiplayer-cursor-color);
-  stroke: var(--multiplayer-cursor-color);
+.showcase-pointer-cursor-arrow-fill {
+  fill: var(--showcase-pointer-cursor-color);
+  stroke: var(--showcase-pointer-cursor-color);
   stroke-width: 1.4;
   stroke-linejoin: round;
 }
 
-.multiplayer-cursor-label-anchor {
+.showcase-pointer-cursor-label-anchor {
   position: absolute;
   top: 27px;
   left: 19px;
@@ -82,18 +82,18 @@
   will-change: transform;
 }
 
-.multiplayer-cursor-label {
+.showcase-pointer-cursor-label {
   position: relative;
   display: inline-flex;
   overflow: hidden;
   box-sizing: border-box;
   padding: 0.32em 0.66em 0.36em;
   border-radius: 0.6em;
-  background: var(--multiplayer-cursor-color);
+  background: var(--showcase-pointer-cursor-color);
   box-shadow:
     0 1px 2px rgb(0 0 0 / 14%),
-    0 4px 12px -2px color-mix(in srgb, var(--multiplayer-cursor-color) 45%, transparent);
-  color: var(--multiplayer-cursor-text, #fff);
+    0 4px 12px -2px color-mix(in srgb, var(--showcase-pointer-cursor-color) 45%, transparent);
+  color: var(--showcase-pointer-cursor-text, #fff);
   font:
     600 14px/1.25 ui-sans-serif,
     system-ui,
@@ -103,89 +103,89 @@
   letter-spacing: -0.005em;
   white-space: nowrap;
   transform-origin: 0 0;
-  animation: multiplayer-cursor-label-enter 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: showcase-pointer-cursor-label-enter 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-@keyframes multiplayer-cursor-label-enter {
+@keyframes showcase-pointer-cursor-label-enter {
   from {
     opacity: 0;
     transform: scale(0.5);
   }
 }
 
-.multiplayer-cursor-label-text {
+.showcase-pointer-cursor-label-text {
   display: inline-block;
   perspective: 12em;
 }
 
-.multiplayer-cursor-label-text[data-layer='out'] {
+.showcase-pointer-cursor-label-text[data-layer='out'] {
   position: absolute;
   top: 0.32em;
   left: 0.66em;
 }
 
-.multiplayer-cursor-char {
+.showcase-pointer-cursor-char {
   display: inline-block;
   white-space: pre;
   transform-origin: 50% 50% -0.55em;
   backface-visibility: hidden;
 }
 
-.multiplayer-cursor-label-mask {
+.showcase-pointer-cursor-label-mask {
   display: inline-block;
   overflow: hidden;
   margin: -0.12em;
   padding: 0.12em;
   vertical-align: bottom;
 }
-.multiplayer-cursor-label-mask > span {
+.showcase-pointer-cursor-label-mask > span {
   display: inline-block;
 }
 
-.multiplayer-cursor-ripple {
+.showcase-pointer-cursor-ripple {
   position: absolute;
   top: 0;
   left: 0;
   width: 46px;
   height: 46px;
-  border: 2px solid var(--multiplayer-cursor-color);
+  border: 2px solid var(--showcase-pointer-cursor-color);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--multiplayer-cursor-color) 18%, transparent);
+  background: color-mix(in srgb, var(--showcase-pointer-cursor-color) 18%, transparent);
   opacity: 0;
   pointer-events: none;
 }
 
-.multiplayer-cursor-selection {
+.showcase-pointer-cursor-selection {
   position: absolute;
   inset: 0;
 }
 
-.multiplayer-cursor-highlight {
+.showcase-pointer-cursor-highlight {
   position: absolute;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--multiplayer-cursor-color) 26%, transparent);
-  box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--multiplayer-cursor-color) 70%, transparent);
+  background: color-mix(in srgb, var(--showcase-pointer-cursor-color) 26%, transparent);
+  box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--showcase-pointer-cursor-color) 70%, transparent);
 }
 
-.multiplayer-cursor-marquee {
+.showcase-pointer-cursor-marquee {
   position: absolute;
-  border: 1px solid var(--multiplayer-cursor-color);
+  border: 1px solid var(--showcase-pointer-cursor-color);
   border-radius: 2px;
-  background: color-mix(in srgb, var(--multiplayer-cursor-color) 10%, transparent);
+  background: color-mix(in srgb, var(--showcase-pointer-cursor-color) 10%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .multiplayer-cursor-body,
-  .multiplayer-cursor[data-visible] .multiplayer-cursor-body,
-  .multiplayer-cursor-label {
+  .showcase-pointer-cursor-body,
+  .showcase-pointer-cursor[data-visible] .showcase-pointer-cursor-body,
+  .showcase-pointer-cursor-label {
     animation: none;
   }
-  .multiplayer-cursor-arrow {
+  .showcase-pointer-cursor-arrow {
     transition: none;
   }
 }
 
-.multiplayer-cursor-trail {
+.showcase-pointer-cursor-trail {
   position: absolute;
   inset: 0;
   width: 100%;

@@ -10,4 +10,4 @@ export * from './liquid-glass-logo';
 export * from './fractal-glass';
 
 export * from './refracted-text';
-export * from './multiplayer-cursors';
+export * from './showcase-pointer';

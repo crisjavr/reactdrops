@@ -21,15 +21,15 @@ import {
   springStep,
   type CursorMotion,
   type Point,
-} from './multiplayer-cursors-motion';
-import './multiplayer-cursors.css';
+} from './showcase-pointer-motion';
+import './showcase-pointer.css';
 
 export type { CursorLabelAnimation } from './cursor-label';
 export {
   defaultCursorMotion,
   type CursorEasing,
   type CursorMotion,
-} from './multiplayer-cursors-motion';
+} from './showcase-pointer-motion';
 
 /**
  * Where a cursor goes: a CSS selector or element inside the component (its
@@ -109,7 +109,7 @@ export type CursorController = {
   clear: () => Promise<void>;
 };
 
-export type MultiplayerCursorsHandle = {
+export type ShowcasePointerHandle = {
   cursor: (id: string) => CursorController;
   /** Run steps for one cursor; resolves when they finish. */
   run: (id: string, steps: CursorStep[]) => Promise<void>;
@@ -117,7 +117,7 @@ export type MultiplayerCursorsHandle = {
   restart: () => void;
 };
 
-export interface MultiplayerCursorsProps {
+export interface ShowcasePointerProps {
   cursors: CursorConfig[];
   children?: ReactNode;
   /** Run the scripts. False pauses every cursor in place. */
@@ -186,8 +186,8 @@ function cssPoint(value: number | `${number}%`, size: number) {
 }
 
 /** Simulated multiplayer cursors that move, hover, click, drag and select inside their children. */
-export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, MultiplayerCursorsProps>(
-  function MultiplayerCursors(
+export const ShowcasePointer = forwardRef<ShowcasePointerHandle, ShowcasePointerProps>(
+  function ShowcasePointer(
     {
       cursors,
       children,
@@ -406,7 +406,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
         };
       const spec = typeof target === 'string' || target instanceof Element ? { target } : target;
       const element = resolveElement(spec.target);
-      if (!element) throw new Error(`MultiplayerCursors: no element for ${String(spec.target)}`);
+      if (!element) throw new Error(`ShowcasePointer: no element for ${String(spec.target)}`);
       const rect = element.getBoundingClientRect();
       // Land near the center like a person would, not on the exact same pixel every time.
       const spread = live.current.rules.landingSpread;
@@ -532,7 +532,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
         hoverOwners.set(element, owners);
         element.setAttribute('data-cursor-hover', cursor.id);
         (element as HTMLElement).style?.setProperty(
-          '--multiplayer-cursor-color',
+          '--showcase-pointer-cursor-color',
           cursorsRef.current.find((item) => item.id === cursor.id)?.color ?? '',
         );
         dispatch(
@@ -568,7 +568,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
     const pulse = (cursor: CursorRuntime) => {
       const element = cursor.element;
       if (!element || !live.current.clickEffect) return;
-      const arrow = element.querySelector<HTMLElement>('.multiplayer-cursor-arrow');
+      const arrow = element.querySelector<HTMLElement>('.showcase-pointer-cursor-arrow');
       if (reduced.current) return;
       arrow?.animate(
         [
@@ -579,7 +579,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
         { duration: 320 / live.current.speed, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
       );
       const ring = document.createElement('span');
-      ring.className = 'multiplayer-cursor-ripple';
+      ring.className = 'showcase-pointer-cursor-ripple';
       element.append(ring);
       ring
         .animate(
@@ -606,8 +606,8 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
       layer.replaceChildren(
         ...rects.map((rect) => {
           const block = document.createElement('span');
-          block.className = 'multiplayer-cursor-highlight';
-          block.style.cssText = `left:${rect.left - box.left}px;top:${rect.top - box.top}px;width:${rect.width}px;height:${rect.height}px;--multiplayer-cursor-color:${color(cursor)}`;
+          block.className = 'showcase-pointer-cursor-highlight';
+          block.style.cssText = `left:${rect.left - box.left}px;top:${rect.top - box.top}px;width:${rect.width}px;height:${rect.height}px;--showcase-pointer-cursor-color:${color(cursor)}`;
           return block;
         }),
       );
@@ -758,7 +758,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
           await wait(cancel, 120);
           press(cursor, true);
           const layer = document.createElement('div');
-          layer.className = 'multiplayer-cursor-selection';
+          layer.className = 'showcase-pointer-cursor-selection';
           overlay.current?.prepend(layer);
           const range = document.createRange();
           range.setStart(...locate(from));
@@ -804,8 +804,8 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
           await wait(cancel, 120);
           press(cursor, true);
           const box = document.createElement('div');
-          box.className = 'multiplayer-cursor-marquee';
-          box.style.setProperty('--multiplayer-cursor-color', color(cursor));
+          box.className = 'showcase-pointer-cursor-marquee';
+          box.style.setProperty('--showcase-pointer-cursor-color', color(cursor));
           overlay.current?.prepend(box);
           const items = step.items ? [...(root.current?.querySelectorAll(step.items) ?? [])] : [];
           const end = resolve(cursor, step.to, false);
@@ -827,7 +827,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
                 cursor.marked.add(item);
                 item.setAttribute('data-cursor-selected', cursor.id);
                 (item as HTMLElement).style?.setProperty(
-                  '--multiplayer-cursor-color',
+                  '--showcase-pointer-cursor-color',
                   color(cursor),
                 );
               } else if (!hit && cursor.marked.has(item)) {
@@ -858,7 +858,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
           setHovered(cursor, element);
           pulse(cursor);
           element.setAttribute('data-cursor-focus', cursor.id);
-          element.style.setProperty('--multiplayer-cursor-color', color(cursor));
+          element.style.setProperty('--showcase-pointer-cursor-color', color(cursor));
           const prototype = Object.getPrototypeOf(element) as object;
           const setter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
           for (const character of step.text) {
@@ -1009,11 +1009,11 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
     return (
       <div
         ref={root}
-        className={`multiplayer-cursors ${className}`.trim()}
+        className={`showcase-pointer ${className}`.trim()}
         style={{ ...style, ...(height !== undefined ? { height } : null) }}
       >
         {children}
-        <div ref={overlay} className="multiplayer-cursors-overlay" aria-hidden="true">
+        <div ref={overlay} className="showcase-pointer-overlay" aria-hidden="true">
           {trail > 0 &&
             cursors.map((config) => (
               <svg
@@ -1021,7 +1021,7 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
                 ref={(element) => {
                   runtime(config.id).trailElement = element;
                 }}
-                className="multiplayer-cursor-trail"
+                className="showcase-pointer-cursor-trail"
                 style={{ color: config.color }}
               >
                 {Array.from({ length: 8 }, (_, index) => (
@@ -1041,35 +1041,35 @@ export const MultiplayerCursors = forwardRef<MultiplayerCursorsHandle, Multiplay
                 ref={(element) => {
                   runtime(config.id).element = element;
                 }}
-                className="multiplayer-cursor"
+                className="showcase-pointer-cursor"
                 data-visible={shown > 0 || undefined}
                 style={
                   {
-                    '--multiplayer-cursor-color': config.color,
-                    '--multiplayer-cursor-text':
+                    '--showcase-pointer-cursor-color': config.color,
+                    '--showcase-pointer-cursor-text':
                       config.textColor ?? readableTextColor(config.color),
-                    '--multiplayer-cursor-scale': cursorSize,
+                    '--showcase-pointer-cursor-scale': cursorSize,
                   } as CSSProperties
                 }
               >
-                <div className="multiplayer-cursor-body">
+                <div className="showcase-pointer-cursor-body">
                   <svg
-                    className="multiplayer-cursor-arrow"
+                    className="showcase-pointer-cursor-arrow"
                     viewBox="0 0 24 24"
                     width="28"
                     height="28"
                   >
                     <path
-                      className="multiplayer-cursor-arrow-edge"
+                      className="showcase-pointer-cursor-arrow-edge"
                       d="M4.2 3.3 20.1 9.6 13.3 12.3 10.6 19.2Z"
                     />
                     <path
-                      className="multiplayer-cursor-arrow-fill"
+                      className="showcase-pointer-cursor-arrow-fill"
                       d="M4.2 3.3 20.1 9.6 13.3 12.3 10.6 19.2Z"
                     />
                   </svg>
                   {showLabels && (
-                    <div className="multiplayer-cursor-label-anchor">
+                    <div className="showcase-pointer-cursor-label-anchor">
                       {shown !== 0 && (
                         <CursorLabel
                           key={Math.abs(shown)}

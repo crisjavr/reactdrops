@@ -15,9 +15,9 @@ import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { packageFractalGlass } from './package-fractal-glass.mjs';
 import { packageRefractedText } from './package-refracted-text.mjs';
 import {
-  packageMultiplayerCursors,
-  multiplayerCursorsUsage,
-} from './package-multiplayer-cursors.mjs';
+  packageShowcasePointer,
+  showcasePointerUsage,
+} from './package-showcase-pointer.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -32,12 +32,12 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
-  'multiplayer-cursors': {
-    sourceSlug: 'multiplayer-cursors',
-    symbol: 'MultiplayerCursors',
-    prefix: 'multiplayerCursors',
-    package: () => packageMultiplayerCursors(root),
-    usage: multiplayerCursorsUsage,
+  'showcase-pointer': {
+    sourceSlug: 'showcase-pointer',
+    symbol: 'ShowcasePointer',
+    prefix: 'showcasePointer',
+    package: () => packageShowcasePointer(root),
+    usage: showcasePointerUsage,
   },
   'refracted-text': {
     sourceSlug: 'refracted-text',

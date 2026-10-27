@@ -11,7 +11,7 @@ import topographicFlowPreview from './assets/topographic-flow-preview.webp';
 import chromaticButtonPreview from './assets/chromatic-button-preview.webp';
 import liquidGlassLogoPreviewDark from './assets/liquid-glass-logo-preview-dark.webp';
 import liquidGlassLogoPreviewLight from './assets/liquid-glass-logo-preview-light.webp';
-import multiplayerCursorsPreview from './assets/multiplayer-cursors-preview.svg';
+import showcasePointerPreview from './assets/showcase-pointer-preview.svg';
 
 // Cards with one preview per site theme; CSS shows the one matching the page.
 const themedPreviews: Record<string, { dark: string; light: string }> = {
@@ -21,8 +21,8 @@ const themedPreviews: Record<string, { dark: string; light: string }> = {
 export function CatalogComponentCard({ component }: { component: ComponentMetadata }) {
   const isOrb = component.slug === 'liquid-glass-orb';
   const preview =
-    component.slug === 'multiplayer-cursors'
-      ? multiplayerCursorsPreview
+    component.slug === 'showcase-pointer'
+      ? showcasePointerPreview
       : component.slug === 'refracted-text'
         ? refractedTextPreview
         : component.slug === 'fractal-glass'

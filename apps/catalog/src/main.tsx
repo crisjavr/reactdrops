@@ -32,6 +32,7 @@ function CatalogApp() {
               }
             />
           ))}
+          <Route path="/components/cursor/multiplayer-cursors" element={<Navigate replace to="/components/cursor/showcase-pointer" />} />
           <Route
             path="/components/ai/fluid-agent-orb"
             element={<Navigate replace to="/components/ai/liquid-glass-orb" />}

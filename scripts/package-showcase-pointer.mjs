@@ -3,19 +3,19 @@ import { resolve } from 'node:path';
 import { withReactDropsLicense } from './registry-license.mjs';
 
 const modules = [
-  'multiplayer-cursors.tsx',
-  'multiplayer-cursors-motion.ts',
+  'showcase-pointer.tsx',
+  'showcase-pointer-motion.ts',
   'cursor-label.tsx',
-  'multiplayer-cursors.css',
+  'showcase-pointer.css',
 ];
 
-export const multiplayerCursorsUsage = `import { useState } from 'react';
-import { MultiplayerCursors } from './components/multiplayer-cursors';
+export const showcasePointerUsage = `import { useState } from 'react';
+import { ShowcasePointer } from './components/showcase-pointer';
 
 export function Example() {
   const [published, setPublished] = useState(false);
   return (
-    <MultiplayerCursors
+    <ShowcasePointer
       height={420}
       onCursorPress={({ target }) => {
         if (target.closest('#publish')) setPublished(true);
@@ -34,11 +34,11 @@ export function Example() {
       <button id="publish" type="button" onClick={() => setPublished(true)}>
         {published ? 'Published' : 'Publish'}
       </button>
-    </MultiplayerCursors>
+    </ShowcasePointer>
   );
 }`;
 
-export async function packageMultiplayerCursors(root) {
+export async function packageShowcasePointer(root) {
   return Promise.all(
     modules.map(async (name) => ({
       name,
@@ -46,7 +46,7 @@ export async function packageMultiplayerCursors(root) {
       target: `@components/${name}`,
       type: name.endsWith('.ts') ? 'registry:lib' : 'registry:ui',
       content: withReactDropsLicense(
-        await readFile(resolve(root, 'packages/components/src/multiplayer-cursors', name), 'utf8'),
+        await readFile(resolve(root, 'packages/components/src/showcase-pointer', name), 'utf8'),
       ),
     })),
   );

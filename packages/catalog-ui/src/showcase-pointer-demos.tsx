@@ -8,15 +8,15 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
-  MultiplayerCursors,
+  ShowcasePointer,
   type CursorConfig,
-  type MultiplayerCursorsProps,
-} from '@reactdrops/components/multiplayer-cursors';
+  type ShowcasePointerProps,
+} from '@reactdrops/components/showcase-pointer';
 
-export type MultiplayerDemo = 'together' | 'click' | 'drag' | 'select';
+export type ShowcaseDemo = 'together' | 'click' | 'drag' | 'select';
 export type DemoCursor = { name: string; color: string };
 type Shared = Omit<
-  MultiplayerCursorsProps,
+  ShowcasePointerProps,
   'cursors' | 'children' | 'onCycle' | 'onCursorPress'
 > & {
   people: DemoCursor[];
@@ -60,7 +60,7 @@ function ClickDemo({ people, ...props }: Shared) {
     },
   ];
   return (
-    <MultiplayerCursors
+    <ShowcasePointer
       {...props}
       cursors={cursors}
       className="mpc-demo"
@@ -106,7 +106,7 @@ function ClickDemo({ people, ...props }: Shared) {
           </button>
         </div>
       </div>
-    </MultiplayerCursors>
+    </ShowcasePointer>
   );
 }
 
@@ -274,11 +274,11 @@ function DragDemo({ people, ...props }: Shared) {
     },
   ];
   return (
-    <MultiplayerCursors {...props} cursors={cursors} className="mpc-demo" onCycle={board.reset}>
+    <ShowcasePointer {...props} cursors={cursors} className="mpc-demo" onCycle={board.reset}>
       <div className="mpc-card mpc-board-card">
         <Board state={board} />
       </div>
-    </MultiplayerCursors>
+    </ShowcasePointer>
   );
 }
 
@@ -342,7 +342,7 @@ function SelectDemo({ people, ...props }: Shared) {
     },
   ];
   return (
-    <MultiplayerCursors {...props} cursors={cursors} className="mpc-demo">
+    <ShowcasePointer {...props} cursors={cursors} className="mpc-demo">
       <div className="mpc-card mpc-select">
         <div className="mpc-doc">
           <p className="mpc-eyebrow">Brief</p>
@@ -354,7 +354,7 @@ function SelectDemo({ people, ...props }: Shared) {
         </div>
         <Tiles />
       </div>
-    </MultiplayerCursors>
+    </ShowcasePointer>
   );
 }
 
@@ -417,7 +417,7 @@ function TogetherDemo({ people, ...props }: Shared) {
     },
   ];
   return (
-    <MultiplayerCursors
+    <ShowcasePointer
       {...props}
       cursors={cursors}
       className="mpc-demo is-scatter"
@@ -498,7 +498,7 @@ function TogetherDemo({ people, ...props }: Shared) {
             </button>
             <form
               className="mpc-comment"
-              style={{ '--multiplayer-cursor-color': theo.color } as CSSProperties}
+              style={{ '--showcase-pointer-cursor-color': theo.color } as CSSProperties}
               onSubmit={(event) => {
                 event.preventDefault();
                 send();
@@ -522,18 +522,18 @@ function TogetherDemo({ people, ...props }: Shared) {
             <p
               key={index}
               className="mpc-comment-row"
-              style={{ '--multiplayer-cursor-color': theo.color } as CSSProperties}
+              style={{ '--showcase-pointer-cursor-color': theo.color } as CSSProperties}
             >
               <b>{theo.name}</b> {comment}
             </p>
           ))}
         </div>
       </div>
-    </MultiplayerCursors>
+    </ShowcasePointer>
   );
 }
 
-export function MultiplayerCursorsDemo({ demo, ...props }: Shared & { demo: MultiplayerDemo }) {
+export function ShowcasePointerDemo({ demo, ...props }: Shared & { demo: ShowcaseDemo }) {
   return demo === 'click' ? (
     <ClickDemo {...props} />
   ) : demo === 'drag' ? (

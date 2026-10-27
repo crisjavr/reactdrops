@@ -24,4 +24,4 @@ export {
 export { default as FractalGlassCatalogPage, fractalGlassMeta } from './fractal-glass-page';
 
 export { default as RefractedTextCatalogPage, refractedTextMeta } from './refracted-text-page';
-export { default as MultiplayerCursorsCatalogPage, multiplayerCursorsMeta } from './multiplayer-cursors-page';
+export { default as ShowcasePointerCatalogPage, showcasePointerMeta } from './showcase-pointer-page';

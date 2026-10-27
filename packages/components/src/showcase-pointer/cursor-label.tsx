@@ -13,7 +13,7 @@ function Characters({ text }: { text: string }) {
   return (
     <>
       {Array.from(text).map((character, index) => (
-        <span key={index} className="multiplayer-cursor-char" data-char>
+        <span key={index} className="showcase-pointer-cursor-char" data-char>
           {character === ' ' ? ' ' : character}
         </span>
       ))}
@@ -118,18 +118,18 @@ export function CursorLabel({
   }, [current.key, animation, animated]);
 
   return (
-    <span ref={pill} className="multiplayer-cursor-label" style={style}>
+    <span ref={pill} className="showcase-pointer-cursor-label" style={style}>
       {layers.map((layer) => {
         const role = layer.entering || layers.length === 1 ? 'in' : 'out';
         return (
           <span
             key={layer.key}
-            className="multiplayer-cursor-label-text"
+            className="showcase-pointer-cursor-label-text"
             data-layer={role}
             aria-hidden={role === 'out' || undefined}
           >
             {animated && animation === 'masked-lift' && role === 'in' ? (
-              <span className="multiplayer-cursor-label-mask">
+              <span className="showcase-pointer-cursor-label-mask">
                 <span data-lift-line>{layer.text}</span>
               </span>
             ) : animated && animation === 'roll' ? (

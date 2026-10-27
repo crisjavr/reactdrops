@@ -17,7 +17,7 @@
     "./liquid-glass-logo": "./src/liquid-glass-logo/index.ts",
     "./fractal-glass": "./src/fractal-glass/index.ts",
     "./refracted-text": "./src/refracted-text/index.ts",
-    "./multiplayer-cursors": "./src/multiplayer-cursors/index.ts"
+    "./showcase-pointer": "./src/showcase-pointer/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -72,11 +72,6 @@
     "src/liquid-glass-logo/liquid-glass-logo.tsx",
     "src/liquid-glass-orb/index.ts",
     "src/liquid-glass-orb/liquid-glass-orb.tsx",
-    "src/multiplayer-cursors/cursor-label.tsx",
-    "src/multiplayer-cursors/index.ts",
-    "src/multiplayer-cursors/multiplayer-cursors-motion.ts",
-    "src/multiplayer-cursors/multiplayer-cursors.css",
-    "src/multiplayer-cursors/multiplayer-cursors.tsx",
     "src/public-index.ts",
     "src/refracted-text/LIBRESTILE-LICENSE.txt",
     "src/refracted-text/index.ts",
@@ -93,6 +88,11 @@
     "src/shape-physics/solid-world.ts",
     "src/shared/agent-orb-motion.ts",
     "src/shared/viewport-playback.ts",
+    "src/showcase-pointer/cursor-label.tsx",
+    "src/showcase-pointer/index.ts",
+    "src/showcase-pointer/showcase-pointer-motion.ts",
+    "src/showcase-pointer/showcase-pointer.css",
+    "src/showcase-pointer/showcase-pointer.tsx",
     "src/topographic-flow/index.ts",
     "src/topographic-flow/topographic-field.ts",
     "src/topographic-flow/topographic-flow.css",

@@ -22,16 +22,16 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/liquid-glass-logo')),
   },
   {
-    path: '/components/cursor/multiplayer-cursors',
-    Page: lazy(() => import('@reactdrops/catalog-ui/pages/multiplayer-cursors')),
-  },
-  {
     path: '/components/text-effect/refracted-text',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/refracted-text')),
   },
   {
     path: '/components/background/shape-physics',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/shape-physics')),
+  },
+  {
+    path: '/components/cursor/showcase-pointer',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/showcase-pointer')),
   },
   {
     path: '/components/background/topographic-flow',
