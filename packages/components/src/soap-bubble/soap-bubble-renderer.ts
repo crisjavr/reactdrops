@@ -2,7 +2,9 @@ import {
   cancelSoapBubbleFrame,
   frameRect,
   isFilmFrame,
+  onSoapBubbleResolution,
   requestSoapBubbleFrame,
+  soapBubbleResolution,
   soapBubbleContext,
   subscribeBackdrop,
   type SoapBubbleBackdrop,
@@ -502,8 +504,13 @@ export function createSoapBubbleRenderer(
    * outline and everything around it (bleed, track, fill) are unchanged and
    * just the bubble's box is shaded again.
    */
-  const draw = (filmOnly = false) => {
-    if (disposed) return;
+  const draw = (filmOnly = false): boolean => {
+    if (disposed) return false;
+    if (!context.ready()) {
+      // Asked again each frame until the driver has linked the program.
+      request();
+      return false;
+    }
     const [ex, ey] = extent();
     const cssRadius = Math.min(hostWidth, hostHeight) / 2;
     const radius = cssRadius * dpr;
@@ -673,6 +680,7 @@ export function createSoapBubbleRenderer(
       painted = true;
       onReady?.();
     }
+    return true;
   };
 
   const shown = () => visible && !still && !document.hidden;
@@ -709,8 +717,8 @@ export function createSoapBubbleRenderer(
       for (let i = 0; i < steps; i++) stepPhysics((dt * rate) / steps);
     }
     // Settled modes leave the outline where the last whole draw put it.
-    draw(drifting && !wobbling && !dirtyFrame);
-    dirtyFrame = false;
+    // The first draw after the program links shades the whole canvas.
+    if (draw(drifting && !wobbling && !dirtyFrame)) dirtyFrame = false;
     if (drifting || jiggling()) request();
     else last = 0;
   };
@@ -729,7 +737,9 @@ export function createSoapBubbleRenderer(
     hostWidth = shape ? shape.width : boxWidth;
     hostHeight = shape ? shape.height : boxHeight;
     em = (Number.parseFloat(getComputedStyle(host).fontSize) || 16) / 16;
-    dpr = Math.min(window.devicePixelRatio || 1, tuning.maxDpr);
+    const density = Math.min(window.devicePixelRatio || 1, tuning.maxDpr);
+    // Fewer pixels when the GPU cannot keep up, but never under one per CSS pixel.
+    dpr = Math.max(Math.min(1, density), density * soapBubbleResolution());
     // Large surfaces are soft at their centre anyway; cap the buffer near 0.8 MP.
     dpr = Math.min(dpr, Math.sqrt(800_000 / (width * height)));
     const pixelWidth = Math.max(1, Math.round(width * dpr));
@@ -751,6 +761,7 @@ export function createSoapBubbleRenderer(
     if (visible) request();
   });
   visibility.observe(canvas);
+  const releaseResolution = onSoapBubbleResolution(resize);
   const onMotion = () => {
     still = reduced?.matches ?? false;
     last = 0;
@@ -891,6 +902,7 @@ export function createSoapBubbleRenderer(
       releaseBackdrop();
       resizeObserver.disconnect();
       visibility.disconnect();
+      releaseResolution();
       reduced?.removeEventListener?.('change', onMotion);
       document.removeEventListener('visibilitychange', onMotion);
       window.removeEventListener('scroll', onScroll, { capture: true });

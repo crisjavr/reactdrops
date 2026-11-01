@@ -378,6 +378,15 @@ export type SoapBubbleContext = {
   /** Queues the last draw for its surface's own canvas; see flush. */
   present: (target: CanvasRenderingContext2D) => void;
   emptyTexture: WebGLTexture;
+  /** Present queued surfaces immediately when composed inside another canvas. */
+  flush: () => void;
+  /**
+   * True once the program has linked. A paced context links on the driver's
+   * own thread, and its surfaces wait for it instead of the page.
+   */
+  ready: () => boolean;
+  /** Frames handed over that the GPU has not finished drawing yet. */
+  inFlight: (now: number) => number;
 };
 
 let shared: SoapBubbleContext | null | undefined;
@@ -392,7 +401,15 @@ export function frameRect(element: Element) {
 }
 
 export function soapBubbleContext(): SoapBubbleContext | null {
-  if (shared !== undefined) return shared;
+  if (shared === undefined) shared = createSoapBubbleContext(soapBubbleFragment, { paced: true });
+  return shared;
+}
+
+/** Same Bubble UI optics and resources, with an optional custom outline shader. */
+export function createSoapBubbleContext(
+  fragmentSource = soapBubbleFragment,
+  { paced = false }: { paced?: boolean } = {},
+): SoapBubbleContext | null {
   // Off screen where possible: the frame's draws leave it as one bitmap,
   // without a copy.
   const canvas: HTMLCanvasElement | OffscreenCanvas =
@@ -403,11 +420,16 @@ export function soapBubbleContext(): SoapBubbleContext | null {
     premultipliedAlpha: true,
     alpha: true,
     antialias: false,
-    preserveDrawingBuffer: true,
+    // The shared context shades every frame's regions afresh and hands the
+    // buffer over whole, so it need not be kept: the hand-over then moves it
+    // instead of copying it.
+    preserveDrawingBuffer: !paced,
   });
-  if (!gl) return (shared = null);
+  if (!gl) return null;
   // The driver compiles and links on its own thread while the lookup tables
-  // are built here; nothing asks for the result until both are done.
+  // are built here; nothing asks for the result until both are done. Paced,
+  // the surfaces then ask each frame whether it is done rather than wait.
+  const parallel = paced ? gl.getExtension('KHR_parallel_shader_compile') : null;
   const compile = (type: number, source: string) => {
     const shader = gl.createShader(type)!;
     gl.shaderSource(shader, source);
@@ -416,7 +438,7 @@ export function soapBubbleContext(): SoapBubbleContext | null {
   };
   const program = gl.createProgram()!;
   const vertex = compile(gl.VERTEX_SHADER, soapBubbleVertex);
-  const fragment = compile(gl.FRAGMENT_SHADER, soapBubbleFragment);
+  const fragment = compile(gl.FRAGMENT_SHADER, fragmentSource);
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
   gl.linkProgram(program);
@@ -463,27 +485,32 @@ export function soapBubbleContext(): SoapBubbleContext | null {
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
   gl.activeTexture(gl.TEXTURE0);
 
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const message =
-      [vertex, fragment]
-        .map((shader) =>
-          gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? '' : gl.getShaderInfoLog(shader),
-        )
-        .find(Boolean) || gl.getProgramInfoLog(program);
+  const u = {} as SoapBubbleContext['u'];
+  let linked = false;
+  let failed = false;
+  const link = () => {
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const message =
+        [vertex, fragment]
+          .map((shader) =>
+            gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? '' : gl.getShaderInfoLog(shader),
+          )
+          .find(Boolean) || gl.getProgramInfoLog(program);
+      gl.deleteShader(vertex);
+      gl.deleteShader(fragment);
+      gl.deleteProgram(program);
+      throw new Error(message || 'Soap Bubble program failed to link.');
+    }
     gl.deleteShader(vertex);
     gl.deleteShader(fragment);
-    gl.deleteProgram(program);
-    throw new Error(message || 'Soap Bubble program failed to link.');
-  }
-  gl.deleteShader(vertex);
-  gl.deleteShader(fragment);
-  gl.useProgram(program);
-  const u = Object.fromEntries(
-    uniformNames.map((name) => [name, gl.getUniformLocation(program, name)]),
-  ) as SoapBubbleContext['u'];
-  gl.uniform1i(u.uBackdrop, 0);
-  gl.uniform1i(gl.getUniformLocation(program, 'uFilmTable'), 1);
-  gl.uniform1i(gl.getUniformLocation(program, 'uNoise'), 2);
+    gl.useProgram(program);
+    for (const name of uniformNames) u[name] = gl.getUniformLocation(program, name);
+    gl.uniform1i(u.uBackdrop, 0);
+    gl.uniform1i(gl.getUniformLocation(program, 'uFilmTable'), 1);
+    gl.uniform1i(gl.getUniformLocation(program, 'uNoise'), 2);
+    linked = true;
+  };
+  if (!parallel) link();
 
   const quad = gl.createVertexArray();
   gl.bindVertexArray(quad);
@@ -496,12 +523,35 @@ export function soapBubbleContext(): SoapBubbleContext | null {
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
   gl.generateMipmap(gl.TEXTURE_2D);
 
-  shared = {
+  const context: SoapBubbleContext = {
     gl,
     canvas,
     u,
     set: uniformSetters(gl),
     emptyTexture,
+    flush: () => flush(),
+    ready() {
+      if (linked) return true;
+      if (failed || !gl.getProgramParameter(program, parallel!.COMPLETION_STATUS_KHR)) return false;
+      try {
+        link();
+      } catch {
+        failed = true;
+      }
+      return linked;
+    },
+    inFlight(now) {
+      while (fences.length) {
+        const status = gl.isContextLost()
+          ? gl.SIGNALED
+          : gl.getSyncParameter(fences[0].sync, gl.SYNC_STATUS);
+        if (status !== gl.SIGNALED) break;
+        const done = fences.shift()!;
+        gl.deleteSync(done.sync);
+        gpuDone(now - done.at);
+      }
+      return fences.length;
+    },
     begin(width, height, part) {
       const rect = part ?? { x: 0, y: 0, width, height };
       const [x, y] = reserve(rect.width, rect.height);
@@ -535,6 +585,9 @@ export function soapBubbleContext(): SoapBubbleContext | null {
   const atlas = { x: 0, y: 0, shelf: 0 };
   let queued: Region = { x: 0, y: 0, width: 0, height: 0, left: 0, top: 0 };
   let flushQueued = false;
+  // A paced context marks the end of each frame's draws, to learn when the
+  // GPU is through with them.
+  const fences: { sync: WebGLSync; at: number }[] = [];
   const reserve = (width: number, height: number): [number, number] => {
     if (atlas.x + width > canvas.width) {
       atlas.x = 0;
@@ -563,6 +616,10 @@ export function soapBubbleContext(): SoapBubbleContext | null {
     atlas.y = 0;
     atlas.shelf = 0;
     if (!pending.length) return;
+    if (paced && fences.length < 4) {
+      const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+      if (sync) fences.push({ sync, at: performance.now() });
+    }
     const source: CanvasImageSource =
       'transferToImageBitmap' in canvas ? canvas.transferToImageBitmap() : canvas;
     for (const { target, x, y, width, height, left, top } of pending) {
@@ -583,7 +640,7 @@ export function soapBubbleContext(): SoapBubbleContext | null {
     pending.length = 0;
     if (source instanceof ImageBitmap) source.close();
   };
-  return shared;
+  return context;
 }
 
 function createBackdropTexture(gl: WebGL2RenderingContext) {
@@ -753,8 +810,73 @@ let filmAt = 0;
 let filmFrame = false;
 export const isFilmFrame = () => filmFrame;
 
+// The GPU's pace. A frame is held back while two earlier ones are still
+// being drawn, so a slow GPU never queues work ahead of the page's own
+// scrolling and compositing. Should it stay behind, every surface is drawn
+// with fewer pixels; a GPU that keeps up never sees a difference.
+const resolutionLevels = [1, 0.8, 0.65, 0.5];
+let resolutionLevel = 0;
+const resolutionListeners = new Set<() => void>();
+/** Share of each surface's pixel density the GPU can afford. */
+export const soapBubbleResolution = () => resolutionLevels[resolutionLevel];
+export function onSoapBubbleResolution(listener: () => void) {
+  resolutionListeners.add(listener);
+  return () => {
+    resolutionListeners.delete(listener);
+  };
+}
+
+const latencies: number[] = [];
+let paceFrom = 0;
+let paceLast = 0;
+let paceHeld = 0;
+let paceFrames = 0;
+let slowSpells = 0;
+// Time from handing a frame over to its last pixel, as seen from the next
+// animation frame.
+function gpuDone(latency: number) {
+  latencies.push(latency);
+}
+
+function pace(now: number, held: boolean) {
+  // A gap (a hidden tab, nothing moving, a long task) starts afresh.
+  if (now - paceLast > 250) {
+    paceFrom = now;
+    paceHeld = 0;
+    paceFrames = 0;
+    latencies.length = 0;
+  }
+  paceLast = now;
+  paceFrames++;
+  if (held) paceHeld++;
+  if (now - paceFrom < 1000) return;
+  // Slow: most frames took the GPU over two display frames, or a third of
+  // the animation frames had to wait for it.
+  latencies.sort((a, b) => a - b);
+  const typical = latencies.length >= 8 ? latencies[latencies.length >> 1] : 0;
+  const slow = typical > 34 || paceHeld * 3 > paceFrames;
+  slowSpells = slow ? slowSpells + 1 : 0;
+  paceFrom = now;
+  paceHeld = 0;
+  paceFrames = 0;
+  latencies.length = 0;
+  // Two slow seconds in a row, never a single hitch.
+  if (slowSpells >= 2 && resolutionLevel < resolutionLevels.length - 1) {
+    slowSpells = 0;
+    resolutionLevel++;
+    resolutionListeners.forEach((listener) => listener());
+  }
+}
+
 function runFrame(now: number) {
   frameHandle = 0;
+  const held = (shared?.inFlight(now) ?? 0) >= 2;
+  if (shared) pace(now, held);
+  if (held) {
+    // Everything waits a frame; the tasks stay queued.
+    frameHandle = requestAnimationFrame(runFrame);
+    return;
+  }
   filmFrame = now - filmAt >= 31;
   if (filmFrame) filmAt = now;
   // Swap the sets instead of copying: tasks queued while running wait for

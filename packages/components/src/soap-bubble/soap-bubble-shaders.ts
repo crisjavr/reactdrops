@@ -417,9 +417,11 @@ vec2 restPoint(vec2 p) {
   return p / wobble;
 }
 
+/* CUSTOM_OUTLINE */
+
 // Signed distance to the outline, in radii, after wobble and squash.
 float outline(vec2 p) {
-  return roundedRect(restPoint(p), uExtent, clamp(uCorner, 0.0, 1.0));
+  return /* OUTLINE_DISTANCE */ roundedRect(restPoint(p), uExtent, clamp(uCorner, 0.0, 1.0));
 }
 
 // A film stretched over a rounded frame bulges only as far in as its corner
@@ -845,3 +847,13 @@ void main() {
   outColor = bubble * coverage + outside * (1.0 - coverage);
 }
 `;
+
+/** Keep Bubble UI's complete material while supplying another silhouette's SDF. */
+export function soapBubbleFragmentForOutline(source: string) {
+  return soapBubbleFragment
+    .replace('/* CUSTOM_OUTLINE */', source)
+    .replace(
+      '/* OUTLINE_DISTANCE */ roundedRect(restPoint(p), uExtent, clamp(uCorner, 0.0, 1.0))',
+      'customOutline(restPoint(p))',
+    );
+}
