@@ -5,8 +5,13 @@ import {
   onSoapBubbleResolution,
   requestSoapBubbleFrame,
   soapBubbleResolution,
+  backdropTexture,
+  coveredTexture,
+  releaseSoapBubbleOwnContext,
   soapBubbleContext,
+  soapBubbleOwnContext,
   subscribeBackdrop,
+  wantCoveredBackdrop,
   type SoapBubbleBackdrop,
   type SoapBubbleRect,
 } from './soap-bubble-gl';
@@ -75,6 +80,13 @@ export type SoapBubbleTuning = {
   reflectivity: number;
   /** Reflections of the nearby page in the rim of the bubble. */
   mirage: number;
+  /**
+   * How much of the bubbles behind this one show through its film, which
+   * the backdrop leaves out. 0 shows the backdrop alone.
+   */
+  seeThrough: number;
+  /** How far those bubbles bend, in multiples of the backdrop's refraction. */
+  seeThroughBend: number;
   /** The studio's bounce light from below, a pale crescent along the lower rim; 0 removes it. */
   floorLight: number;
   /** The reflection at the top drawn as a large cartoon window and spark that follow the pointer. */
@@ -170,6 +182,8 @@ export const soapBubbleDefaults: SoapBubbleTuning = {
   soapHighlightColor: 'auto',
   reflectivity: 1.6,
   mirage: 1,
+  seeThrough: 0,
+  seeThroughBend: 0.3,
   floorLight: 1,
   windowLight: false,
   windowStyle: 'edge',
@@ -268,6 +282,8 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
         : d.soapHighlightColor,
     reflectivity: clamp(v.reflectivity, 0, 6, d.reflectivity),
     mirage: clamp(v.mirage, 0, 3, d.mirage),
+    seeThrough: clamp(v.seeThrough, 0, 1, d.seeThrough),
+    seeThroughBend: clamp(v.seeThroughBend, 0, 2, d.seeThroughBend),
     floorLight: clamp(v.floorLight, 0, 1, d.floorLight),
     windowLight: Boolean(v.windowLight),
     windowStyle: soapBubbleWindowStyles.includes(v.windowStyle) ? v.windowStyle : d.windowStyle,
@@ -399,9 +415,11 @@ export function createSoapBubbleRenderer(
   initial: SoapBubbleTuning,
   onReady?: () => void,
 ): SoapBubbleRenderer | null {
-  const context = soapBubbleContext();
-  const target = canvas.getContext('2d');
-  if (!context || !target) return null;
+  const own = soapBubbleOwnContext(canvas);
+  const context = own ?? soapBubbleContext();
+  // Drawing in its own canvas, the surface has nothing handed to it.
+  const target = own ? null : canvas.getContext('2d');
+  if (!context || (!own && !target)) return null;
   const { gl, u, set } = context;
 
   let tuning = initial;
@@ -498,6 +516,14 @@ export function createSoapBubbleRenderer(
   let backdrop: SoapBubbleBackdrop | null = null;
   let backdropElement: HTMLElement | null = null;
   let releaseBackdrop = () => {};
+  // Whether this surface has asked its backdrop for the bubbles it covers.
+  let showsCovered = false;
+  const showCovered = () => {
+    const want = tuning.seeThrough > 0;
+    if (!backdrop || want === showsCovered) return;
+    showsCovered = want;
+    wantCoveredBackdrop(backdrop, want);
+  };
 
   /**
    * filmOnly: only the film has moved since the last draw, so the bubble's
@@ -612,6 +638,7 @@ export function createSoapBubbleRenderer(
     set.f1(u.uSwirl, tuning.swirl);
     set.f1(u.uReflectivity, tuning.reflectivity);
     set.f1(u.uMirage, tuning.mirage);
+    set.f1(u.uSeeThrough, tuning.seeThrough);
     set.f1(u.uFloorLight, tuning.floorLight);
     set.f1(u.uReach, tuning.reach);
     set.f1(u.uRefraction, tuning.refraction);
@@ -639,14 +666,24 @@ export function createSoapBubbleRenderer(
     set.m3(u.uEnvRotation, rotation);
     const captured = backdrop?.size ? backdrop : null;
     set.i1(u.uHasBackdrop, captured ? 1 : 0);
+    // Uploaded before the backdrop is bound, as an upload binds unit 0.
+    const covered = captured && tuning.seeThrough > 0 ? coveredTexture(gl, captured) : null;
+    set.i1(u.uHasCovered, covered ? 1 : 0);
+    if (covered) {
+      set.f1(u.uCoveredBend, tuning.seeThroughBend);
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, covered);
+    }
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, captured ? captured.texture : context.emptyTexture);
+    gl.bindTexture(gl.TEXTURE_2D, captured ? backdropTexture(gl, captured) : context.emptyTexture);
     if (captured) {
       const page = frameRect(captured.element);
       set.f2(
         u.uBackdropOrigin,
-        (box.left + box.width / 2 - page.left) / Math.max(1, page.width),
-        (box.top + box.height / 2 - page.top) / Math.max(1, page.height),
+        // From the shape's own centre: a menu growing or shrinking inside its
+        // box sees what lies behind it move with it.
+        (box.left + middleX * zoomX - page.left) / Math.max(1, page.width),
+        (box.top + middleY * zoomY - page.top) / Math.max(1, page.height),
       );
       set.f2(u.uBackdropSize, captured.size![0], captured.size![1]);
       set.f2(
@@ -789,6 +826,7 @@ export function createSoapBubbleRenderer(
   return {
     update(next) {
       tuning = next;
+      showCovered();
       tint = cssColour(next.tint);
       soapColor = paletteColour(next.soapColor);
       soapShadeColor = paletteColour(next.soapShadeColor);
@@ -801,6 +839,8 @@ export function createSoapBubbleRenderer(
     },
     setBackdrop(element) {
       if (element === backdropElement) return;
+      if (backdrop && showsCovered) wantCoveredBackdrop(backdrop, false);
+      showsCovered = false;
       releaseBackdrop();
       backdropElement = element;
       backdrop = null;
@@ -808,7 +848,9 @@ export function createSoapBubbleRenderer(
       releaseBackdrop = element
         ? subscribeBackdrop(element, (next) => {
             backdrop = next;
-            canvas.dataset.backdrop = next.size ? 'captured' : 'failed';
+            showCovered();
+            const state = next.size ? 'captured' : 'failed';
+            if (canvas.dataset.backdrop !== state) canvas.dataset.backdrop = state;
             draw();
             request();
           })
@@ -898,7 +940,9 @@ export function createSoapBubbleRenderer(
     },
     dispose() {
       disposed = true;
+      if (own) releaseSoapBubbleOwnContext(canvas);
       cancelSoapBubbleFrame(tick);
+      if (backdrop && showsCovered) wantCoveredBackdrop(backdrop, false);
       releaseBackdrop();
       resizeObserver.disconnect();
       visibility.disconnect();

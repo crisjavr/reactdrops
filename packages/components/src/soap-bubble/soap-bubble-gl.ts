@@ -262,6 +262,9 @@ const uniformNames = [
   'uFilmScale',
   'uReflectivity',
   'uMirage',
+  'uSeeThrough',
+  'uCoveredBend',
+  'uHasCovered',
   'uFloorLight',
   'uReach',
   'uRefraction',
@@ -375,8 +378,11 @@ export type SoapBubbleContext = {
    * and later replaced; the rest of the surface's canvas keeps its pixels.
    */
   begin: (width: number, height: number, part?: SoapBubbleRect | null) => [number, number];
-  /** Queues the last draw for its surface's own canvas; see flush. */
-  present: (target: CanvasRenderingContext2D) => void;
+  /**
+   * Queues the last draw for its surface's own canvas; see flush. A context
+   * that draws in its surface's canvas has nothing to hand over.
+   */
+  present: (surface: CanvasRenderingContext2D | null) => void;
   emptyTexture: WebGLTexture;
   /** Present queued surfaces immediately when composed inside another canvas. */
   flush: () => void;
@@ -405,29 +411,97 @@ export function soapBubbleContext(): SoapBubbleContext | null {
   return shared;
 }
 
+// In iOS Safari a copy out of the shared buffer reads that buffer back from
+// the GPU, which a surface that animates whole (a menu opening) pays on
+// every frame. There each surface draws in its own canvas with a context of
+// its own instead, so nothing is copied.
+const ownContexts =
+  typeof navigator !== 'undefined' &&
+  (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+// WebKit keeps 16 WebGL contexts on a page and fails past that, counting a
+// released context until it is collected. Surfaces take at most 12 of those
+// still alive, leaving the page room for its own; any more share the one
+// context as everywhere else.
+const ownContextLimit = 12;
+const ownContextsInUse = new Map<HTMLCanvasElement, SoapBubbleContext>();
+let ownContextsAlive = 0;
+const ownContextCollected =
+  typeof FinalizationRegistry === 'function'
+    ? new FinalizationRegistry<null>(() => {
+        ownContextsAlive--;
+      })
+    : null;
+
+function releaseOwnContext(canvas: HTMLCanvasElement) {
+  const context = ownContextsInUse.get(canvas);
+  if (!context) return;
+  ownContextsInUse.delete(canvas);
+  for (const entry of backdrops.values()) entry.uploads.delete(context.gl);
+  context.gl.getExtension('WEBGL_lose_context')?.loseContext();
+}
+
+/**
+ * The context a surface drawing in canvas should use: its own where that
+ * pays and the limit allows, otherwise null for the shared one. A canvas
+ * keeps the context it was first given, so a surface mounted on it again
+ * (as React does in development) takes that context back.
+ */
+export function soapBubbleOwnContext(canvas: HTMLCanvasElement): SoapBubbleContext | null {
+  if (!ownContexts) return null;
+  const existing = ownContextsInUse.get(canvas);
+  if (existing) return existing;
+  for (const used of ownContextsInUse.keys()) if (!used.isConnected) releaseOwnContext(used);
+  if (ownContextsAlive >= ownContextLimit) return null;
+  const context = createSoapBubbleContext(soapBubbleFragment, { surface: canvas });
+  if (!context) return null;
+  ownContextsInUse.set(canvas, context);
+  ownContextsAlive++;
+  ownContextCollected?.register(context.gl, null);
+  return context;
+}
+
+/** Frees the own context of a surface whose canvas has left the page. */
+export function releaseSoapBubbleOwnContext(canvas: HTMLCanvasElement) {
+  // React removes the canvas before it runs the effect's cleanup; a canvas
+  // still on the page is mounted again.
+  window.setTimeout(() => {
+    if (!canvas.isConnected) releaseOwnContext(canvas);
+  });
+}
+
 /** Same Bubble UI optics and resources, with an optional custom outline shader. */
 export function createSoapBubbleContext(
   fragmentSource = soapBubbleFragment,
-  { paced = false }: { paced?: boolean } = {},
+  {
+    paced = false,
+    surface,
+  }: {
+    paced?: boolean;
+    /** A surface's own canvas, to draw in directly. */
+    surface?: HTMLCanvasElement;
+  } = {},
 ): SoapBubbleContext | null {
   // Off screen where possible, so the shared buffer is never composited.
   const canvas: HTMLCanvasElement | OffscreenCanvas =
-    typeof OffscreenCanvas === 'function'
+    surface ??
+    (typeof OffscreenCanvas === 'function'
       ? new OffscreenCanvas(1024, 512)
-      : Object.assign(document.createElement('canvas'), { width: 1024, height: 512 });
+      : Object.assign(document.createElement('canvas'), { width: 1024, height: 512 }));
   const gl = canvas.getContext('webgl2', {
     premultipliedAlpha: true,
     alpha: true,
     antialias: false,
     // The shared context shades every frame's regions afresh, so its buffer
-    // need not be kept between frames.
-    preserveDrawingBuffer: !paced,
+    // need not be kept between frames. In its own canvas, a surface's resting
+    // outline stays from the last whole draw.
+    preserveDrawingBuffer: !paced || Boolean(surface),
   });
   if (!gl) return null;
   // The driver compiles and links on its own thread while the lookup tables
   // are built here; nothing asks for the result until both are done. Paced,
   // the surfaces then ask each frame whether it is done rather than wait.
-  const parallel = paced ? gl.getExtension('KHR_parallel_shader_compile') : null;
+  const parallel = paced || surface ? gl.getExtension('KHR_parallel_shader_compile') : null;
   const compile = (type: number, source: string) => {
     const shader = gl.createShader(type)!;
     gl.shaderSource(shader, source);
@@ -506,6 +580,7 @@ export function createSoapBubbleContext(
     gl.uniform1i(u.uBackdrop, 0);
     gl.uniform1i(gl.getUniformLocation(program, 'uFilmTable'), 1);
     gl.uniform1i(gl.getUniformLocation(program, 'uNoise'), 2);
+    gl.uniform1i(gl.getUniformLocation(program, 'uCovered'), 3);
     linked = true;
   };
   if (!parallel) link();
@@ -551,6 +626,14 @@ export function createSoapBubbleContext(
       return fences.length;
     },
     begin(width, height, part) {
+      if (surface) {
+        gl.viewport(0, 0, width, height);
+        if (part) {
+          gl.enable(gl.SCISSOR_TEST);
+          gl.scissor(part.x, height - part.y - part.height, part.width, part.height);
+        } else gl.disable(gl.SCISSOR_TEST);
+        return [0, 0];
+      }
       const rect = part ?? { x: 0, y: 0, width, height };
       const [x, y] = reserve(rect.width, rect.height);
       // The draw is placed so that its part falls on the reserved region.
@@ -566,7 +649,7 @@ export function createSoapBubbleContext(
       return [originX, originY];
     },
     present(target) {
-      pending.push({ target, ...queued });
+      if (target) pending.push({ target, ...queued });
       if (!flushQueued) {
         flushQueued = true;
         // Every surface drawn in this task shares one hand-over.
@@ -659,11 +742,65 @@ export function createSoapBubbleContext(
   return context;
 }
 
-function createBackdropTexture(gl: WebGL2RenderingContext) {
+/**
+ * The backdrop's last capture as a texture of the context gl, uploaded once
+ * per capture and context.
+ */
+export function backdropTexture(gl: WebGL2RenderingContext, backdrop: SoapBubbleBackdrop) {
+  const entry = backdrop as BackdropEntry;
+  return uploaded(gl, entry.uploads, entry.source, entry.version, true);
+}
+
+/**
+ * What the backdrop looks like with its bubbles in it, for a surface that
+ * shows what it covers: null until that is captured.
+ */
+export function coveredTexture(gl: WebGL2RenderingContext, backdrop: SoapBubbleBackdrop) {
+  const entry = backdrop as BackdropEntry;
+  if (!entry.covered) return null;
+  // Sampled once, near where it lies: no mipmaps to build.
+  return uploaded(gl, entry.coveredUploads, entry.covered, entry.coveredVersion, false);
+}
+
+/** Counts the surfaces over a backdrop that show what they cover. */
+export function wantCoveredBackdrop(backdrop: SoapBubbleBackdrop, want: boolean) {
+  const entry = backdrop as BackdropEntry;
+  entry.coveredWanted = Math.max(0, entry.coveredWanted + (want ? 1 : -1));
+  if (want) scheduleCovered(entry);
+}
+
+type Uploads = Map<WebGL2RenderingContext, { texture: WebGLTexture; version: number }>;
+
+function uploaded(
+  gl: WebGL2RenderingContext,
+  uploads: Uploads,
+  source: TexImageSource | null,
+  version: number,
+  mipmaps: boolean,
+) {
+  let upload = uploads.get(gl);
+  if (!upload)
+    uploads.set(gl, (upload = { texture: createBackdropTexture(gl, mipmaps), version: 0 }));
+  if (source && upload.version !== version) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, upload.texture);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    if (mipmaps) gl.generateMipmap(gl.TEXTURE_2D);
+    upload.version = version;
+  }
+  return upload.texture;
+}
+
+function createBackdropTexture(gl: WebGL2RenderingContext, mipmaps = true) {
   const texture = gl.createTexture()!;
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    mipmaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR,
+  );
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -672,13 +809,29 @@ function createBackdropTexture(gl: WebGL2RenderingContext) {
 
 export type SoapBubbleBackdrop = {
   element: HTMLElement;
-  texture: WebGLTexture;
   /** Texel size, or null until the first capture lands. */
   size: [number, number] | null;
   failed: boolean;
 };
 
 type BackdropEntry = SoapBubbleBackdrop & {
+  /** The last capture, counted so each context uploads it once. */
+  source: TexImageSource | null;
+  version: number;
+  uploads: Uploads;
+  /**
+   * The backdrop with its bubbles in it (menus left out), for surfaces that
+   * show what they cover. Taken only while one wants it, and then only when
+   * the page has settled after a change.
+   */
+  covered: HTMLCanvasElement | null;
+  coveredVersion: number;
+  coveredUploads: Uploads;
+  coveredWanted: number;
+  coveredStale: boolean;
+  coveredCapturing: boolean;
+  coveredTimer: number;
+  fontEmbedCSS: Promise<string> | null;
   listeners: Set<() => void>;
   capturing: boolean;
   dirty: boolean;
@@ -695,6 +848,9 @@ const backdrops = new Map<HTMLElement, BackdropEntry>();
 const bubbleSelector = '[data-soap-bubble], [data-soap-bubble-group]';
 const insideSurface = (node: Node) =>
   (node instanceof Element ? node : node.parentElement)?.closest(bubbleSelector) != null;
+const groupSelector = '[data-soap-bubble-group]';
+const insideGroup = (node: Node) =>
+  (node instanceof Element ? node : node.parentElement)?.closest(groupSelector) != null;
 
 /**
  * One rasterised copy of a backdrop element, shared by every surface over it
@@ -704,13 +860,21 @@ export function subscribeBackdrop(
   element: HTMLElement,
   onChange: (backdrop: SoapBubbleBackdrop) => void,
 ): () => void {
-  const context = soapBubbleContext();
-  if (!context) return () => {};
   let entry = backdrops.get(element);
   if (!entry) {
     const created: BackdropEntry = {
       element,
-      texture: createBackdropTexture(context.gl),
+      source: null,
+      version: 0,
+      uploads: new Map(),
+      covered: null,
+      coveredVersion: 0,
+      coveredUploads: new Map(),
+      coveredWanted: 0,
+      coveredStale: true,
+      coveredCapturing: false,
+      coveredTimer: 0,
+      fontEmbedCSS: null,
       size: null,
       failed: false,
       listeners: new Set(),
@@ -719,8 +883,19 @@ export function subscribeBackdrop(
       timer: 0,
       mutations: new MutationObserver((records) => {
         if (records.some((record) => !insideSurface(record.target))) schedule(created);
+        // The bubbles are in the covered view; a menu opening is not, nor the
+        // flags surfaces set on their canvases.
+        if (
+          records.some(
+            (record) => !insideGroup(record.target) && record.attributeName !== 'data-backdrop',
+          )
+        )
+          staleCovered(created);
       }),
-      resize: new ResizeObserver(() => schedule(created)),
+      resize: new ResizeObserver(() => {
+        schedule(created);
+        staleCovered(created);
+      }),
     };
     created.mutations.observe(element, {
       subtree: true,
@@ -741,9 +916,11 @@ export function subscribeBackdrop(
     current.listeners.delete(listener);
     if (current.listeners.size) return;
     window.clearTimeout(current.timer);
+    window.clearTimeout(current.coveredTimer);
     current.mutations.disconnect();
     current.resize.disconnect();
-    context.gl.deleteTexture(current.texture);
+    for (const uploads of [current.uploads, current.coveredUploads])
+      for (const [gl, upload] of uploads) if (!gl.isContextLost()) gl.deleteTexture(upload.texture);
     backdrops.delete(element);
   };
 }
@@ -754,8 +931,6 @@ function schedule(entry: BackdropEntry) {
 }
 
 async function capture(entry: BackdropEntry) {
-  const context = soapBubbleContext();
-  if (!context) return;
   if (entry.capturing) {
     entry.dirty = true;
     return;
@@ -780,28 +955,110 @@ async function capture(entry: BackdropEntry) {
         height: rect.height,
         pixelRatio: Math.min(1.5, window.devicePixelRatio || 1),
         includeQueryParams: true,
+        fontEmbedCSS: await fontEmbedCSS(entry),
         style: { transform: 'none' },
         filter: (node) => !(node instanceof Element && node.matches(bubbleSelector)),
       });
     }
     if (backdrops.get(element) !== entry) return;
-    const { gl } = context;
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, entry.texture);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    entry.source = source;
+    entry.version++;
     entry.size =
       source instanceof HTMLImageElement
         ? [source.naturalWidth, source.naturalHeight]
         : [source.width, source.height];
     entry.failed = false;
+    staleCovered(entry);
   } catch {
     entry.failed = !entry.size;
   } finally {
     entry.capturing = false;
     entry.listeners.forEach((listener) => listener());
     if (entry.dirty && backdrops.get(element) === entry) schedule(entry);
+  }
+}
+
+// The page's fonts, inlined once per backdrop rather than on every capture.
+function fontEmbedCSS(entry: BackdropEntry) {
+  entry.fontEmbedCSS ??= import('html-to-image')
+    .then(({ getFontEmbedCSS }) => getFontEmbedCSS(entry.element))
+    .catch(() => '');
+  return entry.fontEmbedCSS;
+}
+
+function staleCovered(entry: BackdropEntry) {
+  entry.coveredStale = true;
+  scheduleCovered(entry);
+}
+
+// The covered view costs a second rasterisation, so it waits for the page to
+// settle (a slider being dragged, a theme switching) and is skipped while
+// nothing shows it.
+function scheduleCovered(entry: BackdropEntry) {
+  if (!entry.coveredWanted || !entry.coveredStale || !entry.source) return;
+  window.clearTimeout(entry.coveredTimer);
+  entry.coveredTimer = window.setTimeout(() => void captureCovered(entry), 700);
+}
+
+async function captureCovered(entry: BackdropEntry) {
+  const { element } = entry;
+  if (entry.coveredCapturing || !entry.coveredWanted || !entry.source) return;
+  entry.coveredCapturing = true;
+  entry.coveredStale = false;
+  try {
+    const rect = element.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
+    // A refracted view of what lies under a panel: one pixel per CSS pixel
+    // is plenty.
+    const scale = 1;
+    let covered: HTMLCanvasElement;
+    if (element instanceof HTMLImageElement || element instanceof HTMLCanvasElement) {
+      covered = Object.assign(document.createElement('canvas'), {
+        width: Math.round(rect.width * scale),
+        height: Math.round(rect.height * scale),
+      });
+    } else {
+      // The bubbles' own content (labels, icons) over a clear page; their
+      // films and the page go in underneath.
+      const { toCanvas } = await import('html-to-image');
+      covered = await toCanvas(element, {
+        width: rect.width,
+        height: rect.height,
+        pixelRatio: scale,
+        includeQueryParams: true,
+        fontEmbedCSS: await fontEmbedCSS(entry),
+        style: { transform: 'none', background: 'transparent' },
+        filter: (node) =>
+          !(
+            node instanceof Element &&
+            (node.matches(groupSelector) || node.localName === 'canvas')
+          ),
+      });
+    }
+    if (backdrops.get(element) !== entry || !entry.source) return;
+    const context = covered.getContext('2d');
+    if (!context) return;
+    context.globalCompositeOperation = 'destination-over';
+    for (const canvas of element.querySelectorAll<HTMLCanvasElement>('[data-soap-bubble] canvas')) {
+      if (insideGroup(canvas) || !canvas.width) continue;
+      const box = canvas.getBoundingClientRect();
+      context.drawImage(
+        canvas,
+        (box.left - rect.left) * scale,
+        (box.top - rect.top) * scale,
+        box.width * scale,
+        box.height * scale,
+      );
+    }
+    context.drawImage(entry.source as CanvasImageSource, 0, 0, covered.width, covered.height);
+    entry.covered = covered;
+    entry.coveredVersion++;
+    entry.listeners.forEach((listener) => listener());
+  } catch {
+    // Without it, surfaces show the backdrop alone.
+  } finally {
+    entry.coveredCapturing = false;
+    if (entry.coveredStale) scheduleCovered(entry);
   }
 }
 

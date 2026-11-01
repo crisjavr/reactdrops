@@ -266,6 +266,26 @@
       "description": "Reflections of the objects around the bubble, wrapped around its rim. Needs a backdrop."
     },
     {
+      "name": "seeThrough",
+      "label": "Menu see-through",
+      "type": "number",
+      "defaultValue": 0.3,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How much of the bubbles the open menu covers show through its panel, bent like light through glass. 0 shows only the page behind."
+    },
+    {
+      "name": "seeThroughBend",
+      "label": "Menu bend",
+      "type": "number",
+      "defaultValue": 0.3,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "How far the covered bubbles bend through the menu, as a multiple of the panel's own refraction. 0 shows them straight."
+    },
+    {
       "name": "reach",
       "label": "Mirage reach",
       "type": "number",

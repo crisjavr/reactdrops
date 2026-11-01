@@ -43,6 +43,10 @@ uniform float uSwirl;
 uniform float uFilmScale;      // size of the film's colour bands
 uniform float uReflectivity;
 uniform float uMirage;
+uniform float uSeeThrough;     // share of the covered bubbles seen through the film
+uniform float uCoveredBend;    // how far they bend, relative to the backdrop's refraction
+uniform bool uHasCovered;
+uniform sampler2D uCovered;    // the backdrop with its bubbles in it
 uniform float uFloorLight;
 uniform float uReach;         // radius of the reflected surroundings, in radii
 uniform float uRefraction;
@@ -726,6 +730,14 @@ void main() {
     if (split > 1e-4 && dot(shift, shift) > 1e-8) {
       behind.r = behindAt(p + shift * (1.0 - split)).r;
       behind.b = behindAt(p + shift * (1.0 + split)).b;
+    }
+    // The bubbles this one covers, which the backdrop leaves out, seen along
+    // the same ray bent as far as asked.
+    if (uHasCovered) {
+      vec2 bent = p + shift * uCoveredBend;
+      vec2 uv = uBackdropOrigin + vec2(bent.x, -bent.y) * uBackdropScale;
+      vec3 covered = toLinear(textureLod(uCovered, clamp(uv, 0.0, 1.0), 0.0).rgb);
+      behind = mix(behind, covered, uSeeThrough);
     }
   }
   // User-controlled tint under the film, independent of the page theme.

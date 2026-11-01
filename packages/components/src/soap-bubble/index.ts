@@ -6,6 +6,7 @@ export {
   SoapBubbleSlider,
   SoapBubbleSurface,
   SoapBubbleToggle,
+  soapBubbleMenuDefaults,
   soapBubbleSystemDefaults,
   type SoapBubbleButtonProps,
   type SoapBubbleIconButtonProps,

@@ -18,6 +18,7 @@ import {
   SoapBubbleToggle,
   soapBubbleDefaults,
   soapBubbleLightings,
+  soapBubbleMenuDefaults,
   soapBubbleTwinShapes,
   soapBubbleGlintShapes,
   soapBubbleSystemDefaults,
@@ -64,7 +65,11 @@ const previewThumbnails = import.meta.glob<string>('./assets/soap-bubble/*.webp'
   query: '?url',
 });
 const { maxDpr: _maxDpr, ...bubbleDefaults } = soapBubbleDefaults;
-const systemDefaults = { ...bubbleDefaults, ...soapBubbleSystemDefaults } as Values;
+const systemDefaults = {
+  ...bubbleDefaults,
+  ...soapBubbleSystemDefaults,
+  seeThrough: soapBubbleMenuDefaults.seeThrough,
+} as Values;
 const lightMaterial = {
   glass: 0.95,
   iridescence: 0.5,
@@ -205,8 +210,9 @@ const themeDefaults: Record<Theme, Values> = {
   } as Values,
 };
 
-// Corners belong to each component; the system shares only material.
-const componentOnly: (keyof Values)[] = ['radius'];
+// Corners belong to each component, see-through to the menu; the system
+// shares only material.
+const componentOnly: (keyof Values)[] = ['radius', 'seeThrough', 'seeThroughBend'];
 
 const changedProps = (values: Values, base: Values, skip: (keyof Values)[] = []) =>
   Object.entries(values)
@@ -246,7 +252,11 @@ function systemExample(values: Values = themeDefaults.light, theme: Theme = 'lig
     .map(([name, value]) => `${name}="${value}"`)
     .join(' ');
   const font = round3(baseFont * scale);
-  return `import { useRef, useState } from 'react';\nimport {\n  SoapBubbleButton,\n  SoapBubbleIconButton,\n  SoapBubbleMaterial,\n  SoapBubbleMenu,\n  SoapBubbleSearch,\n  SoapBubbleSlider,\n  SoapBubbleToggle,\n} from './components/soap-bubble';\n\nexport function Example() {\n  const page = useRef<HTMLDivElement>(null);\n  const [wifi, setWifi] = useState(true);\n  const [volume, setVolume] = useState(40);\n  return (\n    <div ref={page} className="page" data-theme="${theme}" style={{ background: '${theme === 'light' ? '#f7f7f8' : '#000'}', color: '${theme === 'light' ? '#1b1d22' : '#f2f3f7'}' }}>\n      <SoapBubbleMaterial backdrop={page}${props.length ? `\n        ${props.join('\n        ')}\n      ` : ''}>\n        <div style={{ display: 'grid', gap: '1em', fontSize: ${font} }}>\n        <header style={{ display: 'flex', gap: '0.55em' }}>\n          <SoapBubbleMenu\n            round\n            label="•••"\n            triggerLabel="More"\n            items={[{ label: 'Select chats' }, { label: 'Read all' }]}\n          />\n          <SoapBubbleIconButton aria-label="Camera" style={{ marginLeft: 'auto' }}>📷</SoapBubbleIconButton>\n          <SoapBubbleIconButton aria-label="New" ${newChatProps}>+</SoapBubbleIconButton>\n        </header>\n        <SoapBubbleSearch placeholder="Search" />\n        <SoapBubbleToggle checked={wifi} onCheckedChange={setWifi} aria-label="Wi-Fi" scale={${round3(2.75 * scale)}} />\n        <SoapBubbleSlider value={volume} onValueChange={setVolume} label="Volume" from="${soapBubbleSliderColor(values.tint)}" scale={${round3(3 * scale)}} />\n        <SoapBubbleButton>Continue</SoapBubbleButton>\n        </div>\n      </SoapBubbleMaterial>\n    </div>\n  );\n}`;
+  const menuProps = (['seeThrough', 'seeThroughBend'] as const)
+    .filter((name) => values[name] !== systemDefaults[name])
+    .map((name) => `\n            ${name}={${values[name]}}`)
+    .join('');
+  return `import { useRef, useState } from 'react';\nimport {\n  SoapBubbleButton,\n  SoapBubbleIconButton,\n  SoapBubbleMaterial,\n  SoapBubbleMenu,\n  SoapBubbleSearch,\n  SoapBubbleSlider,\n  SoapBubbleToggle,\n} from './components/soap-bubble';\n\nexport function Example() {\n  const page = useRef<HTMLDivElement>(null);\n  const [wifi, setWifi] = useState(true);\n  const [volume, setVolume] = useState(40);\n  return (\n    <div ref={page} className="page" data-theme="${theme}" style={{ background: '${theme === 'light' ? '#f7f7f8' : '#000'}', color: '${theme === 'light' ? '#1b1d22' : '#f2f3f7'}' }}>\n      <SoapBubbleMaterial backdrop={page}${props.length ? `\n        ${props.join('\n        ')}\n      ` : ''}>\n        <div style={{ display: 'grid', gap: '1em', fontSize: ${font} }}>\n        <header style={{ display: 'flex', gap: '0.55em' }}>\n          <SoapBubbleMenu\n            round\n            label="•••"\n            triggerLabel="More"\n            items={[{ label: 'Select chats' }, { label: 'Read all' }]}${menuProps}\n          />\n          <SoapBubbleIconButton aria-label="Camera" style={{ marginLeft: 'auto' }}>📷</SoapBubbleIconButton>\n          <SoapBubbleIconButton aria-label="New" ${newChatProps}>+</SoapBubbleIconButton>\n        </header>\n        <SoapBubbleSearch placeholder="Search" />\n        <SoapBubbleToggle checked={wifi} onCheckedChange={setWifi} aria-label="Wi-Fi" scale={${round3(2.75 * scale)}} />\n        <SoapBubbleSlider value={volume} onValueChange={setVolume} label="Volume" from="${soapBubbleSliderColor(values.tint)}" scale={${round3(3 * scale)}} />\n        <SoapBubbleButton>Continue</SoapBubbleButton>\n        </div>\n      </SoapBubbleMaterial>\n    </div>\n  );\n}`;
 }
 
 export function soapBubbleMeta() {
@@ -592,6 +602,8 @@ function SystemPreview({
                   {(preview === 'showcase' || preview === 'menu') && (
                     <SoapBubbleMenu
                       round
+                      seeThrough={values.seeThrough}
+                      seeThroughBend={values.seeThroughBend}
                       label={icons.more}
                       triggerLabel="More"
                       items={[
@@ -1075,7 +1087,7 @@ export default function SoapBubblePage() {
                     onChange={(value) => set('bottomShadeColor', value)}
                   />
                 </ControlField>
-                {numbers(['mirage', 'reach', 'tilt'])}
+                {numbers(['mirage', 'seeThrough', 'seeThroughBend', 'reach', 'tilt'])}
                 {presetControl(
                   'Reflection preset',
                   'Soft gradient is a smaller window that fades almost out towards its right end; Glossy a brighter, blunt window with a long top highlight; Checkpoint the earlier look, with the original gradient and a crisp top highlight.',
