@@ -691,6 +691,8 @@ void main() {
   // the rim cross a long chord just as they do in a ball lens.
   vec3 behind = vec3(0.0);
   float behindAlpha = uHasBackdrop ? 1.0 : 0.0;
+  vec3 covered = vec3(0.0);
+  float coveredWeight = 0.0;
   if (uHasBackdrop || uHasLayer) {
     vec2 exitXY = p;
     vec3 outward = view;
@@ -736,8 +738,11 @@ void main() {
     if (uHasCovered) {
       vec2 bent = p + shift * uCoveredBend;
       vec2 uv = uBackdropOrigin + vec2(bent.x, -bent.y) * uBackdropScale;
-      vec3 covered = toLinear(textureLod(uCovered, clamp(uv, 0.0, 1.0), 0.0).rgb);
-      behind = mix(behind, covered, uSeeThrough);
+      covered = toLinear(textureLod(uCovered, clamp(uv, 0.0, 1.0), 0.0).rgb);
+      // Only where a bubble lies: over the bare page the film stays whole.
+      vec3 page = toLinear(textureLod(uBackdrop, clamp(uv, 0.0, 1.0), 0.0).rgb);
+      vec3 apart = abs(covered - page);
+      coveredWeight = smoothstep(0.01, 0.06, max(max(apart.r, apart.g), apart.b));
     }
   }
   // User-controlled tint under the film, independent of the page theme.
@@ -844,6 +849,12 @@ void main() {
     // Reflected light adds to what is there rather than covering it.
     colour = 1.0 - (1.0 - colour) * (1.0 - min(reflected, vec3(1.0)));
     through *= 1.0 - max(light, twin);
+  }
+  // Laid over the film rather than under it, so See-through reads the same
+  // on a light page, where the film's bright reflections would bury it.
+  if (uHasCovered) {
+    // What lies behind, so a solid body (Opacity) hides it as it hides the page.
+    colour = mix(colour, covered, uSeeThrough * coveredWeight * (1.0 - uTint.a));
   }
   vec3 encoded = pow(max(colour, 0.0), vec3(1.0 / 2.2));
   vec4 bubble;

@@ -16,11 +16,14 @@ type Spectrum = readonly [string, string, string, string, string, string];
 type ColorPreset = Partial<Omit<SoapBubbleSettings, 'maxDpr'>>;
 
 // The track uses the preset's solid hue, independently of the glass tint's alpha.
-// Original stays blue in both page themes.
+// A neutral tint (Auto, white, black or a grey) keeps it blue in both themes.
 export function soapBubbleSliderColor(tint: string) {
-  if (tint === soapBubbleDefaults.tint) return '#0a84ff';
+  const blue = '#0a84ff';
+  if (tint === soapBubbleDefaults.tint || tint.trim().toLowerCase() === 'auto') return blue;
   const hex = tint.match(/^#([\da-f]{6})([\da-f]{2})?$/i);
-  return hex ? `#${hex[1]}` : tint;
+  if (!hex) return tint;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex[1].slice(i, i + 2), 16));
+  return Math.max(r, g, b) - Math.min(r, g, b) < 40 ? blue : `#${hex[1]}`;
 }
 
 const colorPreset = (tint: string, spectrum?: Spectrum): ColorPreset => ({
@@ -35,7 +38,7 @@ const colorPreset = (tint: string, spectrum?: Spectrum): ColorPreset => ({
 // Each tint carries a complete related spectrum, rather than recolouring
 // all wavelengths with one flat hue. Original bypasses these palettes.
 export const soapBubbleColorPresets: Record<string, ColorPreset> = {
-  original: colorPreset(soapBubbleDefaults.tint),
+  original: colorPreset('auto'),
   pearl: colorPreset('#ffffff30', [
     '#ffd8e8',
     '#fff0bd',

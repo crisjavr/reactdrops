@@ -18,7 +18,6 @@ import {
   SoapBubbleToggle,
   soapBubbleDefaults,
   soapBubbleLightings,
-  soapBubbleMenuDefaults,
   soapBubbleTwinShapes,
   soapBubbleGlintShapes,
   soapBubbleSystemDefaults,
@@ -65,11 +64,29 @@ const previewThumbnails = import.meta.glob<string>('./assets/soap-bubble/*.webp'
   query: '?url',
 });
 const { maxDpr: _maxDpr, ...bubbleDefaults } = soapBubbleDefaults;
+// The tint is the page's own and starts transparent.
 const systemDefaults = {
   ...bubbleDefaults,
   ...soapBubbleSystemDefaults,
-  seeThrough: soapBubbleMenuDefaults.seeThrough,
+  tint: 'auto',
+  opacity: 0,
 } as Values;
+
+// A colour's alpha, 0 to 1, to set Opacity from a picked Tint. Read from the
+// text alone, so it also runs where the page is rendered on the server.
+function colorAlpha(value: string) {
+  const colour = value.trim().toLowerCase();
+  if (colour === 'transparent') return 0;
+  const hex = colour.match(/^#([\da-f]{3,8})$/)?.[1];
+  if (hex?.length === 4) return parseInt(hex[3] + hex[3], 16) / 255;
+  if (hex?.length === 8) return parseInt(hex.slice(6), 16) / 255;
+  // rgb(r g b / a), rgba(r, g, b, a) and the like.
+  const alpha = colour.match(/^[a-z]+\((?:[^,/]+,){3}\s*([\d.]+%?)\s*\)$|\/\s*([\d.]+%?)\s*\)$/);
+  const text = alpha?.[1] ?? alpha?.[2];
+  if (!text) return 1;
+  const number = parseFloat(text) / (text.endsWith('%') ? 100 : 1);
+  return Number.isFinite(number) ? Math.min(1, Math.max(0, number)) : 1;
+}
 const lightMaterial = {
   glass: 0.95,
   iridescence: 0.5,
@@ -210,9 +227,8 @@ const themeDefaults: Record<Theme, Values> = {
   } as Values,
 };
 
-// Corners belong to each component, see-through to the menu; the system
-// shares only material.
-const componentOnly: (keyof Values)[] = ['radius', 'seeThrough', 'seeThroughBend'];
+// Corners belong to each component; the system shares only material.
+const componentOnly: (keyof Values)[] = ['radius'];
 
 const changedProps = (values: Values, base: Values, skip: (keyof Values)[] = []) =>
   Object.entries(values)
@@ -232,31 +248,28 @@ const round3 = (value: number) => Math.round(value * 1000) / 1000;
 // Resolve Auto from the shared material, exactly as Continue does. Only the
 // base tint is green; every oil and lighting setting stays shared.
 function newChatMaterial(values: Values) {
-  const sharedTint = values.tint ?? bubbleDefaults.tint;
-  const originalAccent = sharedTint === bubbleDefaults.tint;
-  const sharedColour = (name: 'soapColor' | 'soapShadeColor' | 'soapHighlightColor') => {
-    const colour = values[name] ?? 'auto';
-    return colour === 'auto' ? sharedTint : colour;
-  };
-  return {
-    tint: originalAccent ? 'rgb(52 199 89 / 0.92)' : sharedTint,
-    soapColor: sharedColour('soapColor'),
-    soapShadeColor: sharedColour('soapShadeColor'),
-    soapHighlightColor: sharedColour('soapHighlightColor'),
-  };
+  // Left at the page's own tint, + is the green accent; any other tint (and
+  // its opacity) it shares with the rest. Its film keeps the shared colours.
+  return values.tint === 'auto' || values.tint === bubbleDefaults.tint
+    ? { tint: 'rgb(52 199 89)', opacity: 0.92 }
+    : {};
 }
 
 function systemExample(values: Values = themeDefaults.light, theme: Theme = 'light', scale = 1) {
-  const props = changedProps(values, systemDefaults, componentOnly);
+  // Opacity is written only where it differs from the tint's own alpha.
+  const props = changedProps(values, systemDefaults, [
+    ...componentOnly,
+    ...(values.opacity === colorAlpha(values.tint) && values.tint !== 'auto'
+      ? (['opacity'] as const)
+      : []),
+  ]);
   const newChatProps = Object.entries(newChatMaterial(values))
-    .map(([name, value]) => `${name}="${value}"`)
+    .map(([name, value]) =>
+      typeof value === 'string' ? `${name}="${value}"` : `${name}={${value}}`,
+    )
     .join(' ');
   const font = round3(baseFont * scale);
-  const menuProps = (['seeThrough', 'seeThroughBend'] as const)
-    .filter((name) => values[name] !== systemDefaults[name])
-    .map((name) => `\n            ${name}={${values[name]}}`)
-    .join('');
-  return `import { useRef, useState } from 'react';\nimport {\n  SoapBubbleButton,\n  SoapBubbleIconButton,\n  SoapBubbleMaterial,\n  SoapBubbleMenu,\n  SoapBubbleSearch,\n  SoapBubbleSlider,\n  SoapBubbleToggle,\n} from './components/soap-bubble';\n\nexport function Example() {\n  const page = useRef<HTMLDivElement>(null);\n  const [wifi, setWifi] = useState(true);\n  const [volume, setVolume] = useState(40);\n  return (\n    <div ref={page} className="page" data-theme="${theme}" style={{ background: '${theme === 'light' ? '#f7f7f8' : '#000'}', color: '${theme === 'light' ? '#1b1d22' : '#f2f3f7'}' }}>\n      <SoapBubbleMaterial backdrop={page}${props.length ? `\n        ${props.join('\n        ')}\n      ` : ''}>\n        <div style={{ display: 'grid', gap: '1em', fontSize: ${font} }}>\n        <header style={{ display: 'flex', gap: '0.55em' }}>\n          <SoapBubbleMenu\n            round\n            label="•••"\n            triggerLabel="More"\n            items={[{ label: 'Select chats' }, { label: 'Read all' }]}${menuProps}\n          />\n          <SoapBubbleIconButton aria-label="Camera" style={{ marginLeft: 'auto' }}>📷</SoapBubbleIconButton>\n          <SoapBubbleIconButton aria-label="New" ${newChatProps}>+</SoapBubbleIconButton>\n        </header>\n        <SoapBubbleSearch placeholder="Search" />\n        <SoapBubbleToggle checked={wifi} onCheckedChange={setWifi} aria-label="Wi-Fi" scale={${round3(2.75 * scale)}} />\n        <SoapBubbleSlider value={volume} onValueChange={setVolume} label="Volume" from="${soapBubbleSliderColor(values.tint)}" scale={${round3(3 * scale)}} />\n        <SoapBubbleButton>Continue</SoapBubbleButton>\n        </div>\n      </SoapBubbleMaterial>\n    </div>\n  );\n}`;
+  return `import { useRef, useState } from 'react';\nimport {\n  SoapBubbleButton,\n  SoapBubbleIconButton,\n  SoapBubbleMaterial,\n  SoapBubbleMenu,\n  SoapBubbleSearch,\n  SoapBubbleSlider,\n  SoapBubbleToggle,\n} from './components/soap-bubble';\n\nexport function Example() {\n  const page = useRef<HTMLDivElement>(null);\n  const [wifi, setWifi] = useState(true);\n  const [volume, setVolume] = useState(40);\n  return (\n    <div ref={page} className="page" data-theme="${theme}" style={{ background: '${theme === 'light' ? '#f7f7f8' : '#000'}', color: '${theme === 'light' ? '#1b1d22' : '#f2f3f7'}' }}>\n      <SoapBubbleMaterial backdrop={page}${props.length ? `\n        ${props.join('\n        ')}\n      ` : ''}>\n        <div style={{ display: 'grid', gap: '1em', fontSize: ${font} }}>\n        <header style={{ display: 'flex', gap: '0.55em' }}>\n          <SoapBubbleMenu\n            round\n            label="•••"\n            triggerLabel="More"\n            items={[{ label: 'Select chats' }, { label: 'Read all' }]}\n          />\n          <SoapBubbleIconButton aria-label="Camera" style={{ marginLeft: 'auto' }}>📷</SoapBubbleIconButton>\n          <SoapBubbleIconButton aria-label="New" ${newChatProps}>+</SoapBubbleIconButton>\n        </header>\n        <SoapBubbleSearch placeholder="Search" />\n        <SoapBubbleToggle checked={wifi} onCheckedChange={setWifi} aria-label="Wi-Fi" scale={${round3(2.75 * scale)}} />\n        <SoapBubbleSlider value={volume} onValueChange={setVolume} label="Volume" from="${soapBubbleSliderColor(values.tint)}" scale={${round3(3 * scale)}} />\n        <SoapBubbleButton>Continue</SoapBubbleButton>\n        </div>\n      </SoapBubbleMaterial>\n    </div>\n  );\n}`;
 }
 
 export function soapBubbleMeta() {
@@ -578,7 +591,9 @@ function SystemPreview({
     Object.entries(values).filter(
       ([name, value]) =>
         !componentOnly.includes(name as keyof Values) &&
-        systemDefaults[name as keyof Values] !== value,
+        // Tint and Opacity always go along: the library's own tint is not the
+        // page's.
+        (name === 'tint' || name === 'opacity' || systemDefaults[name as keyof Values] !== value),
     ),
   );
   return (
@@ -602,8 +617,6 @@ function SystemPreview({
                   {(preview === 'showcase' || preview === 'menu') && (
                     <SoapBubbleMenu
                       round
-                      seeThrough={values.seeThrough}
-                      seeThroughBend={values.seeThroughBend}
                       label={icons.more}
                       triggerLabel="More"
                       items={[
@@ -754,6 +767,11 @@ export default function SoapBubblePage() {
               ...(presets === colorPresets && value !== 'original'
                 ? { filmScale: 6, iridescence: 0 }
                 : {}),
+              ...(presets[value].tint !== undefined
+                ? {
+                    opacity: presets[value].tint === 'auto' ? 0 : colorAlpha(presets[value].tint!),
+                  }
+                : {}),
             }));
         }}
       />
@@ -897,6 +915,30 @@ export default function SoapBubblePage() {
             hidden={panelTab !== 'controls'}
           >
             {group(
+              'Transparency',
+              <>
+                {numbers(['seeThrough', 'seeThroughBend', 'refraction', 'opacity', 'oilOpacity'])}
+                <ControlField
+                  className="is-color"
+                  label="Tint"
+                  description="Color of the bubble's body; Opacity sets how solid it is. Auto is the page's own, white on light pages and black on dark ones. The film's oil keeps its own colors."
+                >
+                  <ColorControl
+                    label="Tint"
+                    allowAuto
+                    value={values.tint}
+                    onChange={(value) =>
+                      setValues((old) => ({
+                        ...old,
+                        tint: value,
+                        opacity: value === 'auto' ? old.opacity : colorAlpha(value),
+                      }))
+                    }
+                  />
+                </ControlField>
+              </>,
+            )}
+            {group(
               'Theme',
               <ControlField
                 label="Page"
@@ -961,17 +1003,6 @@ export default function SoapBubblePage() {
                   'Color presets set Oil film to 0 and Oil size to 6. Each keeps its own editable six-color spectrum if you turn Oil film back on. The base, shades and highlights follow the preset too; Original restores the natural palette.',
                   colorPresets,
                 )}
-                <ControlField
-                  className="is-color"
-                  label="Tint"
-                  description="Base color for the whole bubble. Soap color, Soap shades and Soap highlights follow it when set to Auto, while the film keeps its multicolor bands. Opacity sets the strength; transparent restores the original material."
-                >
-                  <ColorControl
-                    label="Tint"
-                    value={values.tint}
-                    onChange={(value) => set('tint', value)}
-                  />
-                </ControlField>
                 {(['soapColor', 'soapShadeColor', 'soapHighlightColor'] as const).map((name) => (
                   <ControlField
                     key={name}
@@ -1029,7 +1060,6 @@ export default function SoapBubblePage() {
                   'glass',
                   'iridescence',
                   'filmScale',
-                  'oilOpacity',
                   'oilCoverage',
                   'oilEdge',
                   'oilEdgeFade',
@@ -1038,7 +1068,6 @@ export default function SoapBubblePage() {
                   'drainage',
                   'swirl',
                   'reflectivity',
-                  'refraction',
                   'dispersion',
                   'bevel',
                 ])}
@@ -1087,7 +1116,7 @@ export default function SoapBubblePage() {
                     onChange={(value) => set('bottomShadeColor', value)}
                   />
                 </ControlField>
-                {numbers(['mirage', 'seeThrough', 'seeThroughBend', 'reach', 'tilt'])}
+                {numbers(['mirage', 'reach', 'tilt'])}
                 {presetControl(
                   'Reflection preset',
                   'Soft gradient is a smaller window that fades almost out towards its right end; Glossy a brighter, blunt window with a long top highlight; Checkpoint the earlier look, with the original gradient and a crisp top highlight.',

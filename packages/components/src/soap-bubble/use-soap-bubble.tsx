@@ -57,6 +57,7 @@ const materialKeys = [
   'mirage',
   'seeThrough',
   'seeThroughBend',
+  'opacity',
   'floorLight',
   'reach',
   'refraction',
@@ -198,7 +199,10 @@ export function useSoapBubble({
   latest.current = tuning;
   const key = JSON.stringify(tuning);
   useLayoutEffect(() => {
-    host.current?.style.setProperty('--soap-bubble-tint', tuning.tint);
+    host.current?.style.setProperty(
+      '--soap-bubble-tint',
+      tuning.tint.trim().toLowerCase() === 'auto' ? 'transparent' : tuning.tint,
+    );
     for (const [key, value] of [
       ['soap-color', tuning.soapColor],
       ['soap-shade-color', tuning.soapShadeColor],
@@ -206,7 +210,7 @@ export function useSoapBubble({
     ])
       host.current?.style.setProperty(
         `--soap-bubble-${key}`,
-        value.trim().toLowerCase() === 'auto' ? tuning.tint : value,
+        value.trim().toLowerCase() === 'auto' ? 'transparent' : value,
       );
   }, [host, tuning.tint, tuning.soapColor, tuning.soapShadeColor, tuning.soapHighlightColor]);
   useLayoutEffect(() => {

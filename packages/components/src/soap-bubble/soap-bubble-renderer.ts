@@ -61,8 +61,12 @@ export type SoapBubbleTuning = {
   /** Clear oil and reflected haze from the centre at any size: 1 leaves a transparent middle and an oily rim. */
   clearCenter: number;
   /** Base colour; also guides the soap, shades and highlights set to auto. */
+  /**
+   * Colour of the body; Opacity sets how solid. Auto is the page's own,
+   * white on light pages and black on dark ones.
+   */
   tint: string;
-  /** Gentle colour filter for the multicolour film; auto follows tint, transparent leaves it unchanged. */
+  /** Gentle colour filter for the multicolour film; auto and transparent leave it unchanged. */
   soapColor: string;
   /** Natural spectral colours by default, or six editable hue families. */
   soapPalette: 'natural' | 'custom';
@@ -72,9 +76,9 @@ export type SoapBubbleTuning = {
   soapPaletteCyan: string;
   soapPaletteBlue: string;
   soapPaletteViolet: string;
-  /** Colour and strength of the darker film and bottom shade; auto follows tint. */
+  /** Colour and strength of the darker film and bottom shade; auto leaves them unchanged. */
   soapShadeColor: string;
-  /** Colour and strength of reflected light, bevel and window; auto follows tint. */
+  /** Colour and strength of reflected light, bevel and window; auto leaves them unchanged. */
   soapHighlightColor: string;
   /** Film reflectance multiplier; 1 is soapy water. */
   reflectivity: number;
@@ -87,6 +91,11 @@ export type SoapBubbleTuning = {
   seeThrough: number;
   /** How far those bubbles bend, in multiples of the backdrop's refraction. */
   seeThroughBend: number;
+  /**
+   * How solid the tint fills the bubble, over the tint's own alpha: 1 is an
+   * opaque body, 0 none. Below 0 (the default) the tint's alpha is used.
+   */
+  opacity: number;
   /** The studio's bounce light from below, a pale crescent along the lower rim; 0 removes it. */
   floorLight: number;
   /** The reflection at the top drawn as a large cartoon window and spark that follow the pointer. */
@@ -184,6 +193,7 @@ export const soapBubbleDefaults: SoapBubbleTuning = {
   mirage: 1,
   seeThrough: 0,
   seeThroughBend: 0.3,
+  opacity: -1,
   floorLight: 1,
   windowLight: false,
   windowStyle: 'edge',
@@ -284,6 +294,7 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
     mirage: clamp(v.mirage, 0, 3, d.mirage),
     seeThrough: clamp(v.seeThrough, 0, 1, d.seeThrough),
     seeThroughBend: clamp(v.seeThroughBend, 0, 2, d.seeThroughBend),
+    opacity: clamp(v.opacity, -1, 1, d.opacity),
     floorLight: clamp(v.floorLight, 0, 1, d.floorLight),
     windowLight: Boolean(v.windowLight),
     windowStyle: soapBubbleWindowStyles.includes(v.windowStyle) ? v.windowStyle : d.windowStyle,
@@ -404,6 +415,22 @@ function cssColour(value: string): [number, number, number, number] {
   return result;
 }
 
+const noColour: readonly number[] = [0, 0, 0, 0];
+
+// A colour's hue at full strength, kept even when it is transparent: the
+// canvas serialises the style it is given, whatever its alpha.
+function cssHue(value: string): [number, number, number] {
+  colourProbe ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  if (!colourProbe) return [1, 1, 1];
+  colourProbe.fillStyle = '#000';
+  colourProbe.fillStyle = value;
+  const style = String(colourProbe.fillStyle);
+  const hex = style.match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})/i);
+  if (hex) return [1, 2, 3].map((i) => parseInt(hex[i], 16) / 255) as [number, number, number];
+  const parts = style.match(/[\d.]+/g)?.map(Number) ?? [255, 255, 255];
+  return [parts[0] / 255, parts[1] / 255, parts[2] / 255];
+}
+
 /**
  * Draws one bubble. host is the element whose box is the bubble; canvas may
  * be larger (a margin for wobble, or a whole control with its track) and is
@@ -423,9 +450,16 @@ export function createSoapBubbleRenderer(
   const { gl, u, set } = context;
 
   let tuning = initial;
-  let tint = cssColour(initial.tint);
+  // The tint fills the body; Opacity, when set, is its strength. The film's
+  // colours keep their own settings, so a tint never recolours the oil.
+  // Auto is the page's own: white on light pages, black on dark ones.
+  const tintOf = (next: SoapBubbleTuning) => {
+    if (next.tint.trim().toLowerCase() === 'auto')
+      return [...(lightTheme ? [1, 1, 1] : [0, 0, 0]), Math.max(0, next.opacity)];
+    return next.opacity < 0 ? cssColour(next.tint) : [...cssHue(next.tint), next.opacity];
+  };
   const paletteColour = (value: string) =>
-    value.trim().toLowerCase() === 'auto' ? tint : cssColour(value);
+    value.trim().toLowerCase() === 'auto' ? noColour : cssColour(value);
   let soapColor = paletteColour(initial.soapColor);
   let soapShadeColor = paletteColour(initial.soapShadeColor);
   let soapHighlightColor = paletteColour(initial.soapHighlightColor);
@@ -448,6 +482,7 @@ export function createSoapBubbleRenderer(
   let lightTheme =
     pageTheme === 'light' ||
     (pageTheme !== 'dark' && !matchMedia('(prefers-color-scheme: dark)').matches);
+  let tint = tintOf(initial);
   let disposed = false;
   let frame = false;
   let dirtyFrame = true;
@@ -516,13 +551,45 @@ export function createSoapBubbleRenderer(
   let backdrop: SoapBubbleBackdrop | null = null;
   let backdropElement: HTMLElement | null = null;
   let releaseBackdrop = () => {};
-  // Whether this surface has asked its backdrop for the bubbles it covers.
-  let showsCovered = false;
+  // The surface whose element a covered view leaves out, so that it does
+  // not see itself.
+  const self = canvas.closest('[data-soap-bubble]') ?? host;
+  // Which view of the bubbles it covers this surface shows, if it covers
+  // any: the shared one when it floats in a group (a menu's panel), else one
+  // without itself. Covering nothing, it shows none and costs nothing.
+  let covering: Element | null | undefined;
+  const overlapsAnother = (page: HTMLElement) => {
+    const own = self.getBoundingClientRect();
+    for (const other of page.querySelectorAll('[data-soap-bubble]')) {
+      // Only drawn bubbles count, not a burst's droplets.
+      if (other === self || other.contains(self) || self.contains(other)) continue;
+      if (!other.querySelector('canvas')) continue;
+      const box = other.getBoundingClientRect();
+      const left = Math.max(own.left, box.left);
+      const right = Math.min(own.right, box.right);
+      const top = Math.max(own.top, box.top);
+      const bottom = Math.min(own.bottom, box.bottom);
+      if (left >= right || top >= bottom) continue;
+      // Only a bubble below this one is seen through it: whichever the page
+      // hit-tests first in the overlap lies on top.
+      const stack = document.elementsFromPoint((left + right) / 2, (top + bottom) / 2);
+      const mine = stack.findIndex((element) => self.contains(element));
+      const theirs = stack.findIndex((element) => other.contains(element));
+      if (mine >= 0 && (theirs < 0 || mine < theirs)) return true;
+    }
+    return false;
+  };
   const showCovered = () => {
-    const want = tuning.seeThrough > 0;
-    if (!backdrop || want === showsCovered) return;
-    showsCovered = want;
-    wantCoveredBackdrop(backdrop, want);
+    let next: Element | null | undefined;
+    // A floating surface keeps the shared view while it is hidden, so that it
+    // is ready the moment the surface opens over something.
+    if (backdrop && tuning.seeThrough > 0)
+      if (self.closest('[data-soap-bubble-group]')) next = null;
+      else if (overlapsAnother(backdrop.element)) next = self;
+    if (next === covering) return;
+    if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, false);
+    covering = next;
+    if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, true);
   };
 
   /**
@@ -667,7 +734,8 @@ export function createSoapBubbleRenderer(
     const captured = backdrop?.size ? backdrop : null;
     set.i1(u.uHasBackdrop, captured ? 1 : 0);
     // Uploaded before the backdrop is bound, as an upload binds unit 0.
-    const covered = captured && tuning.seeThrough > 0 ? coveredTexture(gl, captured) : null;
+    const covered =
+      captured && covering !== undefined ? coveredTexture(gl, captured, covering) : null;
     set.i1(u.uHasCovered, covered ? 1 : 0);
     if (covered) {
       set.f1(u.uCoveredBend, tuning.seeThroughBend);
@@ -783,6 +851,7 @@ export function createSoapBubbleRenderer(
     const pixelHeight = Math.max(1, Math.round(height * dpr));
     if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
     if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+    showCovered();
     draw();
     request();
   };
@@ -827,7 +896,7 @@ export function createSoapBubbleRenderer(
     update(next) {
       tuning = next;
       showCovered();
-      tint = cssColour(next.tint);
+      tint = tintOf(next);
       soapColor = paletteColour(next.soapColor);
       soapShadeColor = paletteColour(next.soapShadeColor);
       soapHighlightColor = paletteColour(next.soapHighlightColor);
@@ -839,8 +908,8 @@ export function createSoapBubbleRenderer(
     },
     setBackdrop(element) {
       if (element === backdropElement) return;
-      if (backdrop && showsCovered) wantCoveredBackdrop(backdrop, false);
-      showsCovered = false;
+      if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, false);
+      covering = undefined;
       releaseBackdrop();
       backdropElement = element;
       backdrop = null;
@@ -861,6 +930,7 @@ export function createSoapBubbleRenderer(
     setLightTheme(light) {
       if (lightTheme === light) return;
       lightTheme = light;
+      tint = tintOf(tuning);
       dirtyFrame = true;
       request();
     },
@@ -942,7 +1012,7 @@ export function createSoapBubbleRenderer(
       disposed = true;
       if (own) releaseSoapBubbleOwnContext(canvas);
       cancelSoapBubbleFrame(tick);
-      if (backdrop && showsCovered) wantCoveredBackdrop(backdrop, false);
+      if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, false);
       releaseBackdrop();
       resizeObserver.disconnect();
       visibility.disconnect();

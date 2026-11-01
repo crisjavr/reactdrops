@@ -41,6 +41,10 @@ export const soapBubbleSystemDefaults: Partial<SoapBubbleSettings> = {
   dispersion: 1,
   reflectivity: 1.3,
   mirage: 0.7,
+  // A surface over another bubble (an open menu over a field) shows a little
+  // of it, bent.
+  seeThrough: 0.3,
+  seeThroughBend: 0.3,
   reach: 2,
   bevel: 14,
   environment: 'auto',
@@ -585,12 +589,6 @@ export type SoapBubbleMenuProps = SoapBubbleMaterialProps & {
   style?: CSSProperties;
 };
 
-/** The menu's panel lets a little of what it covers show through. */
-export const soapBubbleMenuDefaults: Partial<SoapBubbleSettings> = {
-  ...soapBubbleSystemDefaults,
-  seeThrough: 0.3,
-};
-
 /**
  * A button that grows into a bubble panel of actions. The trigger itself
  * swells into the panel and the actions come into focus inside it; closing
@@ -631,8 +629,6 @@ export function SoapBubbleMenu({
   const triggerEngine = useRef<SoapBubbleRenderer | null>(null);
   const menuJiggle = useRef(1);
   const id = useId();
-  // See-through is the open panel's: it lets what the menu covers show.
-  const { seeThrough: _seeThrough, ...triggerMaterial } = material;
   const panelMaterial = { ...material, radius: material.radius ?? 26 };
   const {
     ready: panelReady,
@@ -643,7 +639,7 @@ export function SoapBubbleMenu({
     canvas: panelCanvas,
     material: panelMaterial,
     interactive: false,
-    defaults: soapBubbleMenuDefaults,
+    defaults: soapBubbleSystemDefaults,
   });
   menuJiggle.current = jiggleOf(panelTuning.wobble);
   useEffect(() => {
@@ -782,7 +778,7 @@ export function SoapBubbleMenu({
       style={style}
     >
       <SoapBubbleButton
-        {...triggerMaterial}
+        {...material}
         ref={trigger}
         aria-label={triggerLabel}
         aria-haspopup="menu"

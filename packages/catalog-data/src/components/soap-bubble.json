@@ -139,14 +139,14 @@
       "label": "Tint",
       "type": "color",
       "defaultValue": "#ffffff00",
-      "description": "Base color of the whole material. Also colors the soap film, darker shades and highlights while their colors are Auto. Opacity sets the strength; transparent restores the untinted look."
+      "description": "Color of the bubble's body. Opacity sets how solid it is; the film's oil keeps its own colors."
     },
     {
       "name": "soapColor",
       "label": "Soap color",
       "type": "color",
       "defaultValue": "auto",
-      "description": "A gentle color filter for the soap's full multicolor spectrum, including its oily rim. Auto follows Tint; a custom color changes the filter. Opacity sets its strength while retaining the natural rainbow bands; transparent leaves their colors unchanged."
+      "description": "A gentle color filter for the soap's full multicolor spectrum, including its oily rim. Auto and transparent leave the natural colors unchanged; a custom color changes the filter, its opacity setting the strength."
     },
     {
       "name": "soapPalette",
@@ -206,14 +206,14 @@
       "label": "Soap shades",
       "type": "color",
       "defaultValue": "auto",
-      "description": "Color of the darker parts of the film, the inner reflection and the bottom shade when enabled. Auto follows Tint; set a separate color and opacity to customize the shading."
+      "description": "Color of the darker parts of the film, the inner reflection and the bottom shade when enabled. Auto keeps the natural shading; set a color and opacity to customize it."
     },
     {
       "name": "soapHighlightColor",
       "label": "Soap highlights",
       "type": "color",
       "defaultValue": "auto",
-      "description": "Color of the reflected light, bright bevel and window highlights. Auto follows Tint; a separate color and opacity lets the lights contrast with the soap. Transparent preserves the original lighting colors."
+      "description": "Color of the reflected light, bright bevel and window highlights. Auto keeps the original lighting colors; a color and opacity lets the lights contrast with the soap."
     },
     {
       "name": "thickness",
@@ -267,23 +267,33 @@
     },
     {
       "name": "seeThrough",
-      "label": "Menu see-through",
+      "label": "See-through",
       "type": "number",
       "defaultValue": 0.3,
       "min": 0,
       "max": 1,
       "step": 0.01,
-      "description": "How much of the bubbles the open menu covers show through its panel, bent like light through glass. 0 shows only the page behind."
+      "description": "How much of the bubbles a surface covers shows through it, bent like light through glass: an open menu over a field, a panel over buttons. Surfaces over nothing but the page are unaffected and cost nothing. 0 shows only the page behind."
     },
     {
       "name": "seeThroughBend",
-      "label": "Menu bend",
+      "label": "Bend",
       "type": "number",
       "defaultValue": 0.3,
       "min": 0,
       "max": 2,
       "step": 0.01,
-      "description": "How far the covered bubbles bend through the menu, as a multiple of the panel's own refraction. 0 shows them straight."
+      "description": "How far the covered bubbles bend, as a multiple of the surface's own refraction. 0 shows them straight."
+    },
+    {
+      "name": "opacity",
+      "label": "Opacity",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How solid the Tint fills the bubble's body: 1 is opaque, 0 lets everything behind show through. Picking a Tint sets it to that color's own opacity."
     },
     {
       "name": "reach",
