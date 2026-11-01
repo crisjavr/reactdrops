@@ -580,7 +580,18 @@ export function createSoapBubbleContext(
   // read-back a frame instead of one per surface.
   type Region = { x: number; y: number; width: number; height: number; left: number; top: number };
   const pending: (Region & { target: CanvasRenderingContext2D })[] = [];
-  const atlas = { x: 0, y: 0, shelf: 0 };
+  const atlas = { x: 0, y: 0, shelf: 0, right: 0 };
+  // That read-back takes the whole buffer, in Safari at a cost that follows
+  // its area rather than the regions drawn: a buffer grown for one menu
+  // opening slowed every frame after it. So the buffer is kept to what the
+  // frames use, grown to fit the frame that overflowed it and shrunk once
+  // the frames of the last two seconds or so all needed far less.
+  const used = { width: 0, height: 0, frames: 0 };
+  const fit = (width: number, height: number) => {
+    const round = (size: number) => Math.min(8192, Math.max(64, Math.ceil(size / 64) * 64));
+    if (canvas.width !== round(width)) canvas.width = round(width);
+    if (canvas.height !== round(height)) canvas.height = round(height);
+  };
   let queued: Region = { x: 0, y: 0, width: 0, height: 0, left: 0, top: 0 };
   let flushQueued = false;
   // A paced context marks the end of each frame's draws, to learn when the
@@ -593,26 +604,26 @@ export function createSoapBubbleContext(
       atlas.shelf = 0;
     }
     if (atlas.y + height > canvas.height || width > canvas.width) {
-      // Full: hand over what is drawn, then grow so the next frame fits.
+      // Full: hand over what is drawn, then grow so a frame like this fits.
+      const need = atlas.y + height;
       flush();
-      const grow = (size: number, need: number) =>
-        Math.min(8192, Math.max(size, Math.ceil(need / 64) * 64));
-      const nextWidth = grow(canvas.width, width);
-      const nextHeight = grow(canvas.height * (height <= canvas.height ? 2 : 1), height);
-      if (nextWidth !== canvas.width) canvas.width = nextWidth;
-      if (nextHeight !== canvas.height) canvas.height = nextHeight;
+      fit(Math.max(canvas.width, width), Math.max(canvas.height, need));
     }
     const at: [number, number] = [atlas.x, atlas.y];
     atlas.x += width;
     atlas.shelf = Math.max(atlas.shelf, height);
+    atlas.right = Math.max(atlas.right, atlas.x);
     return at;
   };
   const flush = () => {
     flushQueued = false;
     rects.clear();
+    const usedWidth = atlas.right;
+    const usedHeight = atlas.y + atlas.shelf;
     atlas.x = 0;
     atlas.y = 0;
     atlas.shelf = 0;
+    atlas.right = 0;
     if (!pending.length) return;
     if (paced && fences.length < 4) {
       const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -637,6 +648,13 @@ export function createSoapBubbleContext(
       );
     }
     pending.length = 0;
+    used.width = Math.max(used.width, usedWidth);
+    used.height = Math.max(used.height, usedHeight);
+    if (++used.frames < 60) return;
+    if (used.width * used.height * 2 < canvas.width * canvas.height) fit(used.width, used.height);
+    used.width = 0;
+    used.height = 0;
+    used.frames = 0;
   };
   return context;
 }
