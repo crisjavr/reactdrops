@@ -410,8 +410,7 @@ export function createSoapBubbleContext(
   fragmentSource = soapBubbleFragment,
   { paced = false }: { paced?: boolean } = {},
 ): SoapBubbleContext | null {
-  // Off screen where possible: the frame's draws leave it as one bitmap,
-  // without a copy.
+  // Off screen where possible, so the shared buffer is never composited.
   const canvas: HTMLCanvasElement | OffscreenCanvas =
     typeof OffscreenCanvas === 'function'
       ? new OffscreenCanvas(1024, 512)
@@ -420,9 +419,8 @@ export function createSoapBubbleContext(
     premultipliedAlpha: true,
     alpha: true,
     antialias: false,
-    // The shared context shades every frame's regions afresh and hands the
-    // buffer over whole, so it need not be kept: the hand-over then moves it
-    // instead of copying it.
+    // The shared context shades every frame's regions afresh, so its buffer
+    // need not be kept between frames.
     preserveDrawingBuffer: !paced,
   });
   if (!gl) return null;
@@ -620,13 +618,14 @@ export function createSoapBubbleContext(
       const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
       if (sync) fences.push({ sync, at: performance.now() });
     }
-    const source: CanvasImageSource =
-      'transferToImageBitmap' in canvas ? canvas.transferToImageBitmap() : canvas;
+    // Copied straight from the buffer. Through transferToImageBitmap, Safari
+    // reads every copy back from the GPU while painting, and the page falls
+    // to a few frames a second.
     for (const { target, x, y, width, height, left, top } of pending) {
       target.clearRect(left, top, width, height);
       // WebGL rows start at the bottom of the buffer.
       target.drawImage(
-        source,
+        canvas,
         x,
         canvas.height - y - height,
         width,
@@ -638,7 +637,6 @@ export function createSoapBubbleContext(
       );
     }
     pending.length = 0;
-    if (source instanceof ImageBitmap) source.close();
   };
   return context;
 }
