@@ -1047,7 +1047,10 @@ async function captureLayer(entry: BackdropEntry) {
         height: rect.height,
         pixelRatio: Math.min(1.5, window.devicePixelRatio || 1),
         includeQueryParams: true,
-        fontEmbedCSS: await fontEmbedCSS(entry),
+        // Groups are never part of a covered view. Hide their paint in the
+        // snapshot while preserving layout: erasing at their live position
+        // afterwards can leave a ghost if they move during rasterisation.
+        fontEmbedCSS: `${await fontEmbedCSS(entry)}\n${groupSelector}, ${groupSelector} * { visibility: hidden !important; }`,
         style: { transform: 'none', background: 'transparent' },
         filter: (node) => !(node instanceof Element && node.localName === 'canvas'),
       });
@@ -1064,9 +1067,9 @@ async function captureLayer(entry: BackdropEntry) {
   }
 }
 
-// One view from the content layer: the content of what it leaves out (every
-// group, and the surface it is for) erased, the other bubbles' films and then
-// the page drawn in underneath.
+// One view from the content layer: groups were hidden during capture; erase
+// the surface it is for, then draw the other bubbles' films and the page
+// underneath.
 function compose(entry: BackdropEntry, self: Element | null, view: CoveredView) {
   const { element, layer } = entry;
   if (!layer.canvas || !entry.source) return;
@@ -1080,7 +1083,7 @@ function compose(entry: BackdropEntry, self: Element | null, view: CoveredView) 
   if (!context) return;
   context.drawImage(layer.canvas, 0, 0);
   const leftOut = [...element.querySelectorAll(groupSelector), ...(self ? [self] : [])];
-  for (const root of leftOut) eraseContent(context, root, rect, scale);
+  if (self && !insideGroup(self)) eraseContent(context, self, rect, scale);
   context.globalCompositeOperation = 'destination-over';
   for (const film of element.querySelectorAll<HTMLCanvasElement>('[data-soap-bubble] canvas')) {
     if (!film.width || leftOut.some((root) => root.contains(film))) continue;

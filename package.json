@@ -13,7 +13,7 @@
     "typecheck": "pnpm registry:build && pnpm -r --if-present typecheck",
     "format": "prettier --write \"packages/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"apps/catalog/tests/**/*.{ts,tsx,html}\" vitest.config.ts .prettierrc.json",
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\" \"apps/catalog/tests/**/*.{ts,tsx,html}\" vitest.config.ts .prettierrc.json",
-    "test": "vitest run tests/fluid-agent-orb.test.tsx tests/fluid-agent-orb-patterns.test.ts tests/fluid-agent-orb-search-curve.test.ts tests/fluid-agent-orb-speech.test.ts tests/soap-bubble-palette.test.tsx",
+    "test": "vitest run tests/fluid-agent-orb.test.tsx tests/fluid-agent-orb-patterns.test.ts tests/fluid-agent-orb-search-curve.test.ts tests/fluid-agent-orb-speech.test.ts tests/soap-bubble-backdrop.test.ts tests/soap-bubble-palette.test.tsx",
     "test:watch": "vitest",
     "check:public": "node scripts/check-public-files.mjs",
     "release:guard": "node scripts/install-release-guards.mjs",
@@ -304,6 +304,7 @@
     "tests/fluid-agent-orb-speech.test.ts",
     "tests/fluid-agent-orb.test.tsx",
     "tests/setup.ts",
+    "tests/soap-bubble-backdrop.test.ts",
     "tests/soap-bubble-palette.test.tsx",
     "tsconfig.base.json",
     "vitest.config.ts"
