@@ -23,4 +23,9 @@ export {
 export { fractalGlassSourceFiles, fractalGlassUsage } from './generated/fractal-glass-source';
 
 export { refractedTextSourceFiles, refractedTextUsage } from './generated/refracted-text-source';
-export { showcasePointerSourceFiles, showcasePointerUsage } from './generated/showcase-pointer-source';
+export {
+  showcasePointerSourceFiles,
+  showcasePointerUsage,
+} from './generated/showcase-pointer-source';
+
+export { soapBubbleSourceFiles, soapBubbleUsage } from './generated/soap-bubble-source';

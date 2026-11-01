@@ -6,18 +6,20 @@ import './customizer-controls.css';
 export function ControlsPanel({
   componentName,
   actions,
+  heading,
   children,
 }: {
   componentName: string;
   /** Optional buttons shown beside the information button. */
   actions?: ReactNode;
+  heading?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="components-document-section component-controls-section" id="controls">
       <ControlHelp>
         <div className="component-controls-heading">
-          <h2>Controls</h2>
+          {heading ?? <h2>Controls</h2>}
           {actions ? (
             <div className="component-controls-actions">
               {actions}

@@ -1,0 +1,459 @@
+/* ------------------------------------------------------------- surfaces */
+
+.soap-bubble-surface,
+.soap-bubble-toggle,
+.soap-bubble-slider {
+  --soap-bubble-fallback-palette:
+    linear-gradient(135deg, var(--soap-bubble-soap-highlight-color, transparent), transparent 65%),
+    linear-gradient(0deg, var(--soap-bubble-soap-shade-color, transparent), transparent 65%),
+    var(--soap-bubble-custom-palette, linear-gradient(transparent, transparent)),
+    linear-gradient(
+      var(--soap-bubble-soap-color, transparent),
+      var(--soap-bubble-soap-color, transparent)
+    ),
+    linear-gradient(var(--soap-bubble-tint, transparent), var(--soap-bubble-tint, transparent));
+}
+
+.soap-bubble-surface {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--soap-bubble-radius, 1.5em);
+  /* A soft shadow that starts below the rim: a dense one hugging the edge
+     reads as a dark outline on light pages. */
+  box-shadow: var(--soap-bubble-shadow, 0 1em 2.25em -0.875em rgb(0 0 0 / 0.14));
+}
+.soap-bubble-surface-canvas,
+.soap-bubble-control-canvas {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+}
+.soap-bubble-surface-canvas {
+  inset: -12px;
+  z-index: -1;
+  width: calc(100% + 24px);
+  height: calc(100% + 24px);
+}
+.soap-bubble-control-canvas {
+  inset: calc(var(--soap-bubble-control-bleed) * -1);
+  z-index: 0;
+  width: calc(100% + var(--soap-bubble-control-bleed) * 2);
+  height: calc(100% + var(--soap-bubble-control-bleed) * 2);
+}
+[data-soap-bubble-ready] > .soap-bubble-surface-canvas,
+[data-soap-bubble-ready] > .soap-bubble-control-canvas {
+  opacity: 1;
+}
+/* Without WebGL: frosted panels. */
+.soap-bubble-surface:not([data-soap-bubble-ready]) {
+  background: var(--soap-bubble-fallback-palette), rgb(255 255 255 / 0.28);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+}
+
+.soap-bubble-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 2.75em;
+  padding: 0 1.25em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Buttons wobble under the pointer and a CSS shadow cannot follow the film:
+   it would show as a fixed frame around the bubble, so they cast none. */
+.soap-bubble-surface.soap-bubble-button {
+  --soap-bubble-shadow: none;
+}
+.soap-bubble-button:focus-visible,
+.soap-bubble-toggle:focus-visible,
+.soap-bubble-slider:has(.soap-bubble-slider-input:focus-visible) {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+/* No ring on the menu, its actions or a field: the shade marks the active
+   action and the caret marks the field. */
+.soap-bubble-menu > .soap-bubble-button:focus-visible,
+.soap-bubble-menu-item:focus-visible,
+.soap-bubble-search-input:focus-visible {
+  outline: none;
+}
+.soap-bubble-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.soap-bubble-toggle {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The pill keeps its bubble material at rest and swells over the track
+   while pressed or moving. White fill is only the no-WebGL fallback. */
+.soap-bubble-toggle-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 1;
+  width: var(--soap-bubble-thumb-width);
+  height: var(--soap-bubble-thumb-height);
+  border-radius: 9999px;
+  box-shadow:
+    0 0.1875em 0.5em rgb(0 0 0 / 0.16),
+    0 0.0625em 0.0625em rgb(0 0 0 / 0.06);
+  transition:
+    width 0.14s cubic-bezier(0.2, 0.8, 0.3, 1),
+    height 0.14s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.25s;
+  pointer-events: none;
+}
+.soap-bubble-toggle:not([data-soap-bubble-ready]) > .soap-bubble-toggle-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--soap-bubble-fallback-palette), #fff;
+}
+.soap-bubble-toggle[data-soap-bubble-ready] > .soap-bubble-toggle-thumb {
+  box-shadow: none;
+}
+.soap-bubble-toggle[data-soap-bubble-ready][data-lens] > .soap-bubble-toggle-thumb {
+  width: calc(var(--soap-bubble-thumb-width) * 1.55);
+  height: calc(var(--soap-bubble-thumb-height) * 1.6);
+  transition-duration: 0.14s, 0.14s, 0.25s;
+  transition-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.soap-bubble-toggle:not([data-soap-bubble-ready]) {
+  background: rgb(120 120 128 / 0.22);
+}
+.soap-bubble-toggle:not([data-soap-bubble-ready])[aria-checked='true'] {
+  background: var(--soap-bubble-toggle-color);
+}
+.soap-bubble-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.soap-bubble-slider {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  min-width: 7.5rem;
+  touch-action: pan-y;
+}
+.soap-bubble-slider-thumb {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: var(--soap-bubble-thumb-width);
+  height: var(--soap-bubble-thumb-height);
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.28s cubic-bezier(0.3, 1.5, 0.5, 1),
+    height 0.28s cubic-bezier(0.3, 1.5, 0.5, 1);
+  pointer-events: none;
+}
+.soap-bubble-slider[data-active] .soap-bubble-slider-thumb {
+  width: calc(var(--soap-bubble-thumb-width) * 1.45);
+  height: calc(var(--soap-bubble-thumb-height) * 1.45);
+}
+.soap-bubble-slider:not([data-soap-bubble-ready]) .soap-bubble-slider-thumb {
+  background: var(--soap-bubble-fallback-palette), #fff;
+  box-shadow: 0 0.375em 0.875em -0.375em rgb(0 0 0 / 0.35);
+}
+.soap-bubble-slider-input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.soap-bubble-slider-input::-webkit-slider-thumb {
+  width: var(--soap-bubble-thumb-width);
+  height: var(--soap-bubble-thumb-height);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.soap-bubble-slider-input::-moz-range-thumb {
+  width: var(--soap-bubble-thumb-width);
+  height: var(--soap-bubble-thumb-height);
+  border: 0;
+}
+.soap-bubble-slider[data-disabled] {
+  opacity: 0.55;
+}
+
+.soap-bubble-icon-button.soap-bubble-button {
+  width: 2.75em;
+  height: 2.75em;
+  padding: 0;
+  font-weight: 400;
+}
+.soap-bubble-icon-button svg {
+  width: 1.25em;
+  height: 1.25em;
+}
+/* Pressed, every button bubble swells under the finger and springs back. */
+.soap-bubble-surface.soap-bubble-button {
+  transition: scale 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.soap-bubble-surface.soap-bubble-button:active:not(:disabled) {
+  /* 1.22 at a wobble of 0.8, 1.11 at the system's 0.4; none without jiggle. */
+  scale: calc(1 + 0.275 * min(var(--soap-bubble-wobble, 0.4), 1.6));
+  transition-duration: 0.25s;
+}
+
+.soap-bubble-search {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  height: 2.75em;
+  padding: 0 1.1em;
+}
+/* Fields and menus sit flat on the page, without a shadow in either theme. */
+.soap-bubble-surface.soap-bubble-search,
+.soap-bubble-surface.soap-bubble-menu-panel {
+  --soap-bubble-shadow: none;
+}
+.soap-bubble-search-icon {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.soap-bubble-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.soap-bubble-search-input::placeholder {
+  color: inherit;
+  opacity: 0.5;
+}
+.soap-bubble-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.soap-bubble-menu {
+  position: relative;
+  display: inline-block;
+}
+/* The trigger becomes the panel: it hides while the panel is out. */
+.soap-bubble-menu[data-open] > .soap-bubble-button {
+  opacity: 0;
+}
+.soap-bubble-menu-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  contain: layout style;
+}
+/* Closed, the panel leaves the page, so its film stops drawing. */
+.soap-bubble-menu:not([data-open]) .soap-bubble-menu-panel {
+  display: none;
+}
+/* The actions come into focus as the panel opens and blur away as it
+   closes, while the trigger's glyph does the opposite. On the compositor. */
+.soap-bubble-menu[data-state='open'] .soap-bubble-menu-content {
+  animation: soap-bubble-menu-focus 0.26s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.soap-bubble-menu[data-state='closing'] .soap-bubble-menu-content {
+  animation: soap-bubble-menu-blur 0.12s ease-in both;
+}
+.soap-bubble-menu[data-state='open'] .soap-bubble-menu-echo {
+  animation: soap-bubble-menu-blur 0.07s ease-in both;
+}
+.soap-bubble-menu[data-state='closing'] .soap-bubble-menu-echo {
+  animation: soap-bubble-menu-focus 0.2s ease-out both;
+}
+@keyframes soap-bubble-menu-focus {
+  from,
+  25% {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+@keyframes soap-bubble-menu-blur {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+/* Room for the bounce: the open panel overshoots its size by up to a third
+   before it settles. */
+.soap-bubble-menu-panel > .soap-bubble-surface-canvas {
+  width: calc(135% + 24px);
+  height: calc(135% + 24px);
+}
+.soap-bubble-menu[data-align='end'] .soap-bubble-menu-panel > .soap-bubble-surface-canvas {
+  right: -12px;
+  left: auto;
+}
+.soap-bubble-menu[data-align='end'] .soap-bubble-menu-panel {
+  right: 0;
+  left: auto;
+}
+.soap-bubble-menu-echo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.soap-bubble-menu[data-align='end'] .soap-bubble-menu-echo {
+  right: 0;
+  left: auto;
+}
+/* The actions keep their own size while the bubble grows round them: the
+   clip scales with the bubble and the actions scale back by the inverse. */
+.soap-bubble-menu-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  transform-origin: top left;
+}
+.soap-bubble-menu-clip,
+.soap-bubble-menu-content {
+  will-change: transform;
+}
+.soap-bubble-menu[data-align='end'] .soap-bubble-menu-clip {
+  transform-origin: top right;
+}
+.soap-bubble-menu-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  min-width: 8.5em;
+  padding: 0.3em;
+}
+.soap-bubble-menu[data-align='end'] .soap-bubble-menu-content {
+  right: 0;
+  left: auto;
+  transform-origin: top right;
+}
+/* The active action is only a shade inside the bubble, not a bubble of its own. */
+.soap-bubble-menu-highlight {
+  position: absolute;
+  top: 0;
+  right: 0.3em;
+  left: 0.3em;
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.13);
+  pointer-events: none;
+  transition:
+    transform 0.3s cubic-bezier(0.3, 1.3, 0.5, 1),
+    height 0.3s cubic-bezier(0.3, 1.3, 0.5, 1),
+    opacity 0.15s;
+}
+.soap-bubble-menu-item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  padding: 0.55em 1.5em 0.55em 0.75em;
+  line-height: 1.2;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.soap-bubble-menu-item:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.soap-bubble-menu-icon {
+  display: inline-grid;
+  width: 1.25em;
+  place-items: center;
+}
+.soap-bubble-menu-icon svg {
+  width: 1.15em;
+  height: 1.15em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .soap-bubble-slider-thumb,
+  .soap-bubble-toggle-thumb,
+  .soap-bubble-toggle-thumb::before {
+    transition: none;
+  }
+  .soap-bubble-surface.soap-bubble-button,
+  .soap-bubble-menu-highlight {
+    transition: none;
+  }
+  .soap-bubble-menu[data-state] .soap-bubble-menu-content,
+  .soap-bubble-menu[data-state] .soap-bubble-menu-echo {
+    animation: none;
+  }
+}
+
+/* Dark pages: deeper shadows, a darker frosted fallback. */
+:where([data-theme='dark']) .soap-bubble-surface {
+  --soap-bubble-shadow: 0 1em 2.375em -1em rgb(0 0 0 / 0.7), 0 0.0625em 0.125em rgb(0 0 0 / 0.4);
+}
+:where([data-theme='dark']) .soap-bubble-menu-highlight {
+  background: rgb(255 255 255 / 0.13);
+}
+:where([data-theme='dark']) .soap-bubble-surface:not([data-soap-bubble-ready]) {
+  background: var(--soap-bubble-fallback-palette), rgb(255 255 255 / 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :where(:root:not([data-theme='light'])) .soap-bubble-surface {
+    --soap-bubble-shadow: 0 1em 2.375em -1em rgb(0 0 0 / 0.7), 0 0.0625em 0.125em rgb(0 0 0 / 0.4);
+  }
+  :where(:root:not([data-theme='light'])) .soap-bubble-menu-highlight {
+    background: rgb(255 255 255 / 0.13);
+  }
+  :where(:root:not([data-theme='light'])) .soap-bubble-surface:not([data-soap-bubble-ready]) {
+    background: var(--soap-bubble-fallback-palette), rgb(255 255 255 / 0.08);
+  }
+}

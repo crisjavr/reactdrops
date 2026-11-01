@@ -11,3 +11,5 @@ export * from './fractal-glass';
 
 export * from './refracted-text';
 export * from './showcase-pointer';
+
+export * from './soap-bubble';

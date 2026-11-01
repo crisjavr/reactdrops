@@ -16,7 +16,7 @@
 <p>
   <a href="https://github.com/crisjavr/reactdrops/stargazers"><img src="https://img.shields.io/github/stars/crisjavr/reactdrops?style=flat&logo=github&label=Stars&color=111111" alt="GitHub stars" /></a>
   <a href="https://github.com/crisjavr/reactdrops/commits/main"><img src="https://img.shields.io/github/last-commit/crisjavr/reactdrops?style=flat&label=Last%20drop&color=111111" alt="Last commit" /></a>
-  <a href="https://reactdrops.dev/components"><img src="https://img.shields.io/badge/components-10-111111?style=flat" alt="10 components" /></a>
+  <a href="https://reactdrops.dev/components"><img src="https://img.shields.io/badge/components-11-111111?style=flat" alt="11 components" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-ReactDrops%20Component%201.0-111111?style=flat" alt="License" /></a>
 </p>
 <p>
@@ -70,6 +70,7 @@ export function Hero() {
 
 | Component | Category | Description | Dependencies |
 | --- | --- | --- | --- |
+| [**Bubble UI**](https://reactdrops.dev/components/button/soap-bubble) | Button | Soap-film buttons, menus, search, switches and sliders with configurable glass and oil. | `html-to-image` |
 | [**Liquid Glass Orb**](https://reactdrops.dev/components/ai/liquid-glass-orb) | AI | A liquid glass orb for AI interfaces with agent states, voice response and six palettes. | `gsap` |
 | [**Refracted Text**](https://reactdrops.dev/components/text-effect/refracted-text) | Text Effect | Glass letters with a character lift, a refracted light beam and spectral colors. | — |
 | [**Liquid Glass Logo**](https://reactdrops.dev/components/text-reveal/liquid-glass-logo) | Text Reveal | A droplet becomes a glass tile that refracts your logo, then clears to the original. | — |
@@ -85,6 +86,7 @@ export function Hero() {
 <summary><strong>Install all components</strong></summary>
 
 ```sh
+npx shadcn@latest add https://reactdrops.dev/r/soap-bubble.json
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-orb.json
 npx shadcn@latest add https://reactdrops.dev/r/refracted-text.json
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-logo.json
@@ -98,6 +100,8 @@ npx shadcn@latest add https://reactdrops.dev/r/shape-physics.json
 ```
 
 </details>
+
+Bubble UI follows the catalog defaults: **Light glass on light pages and Rainbow glass on dark pages**. An explicitly selected material or color preset and custom Oil settings take precedence, including Oil film set to 0. See [the Bubble UI guide](docs/soap-bubble.md).
 
 ## Usage
 

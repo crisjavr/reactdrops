@@ -9,6 +9,7 @@ import shapePhysicsJson from './components/shape-physics.json';
 import topographicFlowJson from './components/topographic-flow.json';
 import chromaticButtonJson from './components/chromatic-button.json';
 import showcasePointerJson from './components/showcase-pointer.json';
+import soapBubbleJson from './components/soap-bubble.json';
 import { isPublishedComponent } from './publication.mjs';
 export type { ComponentMetadata } from '@reactdrops/component-schema';
 export { isPublishedComponent, componentPath } from './publication.mjs';
@@ -23,7 +24,9 @@ export const liquidGlassLogo = liquidGlassLogoJson as ComponentMetadata;
 export const fractalGlass = fractalGlassJson as ComponentMetadata;
 export const refractedText = refractedTextJson as ComponentMetadata;
 export const showcasePointer = showcasePointerJson as ComponentMetadata;
+export const soapBubble = soapBubbleJson as ComponentMetadata;
 export const components = [
+  soapBubble,
   showcasePointer,
   refractedText,
   fractalGlass,

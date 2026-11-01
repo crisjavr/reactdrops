@@ -1,0 +1,317 @@
+.component-showcase .component-preview-stage:has(> .soap-bubble-system-demo) {
+  --component-background-preview-height: 44rem;
+  padding: 0;
+}
+
+.soap-bubble-system-demo {
+  position: relative;
+  overflow: hidden;
+  color: #1b1d22;
+  background: #f7f7f8;
+}
+
+.soap-bubble-panel-tabs {
+  gap: 1.5rem;
+}
+.soap-bubble-component-card:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 3px;
+}
+.soap-bubble-control-panel {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.soap-bubble-control-panel[hidden] {
+  display: none;
+}
+.soap-bubble-component-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 1.125rem;
+  padding: 0.25rem;
+}
+.component-controls .soap-bubble-component-card {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  padding: 0.4rem;
+  overflow: hidden;
+  border: 1px solid var(--theme-border);
+  border-radius: 1.25rem;
+  background: var(--theme-background);
+  color: var(--theme-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.component-controls .soap-bubble-component-card:hover,
+.component-controls .soap-bubble-component-card[aria-pressed='true'] {
+  border-color: var(--theme-ink-muted);
+}
+.soap-bubble-component-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 7 / 4;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  background: #000;
+}
+.soap-bubble-component-card > span {
+  padding: 0.75rem 0.45rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.component-showcase .component-background-preview.soap-bubble-system-demo > * {
+  width: auto;
+  height: auto;
+}
+
+/* Dark page: plain black. */
+.soap-bubble-system-demo[data-theme='dark'] {
+  color: #f2f3f7;
+  background: #000;
+}
+
+/* A close-up of the controls: a toolbar with a menu and two round buttons,
+   a search field, the switch row and a slider. */
+.component-showcase .soap-bubble-system-demo > .soap-bubble-system-controls {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  /* Sized in em from the inline font size, so Scale resizes the whole set. */
+  gap: 1.7em;
+  width: min(21.75em, 90%);
+  transform: translate(-50%, -50%);
+}
+
+/* Individual controls size the preview from their content instead of the showcase height. */
+.component-showcase:not(.is-fullscreen):not(:where(.studio-viewer-frame[data-viewer] *)):has(
+    .soap-bubble-system-demo:not([data-preview='showcase'])
+  ),
+.component-preview-canvas:has(
+  > .component-preview-stage > .soap-bubble-system-demo:not([data-preview='showcase'])
+) {
+  min-height: 0;
+}
+.component-showcase:not(.is-fullscreen):not(:where(.studio-viewer-frame[data-viewer] *))
+  .component-preview-stage:has(> .soap-bubble-system-demo:not([data-preview='showcase'])) {
+  height: auto;
+}
+.component-showcase:not(.is-fullscreen):not(:where(.studio-viewer-frame[data-viewer] *))
+  .soap-bubble-system-demo:not([data-preview='showcase']) {
+  box-sizing: border-box;
+  height: auto;
+  padding-block: max(4rem, calc(var(--soap-bubble-preview-font-size) * 2));
+}
+.component-showcase:not(.is-fullscreen):not(:where(.studio-viewer-frame[data-viewer] *))
+  .soap-bubble-system-demo:not([data-preview='showcase'])
+  > .soap-bubble-system-controls {
+  position: relative;
+  top: auto;
+  left: auto;
+  margin-inline: auto;
+  transform: none;
+}
+.component-showcase:not(.is-fullscreen):not(:where(.studio-viewer-frame[data-viewer] *))
+  .soap-bubble-system-demo[data-preview='menu'] {
+  padding-block: max(4rem, calc(var(--soap-bubble-preview-font-size) * 4));
+}
+.soap-bubble-system-top {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.6em;
+}
+.soap-bubble-system-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+}
+.soap-bubble-system-camera {
+  margin-left: auto;
+}
+.soap-bubble-system-controls:not([data-preview='showcase']) .soap-bubble-system-bar,
+.soap-bubble-system-controls:not([data-preview='showcase']) .soap-bubble-system-row {
+  justify-content: center;
+}
+.soap-bubble-system-controls:not([data-preview='showcase']) .soap-bubble-system-camera {
+  margin-left: 0;
+}
+.soap-bubble-system-new {
+  color: #0b2a14;
+}
+.soap-bubble-system-row {
+  display: flex;
+  align-items: center;
+  /* Switch and Continue line up with the ends of the slider below. */
+  justify-content: space-between;
+  gap: 1.1rem;
+}
+.soap-bubble-system-add.soap-bubble-button {
+  width: 2.75em;
+  padding: 0;
+  font-size: inherit;
+}
+.soap-bubble-system-add {
+  font-weight: 400;
+}
+.soap-bubble-system-add-glyph {
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+/* The close button bursts: it tenses for a moment, vanishes, and its rim
+   sprays beads. The pieces fly out of the button's box. */
+.soap-bubble-system-pop {
+  position: relative;
+  display: inline-grid;
+  --pop-burst: 70ms;
+}
+.soap-bubble-system-pop[data-state='bursting'] > .soap-bubble-system-close {
+  animation: soap-bubble-system-burst calc(var(--pop-burst) + 20ms) cubic-bezier(0.5, 0, 1, 1) both;
+}
+.soap-bubble-system-pop[data-state='gone'] > .soap-bubble-system-close {
+  visibility: hidden;
+}
+.soap-bubble-system-close[data-reborn] {
+  animation: soap-bubble-system-blow 0.32s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.soap-bubble-system-close:disabled {
+  opacity: 1;
+}
+.soap-bubble-system-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  contain: layout style;
+}
+.soap-bubble-system-burst > * {
+  position: absolute;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.soap-bubble-system-drop {
+  left: calc(50% + var(--drop-x));
+  top: calc(50% + var(--drop-y));
+  width: var(--drop-size);
+  height: var(--drop-size);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.95);
+  transform: var(--drop-a);
+}
+.soap-bubble-system-pop[data-state] .soap-bubble-system-drop {
+  animation: soap-bubble-system-drop var(--drop-duration) linear
+    calc(var(--pop-burst) + var(--drop-delay)) forwards;
+}
+/* On a light page the beads need to be darker to be seen. */
+.soap-bubble-system-demo[data-theme='light'] .soap-bubble-system-drop {
+  background: rgb(150 156 168 / 0.85);
+}
+/* Small soap bubbles: a clear film with an iridescent rim, a window
+   highlight at the top left and its faint inverted twin at the bottom right. */
+.soap-bubble-system-mini {
+  left: 50%;
+  top: 50%;
+  width: var(--mini-size);
+  height: var(--mini-size);
+  border-radius: 50%;
+  --mini-rim: rgb(255 255 255 / 0.7);
+  background:
+    radial-gradient(circle at 31% 27%, rgb(255 255 255 / 0.95) 0 8%, transparent 17%),
+    radial-gradient(circle at 70% 75%, rgb(255 255 255 / 0.4) 0 5%, transparent 11%),
+    radial-gradient(closest-side, transparent 66%, var(--mini-rim) 97%, transparent 100%),
+    conic-gradient(
+      from 200deg,
+      rgb(255 110 200 / 0.42),
+      rgb(110 190 255 / 0.42),
+      rgb(255 225 110 / 0.38),
+      rgb(130 255 190 / 0.38),
+      rgb(255 110 200 / 0.42)
+    );
+  -webkit-mask: radial-gradient(closest-side, rgb(0 0 0 / 0.28) 58%, #000 90%, transparent 100%);
+  mask: radial-gradient(closest-side, rgb(0 0 0 / 0.28) 58%, #000 90%, transparent 100%);
+  transform: var(--mini-a);
+}
+.soap-bubble-system-pop[data-state] .soap-bubble-system-mini {
+  animation: soap-bubble-system-mini var(--mini-duration) linear
+    calc(var(--pop-burst) + var(--mini-delay)) forwards;
+}
+/* A light page needs a darker rim to show the film. */
+.soap-bubble-system-demo[data-theme='light'] .soap-bubble-system-mini {
+  --mini-rim: rgb(120 128 145 / 0.55);
+}
+@keyframes soap-bubble-system-mini {
+  from {
+    opacity: 0;
+    transform: var(--mini-a);
+  }
+  4% {
+    opacity: 1;
+    transform: var(--mini-b);
+  }
+  10% {
+    transform: var(--mini-c);
+  }
+  20% {
+    transform: var(--mini-d);
+  }
+  40% {
+    transform: var(--mini-e);
+  }
+  70% {
+    transform: var(--mini-f);
+  }
+  /* Whole until the last moment, then gone in a flash. */
+  94% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: var(--mini-g);
+  }
+}
+@keyframes soap-bubble-system-burst {
+  75% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+  76%,
+  to {
+    opacity: 0;
+    transform: scale(1.07);
+  }
+}
+@keyframes soap-bubble-system-drop {
+  from {
+    opacity: var(--drop-alpha);
+    transform: var(--drop-a);
+  }
+  20% {
+    transform: var(--drop-b);
+  }
+  50% {
+    opacity: var(--drop-alpha);
+    transform: var(--drop-c);
+  }
+  to {
+    opacity: 0;
+    transform: var(--drop-d);
+  }
+}
+@keyframes soap-bubble-system-blow {
+  from {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .soap-bubble-system-pop[data-state] .soap-bubble-system-burst > *,
+  .soap-bubble-system-close[data-reborn] {
+    animation: none;
+  }
+}

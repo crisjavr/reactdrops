@@ -13,11 +13,9 @@ import { packageTopographicFlow } from './package-topographic-flow.mjs';
 import { packageLiquidGlassLogo } from './package-liquid-glass-logo.mjs';
 import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { packageFractalGlass } from './package-fractal-glass.mjs';
+import { packageSoapBubble, soapBubbleUsage } from './package-soap-bubble.mjs';
 import { packageRefractedText } from './package-refracted-text.mjs';
-import {
-  packageShowcasePointer,
-  showcasePointerUsage,
-} from './package-showcase-pointer.mjs';
+import { packageShowcasePointer, showcasePointerUsage } from './package-showcase-pointer.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -32,6 +30,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'soap-bubble': {
+    sourceSlug: 'soap-bubble',
+    symbol: 'SoapBubbleButton',
+    prefix: 'soapBubble',
+    package: () => packageSoapBubble(root),
+    usage: soapBubbleUsage,
+  },
   'showcase-pointer': {
     sourceSlug: 'showcase-pointer',
     symbol: 'ShowcasePointer',

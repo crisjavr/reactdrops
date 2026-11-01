@@ -1,0 +1,606 @@
+{
+  "slug": "soap-bubble",
+  "name": "Bubble UI",
+  "family": {
+    "slug": "button",
+    "name": "Button"
+  },
+  "description": "Soap film interface components: buttons, icon buttons, a search field, a menu, switches and sliders that refract and mirror what is behind them like liquid glass, with swirling thin-film colors you can tune from bubble to glass.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "styles": [
+    "glass",
+    "chromatic",
+    "experimental"
+  ],
+  "types": [
+    "button"
+  ],
+  "interactions": [
+    "automatic",
+    "hover",
+    "focus",
+    "click",
+    "drag"
+  ],
+  "technologies": [
+    "webgl",
+    "css"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "typescript",
+    "responsive",
+    "reduced-motion"
+  ],
+  "dependencies": [
+    "html-to-image@1.11.13"
+  ],
+  "controls": [
+    {
+      "name": "radius",
+      "label": "Corner radius (px)",
+      "type": "number",
+      "defaultValue": 9999,
+      "min": 0,
+      "max": 9999,
+      "step": 1,
+      "description": "Corner radius of the shape, in pixels at a 16 px font; it grows with the text. Large values give fully round ends. The film bulges in as far as this radius, so panels get a soft pillow edge and circles stay spheres."
+    },
+    {
+      "name": "bevel",
+      "label": "Glass bevel (px)",
+      "type": "number",
+      "defaultValue": 24,
+      "min": 2,
+      "max": 200,
+      "step": 1,
+      "description": "Width of the refracting edge as Liquid glass rises, in pixels at a 16 px font. It grows with the component's text so larger controls keep their proportions."
+    },
+    {
+      "name": "iridescence",
+      "label": "Oil film",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Strength of the oily interference colors. At 0 the film reflects without color, 1 is physical soap film and higher values saturate the bands."
+    },
+    {
+      "name": "filmScale",
+      "label": "Oil size",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.2,
+      "max": 6,
+      "step": 0.05,
+      "description": "Size of the oil's color bands and swirls. Larger values give broad, calm bands; smaller values break the film into fine, busy patches."
+    },
+    {
+      "name": "oilOpacity",
+      "label": "Oil opacity",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Opacity of the iridescent oil, independent of Tint opacity. At 0 the oil colors disappear; at 1 the spectral bands stay visible even over an opaque Tint. Oil coverage and Clear centre still define where the oil appears."
+    },
+    {
+      "name": "oilCoverage",
+      "label": "Oil coverage",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How much of the film shows oil colors. At 1 the whole film is iridescent; lower values leave clear film between oil slicks, whose size follows Oil size."
+    },
+    {
+      "name": "oilEdge",
+      "label": "Oil edge (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "description": "On large components such as panels, bars and menus, how far in from the rim the oil reaches, in pixels at a 16 px font. Their middle stays clear; small buttons keep oil all over. 0 shows oil everywhere."
+    },
+    {
+      "name": "oilEdgeFade",
+      "label": "Oil edge fade",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.01,
+      "description": "How strongly large components clear the oil from their middle. At 0 nothing fades, at 1 the middle is clear glass, and above 1 the oil band along the rim narrows too: 2 is half as wide, 3 a third."
+    },
+    {
+      "name": "clearCenter",
+      "label": "Clear centre",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Clear oil and reflected haze from the centre of every component, including small buttons, switches and sliders. At 1 the middle is transparent while the rim keeps its oil colours; at 0 the material is unchanged. Works even with Oil edge at 0 and scales with the component."
+    },
+    {
+      "name": "tint",
+      "label": "Tint",
+      "type": "color",
+      "defaultValue": "#ffffff00",
+      "description": "Base color of the whole material. Also colors the soap film, darker shades and highlights while their colors are Auto. Opacity sets the strength; transparent restores the untinted look."
+    },
+    {
+      "name": "soapColor",
+      "label": "Soap color",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "A gentle color filter for the soap's full multicolor spectrum, including its oily rim. Auto follows Tint; a custom color changes the filter. Opacity sets its strength while retaining the natural rainbow bands; transparent leaves their colors unchanged."
+    },
+    {
+      "name": "soapPalette",
+      "label": "Soap palette",
+      "type": "select",
+      "defaultValue": "natural",
+      "options": [
+        "natural",
+        "custom"
+      ],
+      "description": "Original iridescence keeps the natural multicolor soap spectrum. Color presets load their own six-color spectra into Custom colors, where each hue family stays editable while the same bands and swirls keep moving."
+    },
+    {
+      "name": "soapPaletteRed",
+      "label": "Soap reds",
+      "type": "color",
+      "defaultValue": "#ff6685",
+      "description": "Custom color for the red and pink bands. Opacity blends it with the original spectral colors. Used only with Custom colors."
+    },
+    {
+      "name": "soapPaletteGold",
+      "label": "Soap golds",
+      "type": "color",
+      "defaultValue": "#f6d365",
+      "description": "Custom color for the yellow and gold bands. Opacity blends it with the original spectral colors. Used only with Custom colors."
+    },
+    {
+      "name": "soapPaletteGreen",
+      "label": "Soap greens",
+      "type": "color",
+      "defaultValue": "#83e8a9",
+      "description": "Custom color for the green bands. Opacity blends it with the original spectral colors. Used only with Custom colors."
+    },
+    {
+      "name": "soapPaletteCyan",
+      "label": "Soap cyans",
+      "type": "color",
+      "defaultValue": "#60dce9",
+      "description": "Custom color for the cyan and turquoise bands. Opacity blends it with the original spectral colors. Used only with Custom colors."
+    },
+    {
+      "name": "soapPaletteBlue",
+      "label": "Soap blues",
+      "type": "color",
+      "defaultValue": "#7799ff",
+      "description": "Custom color for the blue bands. Opacity blends it with the original spectral colors. Used only with Custom colors."
+    },
+    {
+      "name": "soapPaletteViolet",
+      "label": "Soap violets",
+      "type": "color",
+      "defaultValue": "#c084fc",
+      "description": "Custom color for the violet and purple bands. Opacity blends it with the original spectral colors. Used only with Custom colors."
+    },
+    {
+      "name": "soapShadeColor",
+      "label": "Soap shades",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "Color of the darker parts of the film, the inner reflection and the bottom shade when enabled. Auto follows Tint; set a separate color and opacity to customize the shading."
+    },
+    {
+      "name": "soapHighlightColor",
+      "label": "Soap highlights",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "Color of the reflected light, bright bevel and window highlights. Auto follows Tint; a separate color and opacity lets the lights contrast with the soap. Transparent preserves the original lighting colors."
+    },
+    {
+      "name": "thickness",
+      "label": "Film thickness (nm)",
+      "type": "number",
+      "defaultValue": 520,
+      "min": 0,
+      "max": 2400,
+      "step": 10,
+      "description": "Mean thickness of the film. Thin films show golds and magentas, near 0 they turn black, and thick films wash out to pale pinks and greens."
+    },
+    {
+      "name": "drainage",
+      "label": "Drainage",
+      "type": "number",
+      "defaultValue": 0.6,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "How far gravity has pulled water to the bottom: a thin cap with horizontal bands over a thicker base."
+    },
+    {
+      "name": "swirl",
+      "label": "Swirl",
+      "type": "number",
+      "defaultValue": 0.65,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Marangoni flow that stirs the film into drifting eddies."
+    },
+    {
+      "name": "reflectivity",
+      "label": "Reflectivity",
+      "type": "number",
+      "defaultValue": 1.6,
+      "min": 0,
+      "max": 6,
+      "step": 0.05,
+      "description": "Brightness of everything the film reflects. 1 is soapy water; real bubbles are faint, so the default lifts them slightly."
+    },
+    {
+      "name": "mirage",
+      "label": "Mirage",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Reflections of the objects around the bubble, wrapped around its rim. Needs a backdrop."
+    },
+    {
+      "name": "reach",
+      "label": "Mirage reach",
+      "type": "number",
+      "defaultValue": 2.6,
+      "min": 0.5,
+      "max": 8,
+      "step": 0.05,
+      "description": "How far around the bubble the mirrored objects come from, in bubble radii."
+    },
+    {
+      "name": "refraction",
+      "label": "Refraction",
+      "type": "number",
+      "defaultValue": 0.08,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Bends the light passing through the bubble like liquid glass. A real film is 0; at 1 the bubble behaves as a ball of water. Needs a backdrop."
+    },
+    {
+      "name": "glass",
+      "label": "Liquid glass",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Morphs the soap film into liquid glass. At 0 it is a blown bubble; towards 1 the face flattens, the curvature gathers into a refracting bevel, the film turns into solid glass and the rim catches light. Oil film still tints the glass."
+    },
+    {
+      "name": "dispersion",
+      "label": "Dispersion",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Separation of colors in the light bent by the glass bevel. Takes effect as Liquid glass rises."
+    },
+    {
+      "name": "environment",
+      "label": "Lighting",
+      "type": "select",
+      "defaultValue": "studio",
+      "options": [
+        "studio",
+        "window",
+        "sky",
+        "soft",
+        "auto"
+      ],
+      "description": "The room the bubbles reflect: dark studio softboxes, a bright window, open sky, soft light for light interfaces, or auto, which picks soft on light pages and studio on dark ones."
+    },
+    {
+      "name": "tilt",
+      "label": "Pointer parallax",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "How far the reflections slide as the pointer moves over the bubble."
+    },
+    {
+      "name": "windowLight",
+      "label": "Window light",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Adds the window of the intro bubbles: a thick band with round ends that follows the top-left edge of each shape, and a small spark past its end. It slides as the pointer turns the room and rides the wobble."
+    },
+    {
+      "name": "windowStyle",
+      "label": "Window style",
+      "type": "select",
+      "defaultValue": "edge",
+      "options": [
+        "edge",
+        "bubble"
+      ],
+      "description": "Edge runs along each control's top-left edge and on along the top. Bubble is the window as it first was, the intro's bean and round glint, bent to follow each control's real curve."
+    },
+    {
+      "name": "windowLength",
+      "label": "Window length",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.3,
+      "max": 2,
+      "step": 0.05,
+      "description": "How far the window runs along the edge or round its arc. 1 is as drawn."
+    },
+    {
+      "name": "windowMargin",
+      "label": "Window margin",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.4,
+      "max": 2.2,
+      "step": 0.05,
+      "description": "How far in from the edge the window sits. 1 is as drawn."
+    },
+    {
+      "name": "windowBend",
+      "label": "Window bend",
+      "type": "number",
+      "defaultValue": 0.6,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "On long controls, how closely the edge window follows the curve: 0 runs straight, 1 hugs the edge. Round buttons always keep their arc."
+    },
+    {
+      "name": "windowWidth",
+      "label": "Window width",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.3,
+      "max": 2.5,
+      "step": 0.05,
+      "description": "Thickness of the window band alone, without changing its glint. 1 is as drawn."
+    },
+    {
+      "name": "windowHead",
+      "label": "Window head",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.3,
+      "max": 2,
+      "step": 0.05,
+      "description": "Thickness of the window's thick left end against the rest of the band, without moving it. 1 is as drawn; lower is a slimmer head."
+    },
+    {
+      "name": "windowTail",
+      "label": "Window tail",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.05,
+      "max": 2.5,
+      "step": 0.05,
+      "description": "Thickness of the window's far end: low values draw it to a point, high ones keep it blunt. 1 is as drawn."
+    },
+    {
+      "name": "glintShape",
+      "label": "Glint shape",
+      "type": "select",
+      "defaultValue": "auto",
+      "options": [
+        "auto",
+        "dot",
+        "dash",
+        "pair",
+        "none"
+      ],
+      "description": "The small glint past the window. Auto varies it per bubble on the edge style and keeps the original dot on the bubble style."
+    },
+    {
+      "name": "glintSize",
+      "label": "Glint size",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Size of the glint. 1 is as drawn."
+    },
+    {
+      "name": "glintIntensity",
+      "label": "Glint intensity",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "Brightness of the glint. 1 is as drawn; 0 hides it."
+    },
+    {
+      "name": "glintDistance",
+      "label": "Glint distance",
+      "type": "number",
+      "defaultValue": 0,
+      "min": -1,
+      "max": 2,
+      "step": 0.05,
+      "description": "How far past the window the glint sits. 0 is as drawn."
+    },
+    {
+      "name": "glintHeight",
+      "label": "Glint height",
+      "type": "number",
+      "defaultValue": 0,
+      "min": -1.5,
+      "max": 1.5,
+      "step": 0.05,
+      "description": "Moves the glint in towards the middle (positive) or out towards the rim (negative). 0 is as drawn."
+    },
+    {
+      "name": "windowSize",
+      "label": "Window size",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.4,
+      "max": 2,
+      "step": 0.05,
+      "description": "How thick the window light and its glint are. 1 is as drawn."
+    },
+    {
+      "name": "windowIntensity",
+      "label": "Window intensity",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "How bright the window light and its inner reflection are. 1 is as drawn."
+    },
+    {
+      "name": "windowGradient",
+      "label": "Window gradient",
+      "type": "number",
+      "defaultValue": 0.24,
+      "min": 0,
+      "max": 1,
+      "step": 0.02,
+      "description": "How much the window fades towards its right end. 0 keeps it even along its length; 1 fades it out by its tip. 0.24 is as drawn."
+    },
+    {
+      "name": "windowTwin",
+      "label": "Inner reflection",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "The window's faint, inverted twin on the far wall at the bottom right, seen through the film. Turn it off to keep only the window at the top."
+    },
+    {
+      "name": "windowTwinShape",
+      "label": "Inner reflection shape",
+      "type": "select",
+      "defaultValue": "mirror",
+      "options": [
+        "mirror",
+        "arc",
+        "crescent",
+        "streak",
+        "dot"
+      ],
+      "description": "Mirror turns both highlights at the top (the window and the long highlight along the top edge) round onto the bottom right, fainter; arc mirrors the window blurred; crescent is a thin line near the rim; streak a short straight one; dot a soft glint."
+    },
+    {
+      "name": "keyLight",
+      "label": "Key reflection",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "The reflection of the room's key light (the bright window, the studio softbox or the sun) at the top left. Turn it off to keep only the window light."
+    },
+    {
+      "name": "topLength",
+      "label": "Top highlight length",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.2,
+      "max": 2.5,
+      "step": 0.05,
+      "description": "How far the highlight along the top edge, behind the window, runs. 1 is as drawn; lower is shorter, higher longer."
+    },
+    {
+      "name": "topFade",
+      "label": "Top highlight fade",
+      "type": "number",
+      "defaultValue": 0.4,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "How long the light panel overhead lets its highlight along a top edge fade out. 0 ends it crisply; higher values draw it out further and more gently."
+    },
+    {
+      "name": "topTail",
+      "label": "Top highlight tail",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0.05,
+      "max": 2,
+      "step": 0.05,
+      "description": "How the far end of the highlight along the top edge, behind the window, thins to a point (below 1) or stays blunt (above 1). 1 is as drawn."
+    },
+    {
+      "name": "bottomShade",
+      "label": "Bottom shade",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Adds a soft band along the whole bottom inside, where the far wall catches the light. It follows the theme: a shadow on light pages, a glow on dark ones."
+    },
+    {
+      "name": "bottomShadeColor",
+      "label": "Shade colour",
+      "type": "color",
+      "defaultValue": "auto",
+      "description": "Colour of the bottom shade. Auto follows the theme (a shadow on light pages, a glow on dark ones); any other colour tints the band, and its opacity sets how strong it is."
+    },
+    {
+      "name": "wobble",
+      "label": "Jiggle",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "How much everything jiggles: the film on hover and press, the swell of a pressed button, the bounce of the opening menu and of the switch thumb. 0 holds them all still."
+    },
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 4,
+      "step": 0.05,
+      "description": "Rate of the film flow and the drifting inner bubbles."
+    },
+    {
+      "name": "seed",
+      "label": "Seed",
+      "type": "number",
+      "defaultValue": 7,
+      "min": 0,
+      "max": 999,
+      "step": 1,
+      "description": "Chooses a different film pattern and inner bubble arrangement."
+    },
+    {
+      "name": "paused",
+      "label": "Paused",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the current frame. Pointer wobble still plays."
+    }
+  ],
+  "version": "0.1.0",
+  "drop": 34
+}

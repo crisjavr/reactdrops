@@ -39,6 +39,8 @@ type ComponentDetailLayoutProps = {
   sourceFiles: ComponentSourceFile[];
   preview: ReactNode;
   controls?: ReactNode;
+  /** Optional navigation replacing the Controls heading. */
+  controlsHeading?: ReactNode;
   /** Optional buttons in the Controls heading, beside the information button. */
   controlsActions?: ReactNode;
   properties?: ComponentProperty[];
@@ -182,6 +184,7 @@ export function ComponentDetailLayout({
   sourceFiles,
   preview,
   controls,
+  controlsHeading,
   controlsActions,
   properties,
   usage,
@@ -432,7 +435,11 @@ export function ComponentDetailLayout({
         </section>
 
         {viewTab === 'preview' && controls && (
-          <ControlsPanel componentName={componentName} actions={controlsActions}>
+          <ControlsPanel
+            componentName={componentName}
+            heading={controlsHeading}
+            actions={controlsActions}
+          >
             {controls}
           </ControlsPanel>
         )}

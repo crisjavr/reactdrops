@@ -15,7 +15,8 @@
     "./sources/liquid-glass-logo": "./src/generated/liquid-glass-logo-source.ts",
     "./sources/fractal-glass": "./src/generated/fractal-glass-source.ts",
     "./sources/refracted-text": "./src/generated/refracted-text-source.ts",
-    "./sources/showcase-pointer": "./src/generated/showcase-pointer-source.ts"
+    "./sources/showcase-pointer": "./src/generated/showcase-pointer-source.ts",
+    "./sources/soap-bubble": "./src/generated/soap-bubble-source.ts"
   },
   "dependencies": {
     "@reactdrops/component-schema": "workspace:*"
@@ -30,6 +31,7 @@
     "src/components/refracted-text.json",
     "src/components/shape-physics.json",
     "src/components/showcase-pointer.json",
+    "src/components/soap-bubble.json",
     "src/components/topographic-flow.json",
     "src/components/topographic-terrain.json",
     "src/generated/chromatic-button-source.ts",
@@ -40,6 +42,7 @@
     "src/generated/refracted-text-source.ts",
     "src/generated/shape-physics-source.ts",
     "src/generated/showcase-pointer-source.ts",
+    "src/generated/soap-bubble-source.ts",
     "src/generated/topographic-flow-source.ts",
     "src/generated/topographic-terrain-source.ts",
     "src/public-catalog.ts",

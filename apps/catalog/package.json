@@ -48,6 +48,7 @@
     "public-release/r/refracted-text.json",
     "public-release/r/shape-physics.json",
     "public-release/r/showcase-pointer.json",
+    "public-release/r/soap-bubble.json",
     "public-release/r/topographic-flow.json",
     "public-release/r/topographic-terrain.json",
     "src/generated/published-routes.ts",

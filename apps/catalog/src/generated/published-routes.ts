@@ -34,6 +34,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/showcase-pointer')),
   },
   {
+    path: '/components/button/soap-bubble',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/soap-bubble')),
+  },
+  {
     path: '/components/background/topographic-flow',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/topographic-flow')),
   },

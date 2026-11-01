@@ -25,6 +25,7 @@
 !/apps/catalog/public-release/r/refracted-text.json
 !/apps/catalog/public-release/r/shape-physics.json
 !/apps/catalog/public-release/r/showcase-pointer.json
+!/apps/catalog/public-release/r/soap-bubble.json
 !/apps/catalog/public-release/r/topographic-flow.json
 !/apps/catalog/public-release/r/topographic-terrain.json
 !/apps/catalog/src/generated/published-routes.ts
@@ -32,6 +33,7 @@
 !/apps/catalog/src/styles.css
 !/apps/catalog/tsconfig.json
 !/apps/catalog/vite.config.ts
+!/docs/soap-bubble.md
 !/package.json
 !/packages/catalog-data/LICENSE
 !/packages/catalog-data/package.json
@@ -43,6 +45,7 @@
 !/packages/catalog-data/src/components/refracted-text.json
 !/packages/catalog-data/src/components/shape-physics.json
 !/packages/catalog-data/src/components/showcase-pointer.json
+!/packages/catalog-data/src/components/soap-bubble.json
 !/packages/catalog-data/src/components/topographic-flow.json
 !/packages/catalog-data/src/components/topographic-terrain.json
 !/packages/catalog-data/src/generated/chromatic-button-source.ts
@@ -53,6 +56,7 @@
 !/packages/catalog-data/src/generated/refracted-text-source.ts
 !/packages/catalog-data/src/generated/shape-physics-source.ts
 !/packages/catalog-data/src/generated/showcase-pointer-source.ts
+!/packages/catalog-data/src/generated/soap-bubble-source.ts
 !/packages/catalog-data/src/generated/topographic-flow-source.ts
 !/packages/catalog-data/src/generated/topographic-terrain-source.ts
 !/packages/catalog-data/src/public-catalog.ts
@@ -70,6 +74,16 @@
 !/packages/catalog-ui/src/assets/refracted-text-preview.webp
 !/packages/catalog-ui/src/assets/shape-physics-preview.webp
 !/packages/catalog-ui/src/assets/showcase-pointer-preview.svg
+!/packages/catalog-ui/src/assets/soap-bubble/add.webp
+!/packages/catalog-ui/src/assets/soap-bubble/button.webp
+!/packages/catalog-ui/src/assets/soap-bubble/camera.webp
+!/packages/catalog-ui/src/assets/soap-bubble/close.webp
+!/packages/catalog-ui/src/assets/soap-bubble/menu.webp
+!/packages/catalog-ui/src/assets/soap-bubble/new.webp
+!/packages/catalog-ui/src/assets/soap-bubble/search.webp
+!/packages/catalog-ui/src/assets/soap-bubble/showcase.webp
+!/packages/catalog-ui/src/assets/soap-bubble/slider.webp
+!/packages/catalog-ui/src/assets/soap-bubble/toggle.webp
 !/packages/catalog-ui/src/assets/topographic-flow-preview.webp
 !/packages/catalog-ui/src/assets/topographic-terrain-preview.webp
 !/packages/catalog-ui/src/catalog-component-card.tsx
@@ -118,6 +132,9 @@
 !/packages/catalog-ui/src/showcase-pointer-demos.tsx
 !/packages/catalog-ui/src/showcase-pointer-page.css
 !/packages/catalog-ui/src/showcase-pointer-page.tsx
+!/packages/catalog-ui/src/soap-bubble-color-presets.ts
+!/packages/catalog-ui/src/soap-bubble-page.css
+!/packages/catalog-ui/src/soap-bubble-page.tsx
 !/packages/catalog-ui/src/topographic-flow-page.css
 !/packages/catalog-ui/src/topographic-flow-page.tsx
 !/packages/catalog-ui/src/topographic-terrain-page.css
@@ -195,6 +212,13 @@
 !/packages/components/src/showcase-pointer/showcase-pointer-motion.ts
 !/packages/components/src/showcase-pointer/showcase-pointer.css
 !/packages/components/src/showcase-pointer/showcase-pointer.tsx
+!/packages/components/src/soap-bubble/index.ts
+!/packages/components/src/soap-bubble/soap-bubble-gl.ts
+!/packages/components/src/soap-bubble/soap-bubble-renderer.ts
+!/packages/components/src/soap-bubble/soap-bubble-shaders.ts
+!/packages/components/src/soap-bubble/soap-bubble-system.tsx
+!/packages/components/src/soap-bubble/soap-bubble.css
+!/packages/components/src/soap-bubble/use-soap-bubble.tsx
 !/packages/components/src/topographic-flow/index.ts
 !/packages/components/src/topographic-flow/topographic-field.ts
 !/packages/components/src/topographic-flow/topographic-flow.css
@@ -220,6 +244,7 @@
 !/registry/refracted-text.json
 !/registry/shape-physics.json
 !/registry/showcase-pointer.json
+!/registry/soap-bubble.json
 !/registry/topographic-flow.json
 !/registry/topographic-terrain.json
 !/scripts/catalog-manifest.mjs
@@ -235,6 +260,7 @@
 !/scripts/package-refracted-text.mjs
 !/scripts/package-shape-physics.mjs
 !/scripts/package-showcase-pointer.mjs
+!/scripts/package-soap-bubble.mjs
 !/scripts/package-topographic-flow.mjs
 !/scripts/package-topographic-terrain.mjs
 !/scripts/registry-license.mjs
@@ -245,6 +271,7 @@
 !/tests/fluid-agent-orb-speech.test.ts
 !/tests/fluid-agent-orb.test.tsx
 !/tests/setup.ts
+!/tests/soap-bubble-palette.test.tsx
 !/tsconfig.base.json
 !/vitest.config.ts
 node_modules/
