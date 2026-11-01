@@ -231,7 +231,9 @@
   align-items: center;
   gap: 0.55em;
   height: 2.75em;
-  padding: 0 1.1em;
+  /* The magnifier sits at the centre of the pill's round end, in line with
+     the round buttons above it. */
+  padding: 0 1.1em 0 0.775em;
 }
 /* Fields and menus sit flat on the page, without a shadow in either theme. */
 .soap-bubble-surface.soap-bubble-search,

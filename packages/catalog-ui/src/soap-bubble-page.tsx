@@ -541,7 +541,7 @@ const icons = {
 function SystemPreview({
   values,
   theme,
-  scale,
+  scale: chosen,
   popEffect,
   preview,
 }: {
@@ -552,6 +552,16 @@ function SystemPreview({
   preview: Preview;
 }) {
   const page = useRef<HTMLDivElement>(null);
+  // A narrow frame shrinks the set so its 21.75em fit in 90% of the width.
+  const [width, setWidth] = useState(Infinity);
+  useEffect(() => {
+    const element = page.current;
+    if (!element) return;
+    const observer = new ResizeObserver(() => setWidth(element.clientWidth));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const scale = Math.min(chosen, (0.9 * width) / (21.75 * baseFont));
   const [wifi, setWifi] = useState(true);
   const [volume, setVolume] = useState(42);
   const shared = Object.fromEntries(

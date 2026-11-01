@@ -150,7 +150,8 @@
   align-items: center;
   /* Switch and Continue line up with the ends of the slider below. */
   justify-content: space-between;
-  gap: 1.1rem;
+  /* Shrinks with the set when a narrow frame scales it down. */
+  gap: min(1.1rem, 0.63em);
 }
 .soap-bubble-system-add.soap-bubble-button {
   width: 2.75em;
