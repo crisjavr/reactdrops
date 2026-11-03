@@ -96,6 +96,7 @@
     "src/showcase-pointer/showcase-pointer.tsx",
     "src/soap-bubble/index.ts",
     "src/soap-bubble/soap-bubble-gl.ts",
+    "src/soap-bubble/soap-bubble-motion.ts",
     "src/soap-bubble/soap-bubble-renderer.ts",
     "src/soap-bubble/soap-bubble-shaders.ts",
     "src/soap-bubble/soap-bubble-system.tsx",

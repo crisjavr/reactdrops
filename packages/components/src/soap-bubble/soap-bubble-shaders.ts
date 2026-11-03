@@ -33,6 +33,17 @@ uniform float uCorner;         // corner radius in radii (1 is fully round)
 uniform float uBevel;          // glass bevel width in radii
 uniform vec4 uModeBasis;       // l=2 amplitude × (cos, sin) of twice its angle, l=3 × thrice its
 uniform vec2 uSquash;          // press squash and stretch
+uniform float uPressScale;    // native press swell, independent of glyph size
+uniform vec4 uJoin0;           // nearby button centre xy and half size zw, in radii
+uniform vec4 uJoin1;
+uniform vec4 uJoin2;
+uniform vec4 uJoin3;
+uniform vec4 uJoinCorners;
+uniform vec4 uJoinAmounts;     // smooth-union radius; zero disables the contact
+uniform vec4 uJoinTint0;
+uniform vec4 uJoinTint1;
+uniform vec4 uJoinTint2;
+uniform vec4 uJoinTint3;
 uniform float uTime;
 uniform float uFlow;           // film flow clock
 uniform float uThickness;
@@ -412,6 +423,8 @@ vec4 behindAt(vec2 xy) {
 // double and triple angle, which need no atan or cos; at rest there is no
 // wobble to undo.
 vec2 restPoint(vec2 p) {
+  float swell = uPressScale > 0.0 ? uPressScale : 1.0;
+  p /= (uExtent + swell - 1.0) / uExtent;
   p /= uSquash;
   if (uModeBasis == vec4(0.0)) return p;
   vec2 d = p * inversesqrt(max(dot(p, p), 1e-30));
@@ -424,8 +437,56 @@ vec2 restPoint(vec2 p) {
 /* CUSTOM_OUTLINE */
 
 // Signed distance to the outline, in radii, after wobble and squash.
+float ownOutline(vec2 p) {
+  // Contacts use the same analytic geometry on both canvases. Independent
+  // wobble modes would otherwise disagree about the position of the seam.
+  if (any(greaterThan(uJoinAmounts, vec4(0.0)))) {
+    float swell = uPressScale > 0.0 ? uPressScale : 1.0;
+    return roundedRect(p, uExtent + swell - 1.0, clamp(uCorner, 0.0, 1.0) * swell);
+  }
+  return (/* OUTLINE_DISTANCE */ roundedRect(restPoint(p), uExtent, clamp(uCorner, 0.0, 1.0))) * (uPressScale > 0.0 ? uPressScale : 1.0);
+}
+
+float joinedDistance(float a, vec2 p, vec4 other, float corner, float amount) {
+  if (amount <= 0.0) return a;
+  float b = roundedRect(p - other.xy, other.zw, corner);
+  float h = clamp(0.5 + 0.5 * (b - a) / amount, 0.0, 1.0);
+  return mix(b, a, h) - amount * h * (1.0 - h);
+}
+
 float outline(vec2 p) {
-  return /* OUTLINE_DISTANCE */ roundedRect(restPoint(p), uExtent, clamp(uCorner, 0.0, 1.0));
+  float d = ownOutline(p);
+  d = joinedDistance(d, p, uJoin0, uJoinCorners.x, uJoinAmounts.x);
+  d = joinedDistance(d, p, uJoin1, uJoinCorners.y, uJoinAmounts.y);
+  d = joinedDistance(d, p, uJoin2, uJoinCorners.z, uJoinAmounts.z);
+  return joinedDistance(d, p, uJoin3, uJoinCorners.w, uJoinAmounts.w);
+}
+
+// Each canvas paints its own half of a shared liquid neck. The partition
+// never enters the SDF, so no glass bevel is drawn down the seam.
+bool ownsContact(vec2 p) {
+  float d = ownOutline(p);
+  // A small opaque overlap covers the two canvases' different pixel grids.
+  // Feathering both halves would composite two half-alphas and expose the
+  // page as a light or dark hairline.
+  float overlap = max(2.0 / uRadius, 0.06);
+  if (uJoinAmounts.x > 0.0 && roundedRect(p - uJoin0.xy, uJoin0.zw, uJoinCorners.x) < d - overlap) return false;
+  if (uJoinAmounts.y > 0.0 && roundedRect(p - uJoin1.xy, uJoin1.zw, uJoinCorners.y) < d - overlap) return false;
+  if (uJoinAmounts.z > 0.0 && roundedRect(p - uJoin2.xy, uJoin2.zw, uJoinCorners.z) < d - overlap) return false;
+  if (uJoinAmounts.w > 0.0 && roundedRect(p - uJoin3.xy, uJoin3.zw, uJoinCorners.w) < d - overlap) return false;
+  return true;
+}
+
+vec4 contactTint(vec4 tint, vec2 p, vec4 other, float corner, float amount, vec4 otherTint) {
+  if (amount <= 0.0) return tint;
+  float a = ownOutline(p);
+  float b = roundedRect(p - other.xy, other.zw, corner);
+  float peer = clamp(0.5 - 0.5 * (b - a) / amount, 0.0, 1.0);
+  // Transparent tint can contain white or black RGB depending on theme.
+  // Mix premultiplied colour so that invisible RGB never paints a divider.
+  float alpha = mix(tint.a, otherTint.a, peer);
+  vec3 colour = mix(tint.rgb * tint.a, otherTint.rgb * otherTint.a, peer);
+  return vec4(alpha > 1e-5 ? colour / alpha : vec3(0.0), alpha);
 }
 
 // A film stretched over a rounded frame bulges only as far in as its corner
@@ -626,10 +687,15 @@ void main() {
   float coverage = clamp(0.5 - sdf / pixel, 0.0, 1.0);
   // Around the bubble only the layer is drawn, flat and unrefracted.
   vec4 outside = layerAt(p);
-  if (coverage <= 0.0) {
+  if (coverage <= 0.0 || !ownsContact(p)) {
     outColor = outside;
     return;
   }
+  // Where two rims become one surface, the old individual rims must stop
+  // reflecting. Keep the real outer edge, but clear the internal bevel,
+  // window and oil ring that would otherwise divide the liquid neck.
+  float contactOptics = 1.0 - smoothstep(0.002, 0.06, ownOutline(p) - sdf)
+    * smoothstep(0.01, 0.1, -sdf);
   vec2 e = vec2(pixel * 0.75, 0.0);
   vec2 gradient = vec2(outline(p + e.xy) - outline(p - e.xy), outline(p + e.yx) - outline(p - e.yx));
   gradient /= max(length(gradient), 1e-5);
@@ -655,7 +721,7 @@ void main() {
       ? mix(1.0, 1.0 - smoothstep(band * 0.5, band * 1.5, -sdf * uRadius),
             uOilLarge * min(uOilFade, 1.0))
       : 1.0;
-  float frontOil = oilMask(frontPoint, 0.0) * rimOil;
+  float frontOil = oilMask(frontPoint, 0.0) * rimOil * contactOptics;
   vec3 naturalSoap = film(filmThickness(frontPoint, 1.0, 0.0), cosI, frontOil);
   vec3 frontSoap = soapFilmPalette(naturalSoap);
   float paletteBrightness = uCustomSoapPalette
@@ -669,8 +735,8 @@ void main() {
   // retain their existing, narrower pixel-sized oil band.
   float clearRim = min(rimOil, 1.0 - smoothstep(0.12, 0.55, -sdf));
   float clarity = mix(1.0, clearRim, uClearCenter);
-  frontFilm *= clarity;
-  backFilm *= clarity;
+  frontFilm *= clarity * contactOptics;
+  backFilm *= clarity * contactOptics;
 
   // Outer wall: convex mirror, upright image. Inner wall: concave mirror seen
   // through the front film, inverted image. Solid glass has no thin back
@@ -747,8 +813,12 @@ void main() {
   }
   // User-controlled tint under the film, independent of the page theme.
   // Premultiplied compositing also works without a captured backdrop.
-  behind = behind * (1.0 - uTint.a) + toLinear(uTint.rgb) * uTint.a;
-  behindAlpha = behindAlpha * (1.0 - uTint.a) + uTint.a;
+  vec4 bodyTint = contactTint(uTint, p, uJoin0, uJoinCorners.x, uJoinAmounts.x, uJoinTint0);
+  bodyTint = contactTint(bodyTint, p, uJoin1, uJoinCorners.y, uJoinAmounts.y, uJoinTint1);
+  bodyTint = contactTint(bodyTint, p, uJoin2, uJoinCorners.z, uJoinAmounts.z, uJoinTint2);
+  bodyTint = contactTint(bodyTint, p, uJoin3, uJoinCorners.w, uJoinAmounts.w, uJoinTint3);
+  behind = behind * (1.0 - bodyTint.a) + toLinear(bodyTint.rgb) * bodyTint.a;
+  behindAlpha = behindAlpha * (1.0 - bodyTint.a) + bodyTint.a;
 
   // Back wall and whatever lies behind it.
   vec3 colour = behind * (1.0 - backFilm) + backReflection;
@@ -777,7 +847,7 @@ void main() {
     vec2 side = normalize(front.xy + 1e-5);
     float lit = pow(max(dot(side, normalize(vec2(-0.6, 0.8))), 0.0), 2.0) +
                 0.45 * pow(max(dot(side, normalize(vec2(0.6, -0.8))), 0.0), 2.0);
-    colour += soapPalette(vec3(0.9, 0.95, 1.0), uSoapHighlightColor) * uGlass * uReflectivity * 0.55 * bevel * lit;
+    colour += soapPalette(vec3(0.9, 0.95, 1.0), uSoapHighlightColor) * uGlass * uReflectivity * 0.55 * bevel * lit * contactOptics;
   }
 
   // Roll off reflected highlights, leaving a cleared centre's page colours intact.
@@ -804,7 +874,7 @@ void main() {
     bool themed = uShadeColor.a < 0.0;
     vec3 shade = themed ? (uLightTheme ? vec3(0.0) : vec3(1.0)) : toLinear(uShadeColor.rgb);
     shade = mix(shade, toLinear(uSoapShadeColor.rgb), uSoapShadeColor.a);
-    float strength = themed ? (uLightTheme ? 0.16 : 0.2) : uShadeColor.a * 0.35;
+    float strength = (themed ? (uLightTheme ? 0.16 : 0.2) : uShadeColor.a * 0.35) * contactOptics;
     colour = mix(colour, shade, band * strength);
     through *= 1.0 - band * strength;
   }
@@ -836,10 +906,10 @@ void main() {
     vec2 q = restPoint(p);
     vec2 near = uWindowStyle == 1 ? bubbleWindow(q, rc, pixel) : windowLight(q, rc, pixel, 1.0);
     vec2 far = windowLight(uTwinShape == 4 ? q : q * 1.35, rc, pixel, -1.0);
-    float light = min(1.0, near.x * uWindowIntensity) * smoothstep(0.05, 0.35, gradient.y);
+    float light = min(1.0, near.x * uWindowIntensity) * smoothstep(0.05, 0.35, gradient.y) * contactOptics;
     // Thin shapes need more light to read at all.
     float twinStrength = uTwinShape == 0 ? 0.16 : uTwinShape == 2 ? 0.26 : uTwinShape == 4 ? 0.45 : 0.3;
-    float twin = uWindowTwin ? min(1.0, far.x * twinStrength * uWindowIntensity) * smoothstep(0.05, 0.35, -gradient.y) : 0.0;
+    float twin = uWindowTwin ? min(1.0, far.x * twinStrength * uWindowIntensity) * smoothstep(0.05, 0.35, -gradient.y) * contactOptics : 0.0;
     // The film's oil colours show at the window's edges, as on a bubble.
     float peak = max(max(frontSoap.r, frontSoap.g), frontSoap.b);
     vec3 hue = frontSoap / max(peak, 1e-4);

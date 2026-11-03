@@ -127,6 +127,8 @@ Every proportion scales with the component, so a larger control looks the same, 
 
 The outline vibrates in its l = 2 and l = 3 modes, with frequencies in the Rayleigh–Lamb ratio. Entering, moving across and leaving the bubble excite them; pressing (pointer, Space or Enter) squashes it while conserving volume and releasing makes it rebound. `wobble` (Jiggle in the catalog) scales all of this, and also the swell of a pressed button, the bounce of the opening menu and the overshoot of the switch thumb; at 0 nothing jiggles.
 
+Buttons use the native control's separate press spring: at the catalog's default Jiggle they swell to 1.36 times their short side, keeping the glyph's size and fading it while held. Nearby buttons sharing a backdrop join through a smooth liquid neck as their rims approach; releasing separates them and briefly undershoots the resting size. Pills grow by the same rim distance as round buttons. The menu follows a measured 500 ms opening and 340 ms closing: a brief compression, a fast vertical stretch, horizontal expansion with a small overshoot, and labels that sharpen between 65 and 240 ms. Reversing an unfinished transition carries on from its visible shape. Reduced motion opens and closes immediately and disables press deformation and liquid contact.
+
 `speed` scales the film flow. `paused` holds it; the bubble still wobbles under the pointer. `seed` picks another film pattern.
 
 ## Performance

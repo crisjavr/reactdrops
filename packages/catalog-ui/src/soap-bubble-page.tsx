@@ -915,6 +915,23 @@ export default function SoapBubblePage() {
             hidden={panelTab !== 'controls'}
           >
             {group(
+              'Motion',
+              <>
+                {numbers(['wobble', 'speed', 'seed'])}
+                <ControlField
+                  className="is-boolean"
+                  label="Paused"
+                  description="Hold the film. Bubbles still wobble under the pointer."
+                >
+                  <SwitchControl
+                    label="Paused"
+                    checked={values.paused}
+                    onChange={(value) => set('paused', value)}
+                  />
+                </ControlField>
+              </>,
+            )}
+            {group(
               'Transparency',
               <>
                 {numbers(['seeThrough', 'seeThroughBend', 'refraction', 'opacity', 'oilOpacity'])}
@@ -1210,23 +1227,6 @@ export default function SoapBubblePage() {
                   />
                 </ControlField>
                 {numbers(['topLength', 'topFade', 'topTail'])}
-              </>,
-            )}
-            {group(
-              'Motion',
-              <>
-                {numbers(['wobble', 'speed', 'seed'])}
-                <ControlField
-                  className="is-boolean"
-                  label="Paused"
-                  description="Hold the film. Bubbles still wobble under the pointer."
-                >
-                  <SwitchControl
-                    label="Paused"
-                    checked={values.paused}
-                    onChange={(value) => set('paused', value)}
-                  />
-                </ControlField>
               </>,
             )}
           </div>

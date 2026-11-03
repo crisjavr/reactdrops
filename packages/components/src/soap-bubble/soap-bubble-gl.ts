@@ -211,6 +211,17 @@ const uniformNames = [
   'uBevel',
   'uModeBasis',
   'uSquash',
+  'uPressScale',
+  'uJoin0',
+  'uJoin1',
+  'uJoin2',
+  'uJoin3',
+  'uJoinCorners',
+  'uJoinAmounts',
+  'uJoinTint0',
+  'uJoinTint1',
+  'uJoinTint2',
+  'uJoinTint3',
   'uTime',
   'uFlow',
   'uThickness',
@@ -769,22 +780,30 @@ export function coveredTexture(
   return uploaded(gl, view.uploads, view.canvas, view.version, false);
 }
 
-/** Counts the surfaces that show what they cover, per view. */
+/**
+ * Counts the surfaces that show what they cover, per view, and how many of
+ * them are on screen: a view kept for a hidden surface (a closed menu's
+ * panel) is refreshed only once one shows it again.
+ */
 export function wantCoveredBackdrop(
   backdrop: SoapBubbleBackdrop,
   self: Element | null,
-  want: boolean,
+  want: number,
+  shown: number,
 ) {
   const entry = backdrop as BackdropEntry;
   let view = entry.covered.get(self);
   if (!view) {
-    if (!want) return;
-    entry.covered.set(self, (view = { canvas: null, version: 0, uploads: new Map(), wanted: 0 }));
+    if (want <= 0) return;
+    entry.covered.set(
+      self,
+      (view = { canvas: null, version: 0, uploads: new Map(), wanted: 0, shown: 0 }),
+    );
     if (entry.layer.canvas) compose(entry, self, view);
-    scheduleLayer(entry);
   }
-  view.wanted += want ? 1 : -1;
-  if (view.wanted > 0) return;
+  view.wanted += want;
+  view.shown += shown;
+  if (view.wanted > 0) return scheduleLayer(entry);
   deleteUploads(view.uploads);
   entry.covered.delete(self);
 }
@@ -865,6 +884,7 @@ type CoveredView = {
   version: number;
   uploads: Uploads;
   wanted: number;
+  shown: number;
 };
 
 const backdrops = new Map<HTMLElement, BackdropEntry>();
@@ -1019,6 +1039,8 @@ function staleCovered(entry: BackdropEntry) {
 function scheduleLayer(entry: BackdropEntry) {
   const { layer } = entry;
   if (!entry.covered.size || !layer.stale || !entry.source) return;
+  // Once there is a layer, it is only refreshed for a view on screen.
+  if (layer.canvas && ![...entry.covered.values()].some((view) => view.shown > 0)) return;
   window.clearTimeout(layer.timer);
   layer.timer = window.setTimeout(() => void captureLayer(entry), 700);
 }

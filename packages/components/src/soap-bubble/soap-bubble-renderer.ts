@@ -15,6 +15,7 @@ import {
   type SoapBubbleBackdrop,
   type SoapBubbleRect,
 } from './soap-bubble-gl';
+import { soapBubbleContactStrength, stepSoapBubblePress } from './soap-bubble-motion';
 
 export const soapBubbleEnvironments = ['studio', 'window', 'sky', 'soft'] as const;
 export type SoapBubbleEnvironment = (typeof soapBubbleEnvironments)[number];
@@ -341,9 +342,20 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
 
 /** Damped oscillator for one component of a shape mode. */
 type Mode = { value: number; velocity: number };
+type ButtonSurface = {
+  scale: () => number;
+  strength: () => number;
+  corner: () => number;
+  tint: () => readonly number[];
+  scope: () => HTMLElement | null;
+  invalidate: () => void;
+};
+const buttonSurfaces = new Map<HTMLElement, ButtonSurface>();
 
 /** Everything that moves in a bubble's look, apart from its box. */
 export type SoapBubbleMotion = {
+  /** Visible button swell, used when its film becomes a menu. */
+  pressScale?: number;
   time: number;
   /** Which small glint the window light shows. */
   spark: number;
@@ -516,6 +528,11 @@ export function createSoapBubbleRenderer(
   const modes: Mode[] = Array.from({ length: 4 }, () => ({ value: 0, velocity: 0 }));
   const squash: Mode = { value: 0, velocity: 0 };
   let pressed = false;
+  const pressure: Mode = { value: 0, velocity: 0 };
+  const isButton = host.classList.contains('soap-bubble-button');
+  const pressStrength = () =>
+    isButton && !still ? pressure.value * Math.min(1.6, tuning.wobble / 0.4) : 0;
+  const pressScale = () => 1 + 0.36 * pressStrength();
   const tiltTarget = [0, 0];
   const tiltValue = [0, 0];
   const pointerAt = { x: 0, y: 0, inside: false, time: 0 };
@@ -536,7 +553,7 @@ export function createSoapBubbleRenderer(
       mode.value += mode.velocity * dt;
     });
     const squashOmega = 2 * Math.PI * 3.2;
-    const target = pressed ? 0.075 * tuning.wobble : 0;
+    const target = pressed && !isButton ? 0.075 * tuning.wobble : 0;
     squash.velocity +=
       (-squashOmega * squashOmega * (squash.value - target) -
         2 * 0.22 * squashOmega * squash.velocity) *
@@ -579,17 +596,27 @@ export function createSoapBubbleRenderer(
     }
     return false;
   };
+  let coveringShown = false;
   const showCovered = () => {
     let next: Element | null | undefined;
-    // A floating surface keeps the shared view while it is hidden, so that it
-    // is ready the moment the surface opens over something.
-    if (backdrop && tuning.seeThrough > 0)
-      if (self.closest('[data-soap-bubble-group]')) next = null;
-      else if (overlapsAnother(backdrop.element)) next = self;
-    if (next === covering) return;
-    if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, false);
+    // A solid body hides what lies behind: nothing to show then. A floating
+    // surface (a menu's panel) keeps the shared view while it is hidden, so
+    // that it is ready the moment it opens; on screen, a surface shows a
+    // view only while it lies over another bubble.
+    const shownNow = visible && !document.hidden;
+    if (backdrop && tuning.seeThrough > 0 && tint[3] < 1) {
+      const floating = self.closest('[data-soap-bubble-group]') != null;
+      if (floating && !shownNow) next = null;
+      else if (overlapsAnother(backdrop.element)) next = floating ? null : self;
+    }
+    const shownNext = next !== undefined && shownNow;
+    if (next === covering && shownNext === coveringShown) return;
+    if (backdrop && covering !== undefined)
+      wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
     covering = next;
-    if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, true);
+    coveringShown = shownNext;
+    if (backdrop && covering !== undefined)
+      wantCoveredBackdrop(backdrop, covering, 1, coveringShown ? 1 : 0);
   };
 
   /**
@@ -635,6 +662,82 @@ export function createSoapBubbleRenderer(
     set.f2(u.uCenter, offsetX + centerX * dpr, offsetY + canvas.height - centerY * dpr);
     set.f1(u.uRadius, radius);
     set.f2(u.uExtent, ex, ey);
+    set.f1(u.uPressScale, pressScale());
+    const joins: { box: DOMRect; entry: ButtonSurface; distance: number; spacing: number }[] = [];
+    if (isButton && !still && !host.parentElement?.matches('.soap-bubble-menu[data-open]')) {
+      for (const [other, entry] of buttonSurfaces) {
+        if (other === host || !other.isConnected || entry.scope() !== backdropElement) continue;
+        if (other.parentElement?.matches('.soap-bubble-menu[data-open]')) continue;
+        if (Math.max(pressStrength(), entry.strength()) <= 0.001) continue;
+        const rect = frameRect(other);
+        if (!rect.width || !rect.height) continue;
+        const spacing = soapBubbleContactStrength(
+          {
+            x: box.left + box.width / 2,
+            y: box.top + box.height / 2,
+            width: box.width,
+            height: box.height,
+            radius: tuning.radius * em * Math.min(zoomX, zoomY),
+          },
+          {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            width: rect.width,
+            height: rect.height,
+            radius: entry.corner() * Math.min(zoomX, zoomY),
+          },
+        );
+        if (spacing === 0) continue;
+        const dx = Math.abs(box.left + box.width / 2 - rect.left - rect.width / 2);
+        const dy = Math.abs(box.top + box.height / 2 - rect.top - rect.height / 2);
+        const gap = Math.hypot(
+          Math.max(
+            0,
+            dx -
+              (box.width + rect.width) / 2 -
+              (Math.min(box.width, box.height) / 2) * (pressScale() - 1) -
+              (Math.min(rect.width, rect.height) / 2) * (entry.scale() - 1),
+          ),
+          Math.max(
+            0,
+            dy -
+              (box.height + rect.height) / 2 -
+              (Math.min(box.width, box.height) / 2) * (pressScale() - 1) -
+              (Math.min(rect.width, rect.height) / 2) * (entry.scale() - 1),
+          ),
+        );
+        if (gap < Math.min(box.width, box.height, rect.width, rect.height) * 0.4)
+          joins.push({ box: rect, entry, distance: gap, spacing });
+      }
+      joins.sort((a, b) => a.distance - b.distance);
+    }
+    const corners = [0, 0, 0, 0],
+      amounts = [0, 0, 0, 0];
+    const shapes = [u.uJoin0, u.uJoin1, u.uJoin2, u.uJoin3];
+    const colours = [u.uJoinTint0, u.uJoinTint1, u.uJoinTint2, u.uJoinTint3];
+    for (let index = 0; index < 4; index++) {
+      const peer = joins[index];
+      if (!peer) continue;
+      const { box: other, entry } = peer;
+      const otherRadius = Math.min(other.width / zoomX, other.height / zoomY) / 2;
+      const size = entry.scale();
+      set.f4(
+        shapes[index],
+        (other.left + other.width / 2 - box.left - box.width / 2) / zoomX / cssRadius,
+        -(other.top + other.height / 2 - box.top - box.height / 2) / zoomY / cssRadius,
+        (other.width / zoomX / 2 + otherRadius * (size - 1)) / cssRadius,
+        (other.height / zoomY / 2 + otherRadius * (size - 1)) / cssRadius,
+      );
+      corners[index] = (Math.min(otherRadius, entry.corner()) * size) / cssRadius;
+      amounts[index] =
+        0.8 *
+        Math.min(1, otherRadius / cssRadius) *
+        Math.min(1, Math.max(pressStrength(), entry.strength())) *
+        peer.spacing;
+      set.v4(colours[index], entry.tint());
+    }
+    set.v4(u.uJoinCorners, corners);
+    set.v4(u.uJoinAmounts, amounts);
     set.f1(u.uCorner, Math.min(1, (tuning.radius * em) / cssRadius));
     set.f1(u.uBevel, (tuning.bevel * em) / cssRadius);
     set.f1(u.uFilmScale, tuning.filmScale);
@@ -794,6 +897,7 @@ export function createSoapBubbleRenderer(
   const jiggling = () =>
     shown() &&
     (pressed ||
+      Math.abs(pressure.value) + Math.abs(pressure.velocity) > 1e-4 ||
       Math.abs(squash.value) + Math.abs(squash.velocity) > 1e-4 ||
       modes.some((mode) => Math.abs(mode.value) + Math.abs(mode.velocity) * 0.1 > 1e-4) ||
       tiltValue.some((value, axis) => Math.abs(value - tiltTarget[axis]) > 1e-3));
@@ -811,6 +915,15 @@ export function createSoapBubbleRenderer(
     }
     const dt = last ? Math.min(1 / 20, (now - last) / 1000) : 1 / 60;
     last = now;
+    if (isButton && !still) {
+      const before = pressure.value;
+      stepSoapBubblePress(pressure, pressed, dt);
+      if (before !== pressure.value) {
+        host.style.setProperty('--soap-bubble-press', String(Math.max(0, pressure.value)));
+        dirtyFrame = true;
+        for (const [other, entry] of buttonSurfaces) if (other !== host) entry.invalidate();
+      }
+    }
     if (drifting) {
       time += dt * tuning.speed;
       flow += dt * tuning.speed;
@@ -863,6 +976,7 @@ export function createSoapBubbleRenderer(
   resizeObserver.observe(host);
   const visibility = new IntersectionObserver(([entry]) => {
     visible = entry?.isIntersecting ?? true;
+    showCovered();
     last = 0;
     if (visible) request();
   });
@@ -870,6 +984,11 @@ export function createSoapBubbleRenderer(
   const releaseResolution = onSoapBubbleResolution(resize);
   const onMotion = () => {
     still = reduced?.matches ?? false;
+    showCovered();
+    if (still) {
+      pressure.value = pressure.velocity = 0;
+      host.style.removeProperty('--soap-bubble-press');
+    }
     last = 0;
     request();
   };
@@ -880,6 +999,18 @@ export function createSoapBubbleRenderer(
   reduced?.addEventListener?.('change', onMotion);
   document.addEventListener('visibilitychange', onMotion);
   window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+  if (isButton)
+    buttonSurfaces.set(host, {
+      scale: pressScale,
+      strength: pressStrength,
+      corner: () => tuning.radius * em,
+      tint: () => tint,
+      scope: () => backdropElement,
+      invalidate: () => {
+        dirtyFrame = true;
+        request();
+      },
+    });
   resize();
 
   const kick = (strength: number, angle: number) => {
@@ -895,8 +1026,8 @@ export function createSoapBubbleRenderer(
   return {
     update(next) {
       tuning = next;
-      showCovered();
       tint = tintOf(next);
+      showCovered();
       soapColor = paletteColour(next.soapColor);
       soapShadeColor = paletteColour(next.soapShadeColor);
       soapHighlightColor = paletteColour(next.soapHighlightColor);
@@ -908,8 +1039,10 @@ export function createSoapBubbleRenderer(
     },
     setBackdrop(element) {
       if (element === backdropElement) return;
-      if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, false);
+      if (backdrop && covering !== undefined)
+        wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
       covering = undefined;
+      coveringShown = false;
       releaseBackdrop();
       backdropElement = element;
       backdrop = null;
@@ -931,6 +1064,7 @@ export function createSoapBubbleRenderer(
       if (lightTheme === light) return;
       lightTheme = light;
       tint = tintOf(tuning);
+      showCovered();
       dirtyFrame = true;
       request();
     },
@@ -970,6 +1104,7 @@ export function createSoapBubbleRenderer(
     },
     motion() {
       return {
+        pressScale: pressScale(),
         time,
         spark,
         flow,
@@ -1010,9 +1145,15 @@ export function createSoapBubbleRenderer(
     },
     dispose() {
       disposed = true;
+      if (isButton) {
+        buttonSurfaces.delete(host);
+        host.style.removeProperty('--soap-bubble-press');
+        for (const entry of buttonSurfaces.values()) entry.invalidate();
+      }
       if (own) releaseSoapBubbleOwnContext(canvas);
       cancelSoapBubbleFrame(tick);
-      if (backdrop && covering !== undefined) wantCoveredBackdrop(backdrop, covering, false);
+      if (backdrop && covering !== undefined)
+        wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
       releaseBackdrop();
       resizeObserver.disconnect();
       visibility.disconnect();

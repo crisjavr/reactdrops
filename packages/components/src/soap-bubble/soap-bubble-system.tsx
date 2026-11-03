@@ -20,6 +20,7 @@ import {
 import type { SoapBubbleRenderer, SoapBubbleSettings } from './soap-bubble-renderer';
 import { splitMaterial, useSoapBubble, type SoapBubbleMaterialProps } from './use-soap-bubble';
 import './soap-bubble.css';
+import { soapBubbleMenuFrame } from './soap-bubble-motion';
 
 /**
  * Material the interface components start from: rainbow glass, with broad
@@ -155,7 +156,11 @@ export const SoapBubbleSurface = forwardRef<HTMLElement, SoapBubbleSurfaceProps>
         style={{ '--soap-bubble-radius': `${tuning.radius / 16}em`, ...style } as CSSProperties}
       >
         <canvas ref={canvas} className="soap-bubble-surface-canvas" aria-hidden="true" />
-        {children}
+        {Tag === 'button' ? (
+          <span className="soap-bubble-button-content">{children}</span>
+        ) : (
+          children
+        )}
       </Element>
     );
   },
@@ -621,6 +626,9 @@ export function SoapBubbleMenu({
     progress: 0,
     velocity: 0,
     frame: 0,
+    box: { x: 0, y: 0, width: 0, height: 0 },
+    focus: 0,
+    echo: 1,
     // The trigger as it looks (a pressed trigger is swollen) and how far
     // that reaches past its layout box on each side.
     from: { width: 0, height: 0, x: 0, y: 0 },
@@ -629,7 +637,7 @@ export function SoapBubbleMenu({
   const triggerEngine = useRef<SoapBubbleRenderer | null>(null);
   const menuJiggle = useRef(1);
   const id = useId();
-  const panelMaterial = { ...material, radius: material.radius ?? 26 };
+  const panelMaterial = { ...material, radius: material.radius ?? 32 };
   const {
     ready: panelReady,
     tuning: panelTuning,
@@ -641,7 +649,7 @@ export function SoapBubbleMenu({
     interactive: false,
     defaults: soapBubbleSystemDefaults,
   });
-  menuJiggle.current = jiggleOf(panelTuning.wobble);
+  menuJiggle.current = Math.min(1.6, panelTuning.wobble / 0.4);
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: PointerEvent) => {
@@ -651,14 +659,23 @@ export function SoapBubbleMenu({
     return () => document.removeEventListener('pointerdown', onPointer);
   }, [open]);
   useEffect(() => {
-    if (open && active >= 0) entries.current[active]?.focus();
-  }, [open, active]);
+    if (open && shown && active >= 0) entries.current[active]?.focus();
+  }, [open, shown, active]);
+  useLayoutEffect(() => {
+    const item = entries.current[active];
+    const highlight = content.current?.querySelector<HTMLElement>('.soap-bubble-menu-highlight');
+    if (!shown || !item || !highlight) return;
+    highlight.style.height = pixels(item.offsetHeight);
+    highlight.style.transform = `translateY(${item.offsetTop}px)`;
+  }, [active, shown]);
   // The trigger's box as it is drawn right now, which the panel starts from
   // on opening and returns to on closing.
   const measureTrigger = useCallback(() => {
     const button = trigger.current;
     if (!button) return;
-    const { width, height } = button.getBoundingClientRect();
+    const swell = triggerEngine.current?.motion().pressScale ?? 1;
+    const width = button.offsetWidth * swell;
+    const height = button.offsetHeight * swell;
     motion.current.from = {
       width,
       height,
@@ -682,78 +699,123 @@ export function SoapBubbleMenu({
       echo.current.style.translate = `${align === 'end' ? from.x : -from.x}px ${-from.y}px`;
     }
   }, [align, measureTrigger]);
-  // The morph never touches layout or paint: the renderer draws the bubble
-  // at its in-between size inside the open panel's canvas, and the actions
-  // are clipped by a scale and its inverse, both on the compositor.
+  // The film, clip and text share one measured timeline. The actions keep
+  // their settled position while the liquid outline stretches around them.
   const place = useCallback(() => {
-    const { progress, from, to } = motion.current;
+    const state = motion.current;
+    const { box, to } = state;
     if (!to.width || !to.height) return;
-    const width = Math.max(1, from.width + (to.width - from.width) * progress);
-    const height = Math.max(1, from.height + (to.height - from.height) * progress);
-    const whole = progress === 1;
-    // A swollen trigger reaches past its corner; the panel starts there and
-    // slides its corner home as it opens.
-    const rest = 1 - progress;
-    const x = align === 'end' ? to.width - width + from.x * rest : -from.x * rest;
-    panelEngine.current?.setShape(whole ? null : { x, y: -from.y * rest, width, height });
-    const scaleX = width / to.width;
-    const scaleY = height / to.height;
-    if (clip.current) clip.current.style.transform = whole ? '' : `scale(${scaleX}, ${scaleY})`;
+    const sx = Math.max(1, box.width) / to.width;
+    const sy = Math.max(1, box.height) / to.height;
+    panelEngine.current?.setShape(state.progress === 1 && box.x === 0 && box.y === 0 ? null : box);
+    if (clip.current) {
+      clip.current.style.transform = `translate(${box.x}px, ${box.y}px) scale(${sx}, ${sy})`;
+      const corner = Math.min(
+        box.width / 2,
+        box.height / 2,
+        (panelTuning.radius * (parseFloat(getComputedStyle(panel.current!).fontSize) || 16)) / 16,
+      );
+      clip.current.style.borderRadius = `${corner / sx}px / ${corner / sy}px`;
+    }
     if (content.current)
-      content.current.style.transform = whole ? '' : `scale(${1 / scaleX}, ${1 / scaleY})`;
-  }, [align, panelEngine]);
+      content.current.style.transform = `scale(${1 / sx}, ${1 / sy}) translate(${-box.x}px, ${-box.y}px)`;
+    root.current?.style.setProperty('--soap-menu-focus', String(state.focus));
+    root.current?.style.setProperty('--soap-menu-blur', `${(1 - state.focus) * 12}px`);
+    root.current?.style.setProperty('--soap-menu-echo', String(state.echo));
+  }, [panelEngine, panelTuning.radius]);
   useLayoutEffect(() => {
     if (open) setShown(true);
   }, [open]);
   useLayoutEffect(() => {
-    if (!shown) return;
+    if (!shown || !trigger.current) return;
     const state = motion.current;
-    const target = open ? 1 : 0;
-    const settle = () => {
-      state.progress = target;
-      state.velocity = 0;
-      state.frame = 0;
-      place();
-      if (!open) setShown(false);
+    const initialOpening = open && state.progress === 0;
+    if (open) measure();
+    else measureTrigger();
+    const button = trigger.current;
+    const baseWidth = button.offsetWidth;
+    const baseHeight = button.offsetHeight;
+    const anchor = baseHeight * 0.106;
+    if (panel.current) {
+      panel.current.style[align === 'end' ? 'right' : 'left'] = pixels(-anchor);
+    }
+    if (echo.current) {
+      echo.current.style.translate = `${align === 'end' ? -anchor : anchor}px 0px`;
+      echo.current.style.width = pixels(baseWidth);
+      echo.current.style.height = pixels(baseHeight);
+    }
+    const boxAt = (time: number) => {
+      const frame = soapBubbleMenuFrame(time, open, menuJiggle.current);
+      const width = Math.max(1, baseWidth + (state.to.width - baseWidth) * frame.growth);
+      const height = Math.max(1, baseHeight + (state.to.height - baseHeight) * frame.height);
+      const x = anchor + baseHeight * frame.x;
+      return {
+        frame,
+        box: {
+          x: align === 'end' ? state.to.width - width - x : x,
+          y: baseHeight * frame.y,
+          width,
+          height,
+        },
+      };
     };
-    // The panel carries on the trigger's film, wobble and tilt, and hands
-    // them back when it has shrunk into it, so neither swap shows.
-    if (open && state.progress === 0) {
-      measure();
+    const first = boxAt(0).box;
+    const initial = initialOpening
+      ? {
+          x:
+            align === 'end'
+              ? state.to.width - state.from.width - anchor + state.from.x
+              : anchor - state.from.x,
+          y: -state.from.y,
+          width: state.from.width,
+          height: state.from.height,
+        }
+      : { ...state.box };
+    const initialFocus = state.focus;
+    const initialEcho = state.echo;
+    if (initialOpening) {
       const handed = triggerEngine.current?.motion();
       if (handed) panelEngine.current?.adopt(handed);
     }
-    if (!open) measureTrigger();
     const finish = () => {
-      settle();
+      state.progress = open ? 1 : 0;
+      state.frame = 0;
+      state.focus = open ? 1 : 0;
+      state.echo = open ? 0 : 1;
+      state.box = boxAt(open ? 0.5 : 0.34).box;
+      place();
       if (!open) {
         const handed = panelEngine.current?.motion();
         if (handed) triggerEngine.current?.adopt(handed);
+        setShown(false);
       }
     };
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return finish();
-    place();
-    // Opening springs past the open size and back a couple of times, and the
-    // film jiggles as it fills out; closing is quick and does not bounce.
-    if (open) panelEngine.current?.rebound();
-    let last = 0;
-    const stiffness = open ? 420 : 640;
-    // Jiggle sets the bounce: a couple of swings at 1, none at 0. The floor
-    // keeps the overshoot within the canvas's room for it.
-    const damping = open ? Math.max(11, 46 - 31 * menuJiggle.current) : 46;
+    const started = performance.now();
     const step = (now: number) => {
-      const dt = last ? Math.min(1 / 30, (now - last) / 1000) : 1 / 60;
-      last = now;
-      state.velocity += ((target - state.progress) * stiffness - state.velocity * damping) * dt;
-      state.progress += state.velocity * dt;
-      if (Math.abs(target - state.progress) + Math.abs(state.velocity) < 2e-3) return finish();
+      const time = (now - started) / 1000;
+      const { frame, box } = boxAt(time);
+      if (frame.done) return finish();
+      // Carry the visible box through an interrupted opening or closing.
+      const carry = Math.exp(-time / (open ? 0.018 : 0.04));
+      state.box = {
+        x: box.x + (initial.x - first.x) * carry,
+        y: box.y + (initial.y - first.y) * carry,
+        width: Math.max(1, box.width + (initial.width - first.width) * carry),
+        height: Math.max(1, box.height + (initial.height - first.height) * carry),
+      };
+      state.progress = Math.min(0.999, Math.max(0.001, frame.growth));
+      state.focus = Math.min(1, Math.max(0, frame.focus + (initialFocus - (open ? 0 : 1)) * carry));
+      state.echo = Math.min(1, Math.max(0, frame.echo + (initialEcho - (open ? 1 : 0)) * carry));
       place();
       state.frame = requestAnimationFrame(step);
     };
+    state.box = initial;
+    place();
     cancelAnimationFrame(state.frame);
     state.frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(state.frame);
-  }, [open, shown, place, measure, measureTrigger, panelEngine]);
+  }, [open, shown, place, measure, measureTrigger, panelEngine, align]);
   const move = (delta: number) => {
     const enabled = items.map((item, index) => (item.disabled ? -1 : index)).filter((i) => i >= 0);
     if (!enabled.length) return;
