@@ -13,36 +13,36 @@ import liquidGlassLogoPreviewDark from './assets/liquid-glass-logo-preview-dark.
 import liquidGlassLogoPreviewLight from './assets/liquid-glass-logo-preview-light.webp';
 import showcasePointerPreview from './assets/showcase-pointer-preview.svg';
 import soapBubblePreview from './assets/soap-bubble/button.webp';
+import soapBubblePreviewLight from './assets/soap-bubble/button-light.webp';
 
 // Cards with one preview per site theme; CSS shows the one matching the page.
 const themedPreviews: Record<string, { dark: string; light: string }> = {
   'liquid-glass-logo': { dark: liquidGlassLogoPreviewDark, light: liquidGlassLogoPreviewLight },
+  'soap-bubble': { dark: soapBubblePreview, light: soapBubblePreviewLight },
 };
 
 export function CatalogComponentCard({ component }: { component: ComponentMetadata }) {
   const isOrb = component.slug === 'liquid-glass-orb';
   const preview =
-    component.slug === 'soap-bubble'
-      ? soapBubblePreview
-      : component.slug === 'showcase-pointer'
-        ? showcasePointerPreview
-        : component.slug === 'refracted-text'
-          ? refractedTextPreview
-          : component.slug === 'fractal-glass'
-            ? fractalGlassPreview
-            : isOrb
-              ? liquidGlassOrbPreview
-              : component.slug === 'topographic-terrain'
-                ? topographicTerrainPreview
-                : component.slug === 'fan-gallery'
-                  ? fanGalleryPreview
-                  : component.slug === 'shape-physics'
-                    ? shapePhysicsPreview
-                    : component.slug === 'topographic-flow'
-                      ? topographicFlowPreview
-                      : component.slug === 'chromatic-button'
-                        ? chromaticButtonPreview
-                        : null;
+    component.slug === 'showcase-pointer'
+      ? showcasePointerPreview
+      : component.slug === 'refracted-text'
+        ? refractedTextPreview
+        : component.slug === 'fractal-glass'
+          ? fractalGlassPreview
+          : isOrb
+            ? liquidGlassOrbPreview
+            : component.slug === 'topographic-terrain'
+              ? topographicTerrainPreview
+              : component.slug === 'fan-gallery'
+                ? fanGalleryPreview
+                : component.slug === 'shape-physics'
+                  ? shapePhysicsPreview
+                  : component.slug === 'topographic-flow'
+                    ? topographicFlowPreview
+                    : component.slug === 'chromatic-button'
+                      ? chromaticButtonPreview
+                      : null;
   const themed = themedPreviews[component.slug];
   return (
     <Link
@@ -57,6 +57,16 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
               key={theme}
               className={`components-card-preview-image is-theme-${theme}`}
               src={themed[theme]}
+              style={
+                component.slug === 'soap-bubble'
+                  ? {
+                      objectFit: 'contain',
+                      padding: '6%',
+                      boxSizing: 'border-box',
+                      background: theme === 'light' ? '#f7f7f8' : '#000',
+                    }
+                  : undefined
+              }
               alt=""
               width={1280}
               height={720}
@@ -66,16 +76,6 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
         {preview && (
           <img
             className="components-card-preview-image"
-            style={
-              component.slug === 'soap-bubble'
-                ? {
-                    objectFit: 'contain',
-                    padding: '6%',
-                    boxSizing: 'border-box',
-                    background: '#000',
-                  }
-                : undefined
-            }
             src={preview}
             alt=""
             width={1280}

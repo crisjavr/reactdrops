@@ -54,7 +54,7 @@
   aspect-ratio: 7 / 4;
   object-fit: cover;
   border-radius: 0.9rem;
-  background: #000;
+  background: var(--theme-background);
 }
 .soap-bubble-component-card > span {
   padding: 0.75rem 0.45rem 0.55rem;

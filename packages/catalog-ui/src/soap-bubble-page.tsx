@@ -897,7 +897,11 @@ export default function SoapBubblePage() {
                   }}
                 >
                   <img
-                    src={previewThumbnails[`./assets/soap-bubble/${option.value}.webp`]}
+                    src={
+                      previewThumbnails[
+                        `./assets/soap-bubble/${option.value}${theme === 'light' ? '-light' : ''}.webp`
+                      ]
+                    }
                     alt=""
                     width={280}
                     height={160}
