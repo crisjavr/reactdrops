@@ -20,6 +20,7 @@ import './liquid-glass-logo.css';
 
 export type LiquidGlassLogoHandle = {
   replay: () => void;
+  /** Shows the moment `seconds` after the start, with speed and delay applied. */
   seek: (seconds: number) => void;
   pause: () => void;
   play: () => void;
@@ -35,6 +36,13 @@ export type LiquidGlassLogoProps = Partial<LiquidGlassLogoTuning> & {
    * when the visitor prefers reduced motion.
    */
   backgroundVideo?: string;
+  /**
+   * Part of the background video that plays, in seconds. Animation time 0 shows
+   * backgroundVideoStart, and the video loops back to it after backgroundVideoEnd
+   * (the end of the file by default).
+   */
+  backgroundVideoStart?: number;
+  backgroundVideoEnd?: number;
   /** Horizontal and vertical offsets as percentages of the frame; 0 centers the background. */
   backgroundX?: number;
   backgroundY?: number;
@@ -49,12 +57,38 @@ export type LiquidGlassLogoProps = Partial<LiquidGlassLogoTuning> & {
   'aria-label'?: string;
 };
 
+/** The section of a video of `duration` seconds that plays, clamped to the file. */
+function videoSection(duration: number, start = 0, end?: number) {
+  const length = Number.isFinite(duration) && duration > 0 ? duration : Infinity;
+  const from = Number.isFinite(start) && start > 0 && start < length ? start : 0;
+  const to =
+    end !== undefined && Number.isFinite(end) && end > from ? Math.min(end, length) : length;
+  return { from, to };
+}
+
+/**
+ * Where a background video is at animation time `seconds`: its section starts
+ * at time 0 and loops back to its start after its end.
+ */
+export function liquidGlassLogoVideoTime(
+  seconds: number,
+  duration: number,
+  start?: number,
+  end?: number,
+) {
+  const { from, to } = videoSection(duration, start, end);
+  const time = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  return Number.isFinite(to) ? from + (time % (to - from)) : from + time;
+}
+
 export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogoProps>(
   function LiquidGlassLogo(
     {
       height,
       backgroundImage,
       backgroundVideo,
+      backgroundVideoStart = 0,
+      backgroundVideoEnd,
       backgroundX = 0,
       backgroundY = 0,
       backgroundScale = 1,
@@ -88,6 +122,10 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
     latest.current = tuning;
     // The background video shares the animation's clock: it pauses, restarts and
     // seeks with it, and stays still when the visitor prefers reduced motion.
+    const section = useRef({ start: backgroundVideoStart, end: backgroundVideoEnd });
+    section.current = { start: backgroundVideoStart, end: backgroundVideoEnd };
+    // A full-length video loops by itself; a section is looped by the watcher below.
+    const sectioned = backgroundVideoStart > 0 || backgroundVideoEnd !== undefined;
     const playVideo = () => {
       const media = video.current;
       if (!media || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
@@ -96,8 +134,8 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
     const seekVideo = (seconds: number) => {
       const media = video.current;
       if (!media) return;
-      const length = media.duration;
-      const target = Number.isFinite(length) && length > 0 ? seconds % length : seconds;
+      const { start, end } = section.current;
+      const target = liquidGlassLogoVideoTime(seconds, media.duration, start, end);
       if (Math.abs(media.currentTime - target) > 0.001) media.currentTime = target;
     };
     useImperativeHandle(
@@ -108,7 +146,9 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
           seekVideo(0);
         },
         seek: (seconds) => {
-          engine.current?.seek(seconds);
+          // Seconds as the animation plays them: its speed and delay apply, so a
+          // seek lands where the playing animation and its video would be.
+          engine.current?.seek(seconds * latest.current.speed);
           seekVideo(Number.isFinite(seconds) ? Math.max(0, seconds) : 0);
         },
         pause: () => {
@@ -133,6 +173,44 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
       // playVideo only reads refs.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tuning.paused, backgroundVideo]);
+    // Keeps a playing section inside its bounds, checked every frame so the
+    // jump back to the start lands on time.
+    useEffect(() => {
+      const media = video.current;
+      if (!media || !sectioned) return;
+      let frame = 0;
+      const keep = () => {
+        const { from, to } = videoSection(media.duration, backgroundVideoStart, backgroundVideoEnd);
+        if (media.ended || media.currentTime >= to || media.currentTime < from - 0.05) {
+          media.currentTime = from;
+          if (media.paused && !latest.current.paused) playVideo();
+        }
+      };
+      const watch = () => {
+        keep();
+        frame = requestAnimationFrame(watch);
+      };
+      const start = () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(watch);
+      };
+      const stop = () => cancelAnimationFrame(frame);
+      media.addEventListener('loadedmetadata', keep);
+      media.addEventListener('ended', keep);
+      media.addEventListener('play', start);
+      media.addEventListener('pause', stop);
+      if (media.readyState >= 1) keep();
+      if (!media.paused) start();
+      return () => {
+        stop();
+        media.removeEventListener('loadedmetadata', keep);
+        media.removeEventListener('ended', keep);
+        media.removeEventListener('play', start);
+        media.removeEventListener('pause', stop);
+      };
+      // playVideo only reads refs.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [backgroundVideo, sectioned, backgroundVideoStart, backgroundVideoEnd]);
     useEffect(() => {
       if (!canvas.current) return;
       let renderer: ReturnType<typeof createLiquidGlassLogoRenderer> = null;
@@ -175,7 +253,7 @@ export const LiquidGlassLogo = forwardRef<LiquidGlassLogoHandle, LiquidGlassLogo
             src={backgroundVideo}
             poster={backgroundImage}
             muted
-            loop
+            loop={!sectioned}
             playsInline
             preload="auto"
             disablePictureInPicture

@@ -61,6 +61,11 @@ export type LiquidGlassLogoTuning = {
   /** Seconds for the secondary glass rings to fade. */
   decay: number;
   speed: number;
+  /**
+   * Seconds the sequence waits before it starts, each time it plays. A background
+   * video keeps playing meanwhile.
+   */
+  delay: number;
   loop: boolean;
   /** Seconds the finished wordmark holds before a loop restarts. */
   loopDelay: number;
@@ -109,6 +114,7 @@ export const liquidGlassLogoDefaults: LiquidGlassLogoTuning = {
   innerWallFocus: 0,
   decay: 1.4,
   speed: 1,
+  delay: 0,
   loop: false,
   loopDelay: 1.6,
   paused: false,
@@ -266,6 +272,7 @@ export function normalizeLiquidGlassLogo(value: LiquidGlassLogoTuning): LiquidGl
     innerWallFocus: finite(value.innerWallFocus, d.innerWallFocus, 0, 1),
     decay: finite(value.decay, d.decay, 0.1, 10),
     speed: finite(value.speed, d.speed, 0.1, 4),
+    delay: finite(value.delay, d.delay, 0, 60),
     loopDelay: finite(value.loopDelay, d.loopDelay, 0, 30),
     maxDpr: finite(value.maxDpr, d.maxDpr, 0.5, 4),
   };
@@ -449,6 +456,24 @@ function rasterText(mark: HTMLImageElement | null, tuning: LiquidGlassLogoTuning
   return { canvas, box, contentWidth };
 }
 
+/** How light the page behind the logo is, from 0 (dark) to 1 (light). */
+function pageLightness(background: string) {
+  const [r, g, b] = parseColor(background);
+  return Math.min(1, Math.max(0, (0.299 * r + 0.587 * g + 0.114 * b - 0.35) / 0.4));
+}
+
+/**
+ * Seconds at speed 1 until the logo sequence stops changing on screen. Over a
+ * light page the glass simply clears; over a dark one its ripples and glow
+ * linger a little longer. The wordmark runs its whole script.
+ */
+export function liquidGlassLogoFinishTime(
+  tuning: Pick<LiquidGlassLogoTuning, 'ending' | 'background'>,
+) {
+  if (tuning.ending !== 'logo') return liquidGlassLogoDuration;
+  return pageLightness(tuning.background) >= 0.9 ? 1.4 : 1.75;
+}
+
 function parseColor(value: string): [number, number, number] {
   const probe = document.createElement('canvas').getContext('2d')!;
   probe.fillStyle = '#000';
@@ -611,6 +636,14 @@ export function createLiquidGlassLogoRenderer(
     );
   const draw = () => {
     if (!loaded || disposed) return;
+    // While the delay runs nothing shows yet, only what is behind the canvas.
+    if (!reduced?.matches && clock < tuning.delay * tuning.speed) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      return;
+    }
     const scale = fit();
     resizeScene();
     gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFramebuffer);
@@ -632,7 +665,9 @@ export function createLiquidGlassLogoRenderer(
     gl.uniform2f(uniform('uTextBox'), textBox[0] * scale, textBox[1] * scale);
     gl.uniform1f(uniform('uTextWidth'), textWidth * scale);
     const finishTime = tuning.ending === 'logo' ? logoFinishTime : liquidGlassLogoDuration;
-    const sequenceTime = reduced?.matches ? finishTime : clock;
+    const sequenceTime = reduced?.matches
+      ? finishTime
+      : Math.max(0, clock - tuning.delay * tuning.speed);
     const displayTime =
       tuning.ending === 'logo' ? Math.min(logoFinishTime, sequenceTime) : sequenceTime;
     gl.uniform1f(uniform('uTime'), displayTime);
@@ -677,9 +712,7 @@ export function createLiquidGlassLogoRenderer(
     // The logo reaches its resting size first, then holds while the glass clears.
     gl.uniform1f(uniform('uSettle'), settle);
     gl.uniform3fv(uniform('uTile'), parseColor(tuning.tileColor));
-    const [pageR, pageG, pageB] = parseColor(tuning.background);
-    const pageLuma = 0.299 * pageR + 0.587 * pageG + 0.114 * pageB;
-    const pageLight = Math.min(1, Math.max(0, (pageLuma - 0.35) / 0.4));
+    const pageLight = pageLightness(tuning.background);
     gl.uniform1f(uniform('uPageLight'), pageLight);
     gl.uniform1f(uniform('uTileEnabled'), tuning.tile ? 1 : 0);
     gl.uniform1f(uniform('uDepth'), tuning.depth);
@@ -780,15 +813,16 @@ export function createLiquidGlassLogoRenderer(
     if (moving) {
       clock += delta * tuning.speed;
       const cycle =
-        (tuning.ending === 'logo' ? logoFinishTime : liquidGlassLogoDuration) + tuning.loopDelay;
+        tuning.delay * tuning.speed +
+        (tuning.ending === 'logo' ? logoFinishTime : liquidGlassLogoDuration) +
+        tuning.loopDelay;
       if (tuning.loop && clock >= cycle) clock %= cycle;
     }
     draw();
-    if (
-      moving &&
-      (tuning.loop || clock < (tuning.ending === 'logo' ? logoFinishTime : liquidGlassLogoDuration))
-    )
-      request();
+    const end =
+      tuning.delay * tuning.speed +
+      (tuning.ending === 'logo' ? logoFinishTime : liquidGlassLogoDuration);
+    if (moving && (tuning.loop || clock < end)) request();
     else last = 0;
   };
   function request() {

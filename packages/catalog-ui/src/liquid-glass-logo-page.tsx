@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom';
 import {
   LiquidGlassLogo,
   liquidGlassLogoDefaults,
+  liquidGlassLogoFinishTime,
   liquidGlassLogoNoteLogo,
   liquidGlassLogoReferenceMark,
   liquidGlassLogoThemes,
@@ -27,6 +28,12 @@ import {
   type LiquidGlassLogoVideoFormat,
 } from './liquid-glass-logo-export';
 import { ImageUploadControl } from './image-upload-control';
+import {
+  VideoSectionTimeline,
+  type LogoClip,
+  type TimelineTarget,
+  type VideoSection,
+} from './video-section-timeline';
 import './catalog.css';
 import './liquid-glass-logo-page.css';
 
@@ -112,6 +119,7 @@ const logoControls = [
   'echoTint',
   'innerWallFocus',
   'speed',
+  'delay',
   'loop',
   'loopDelay',
   'paused',
@@ -191,51 +199,113 @@ const logoPresets = (choice: LogoChoice) => {
   return [
     { value: 'default', label: 'Logo default', settings: base },
     {
-      value: 'crystal-clear', label: 'Crystal clear',
+      value: 'crystal-clear',
+      label: 'Crystal clear',
       settings: {
-        ...base, depth: 0.85, dispersion: 0, relief: 0.05, caustics: 0.1,
-        highlights: 0.65, echoTint: 1, innerWallFocus: 1, bloom: 0,
-        dropStrength: 0.45, decay: 0.8, speed: 1.2,
+        ...base,
+        depth: 0.85,
+        dispersion: 0,
+        relief: 0.05,
+        caustics: 0.1,
+        highlights: 0.65,
+        echoTint: 1,
+        innerWallFocus: 1,
+        bloom: 0,
+        dropStrength: 0.45,
+        decay: 0.8,
+        speed: 1.2,
       },
     },
     {
-      value: 'soft-glow', label: 'Soft glow',
+      value: 'soft-glow',
+      label: 'Soft glow',
       settings: {
-        ...base, depth: 2.3, dispersion: 0.25, relief: 0.55, caustics: 2.3,
-        highlights: 2.6, echoTint: 0.2, innerWallFocus: 0, bloom: 1.9,
-        dropStrength: 1.6, decay: 2.4, speed: 0.65,
+        ...base,
+        depth: 2.3,
+        dispersion: 0.25,
+        relief: 0.55,
+        caustics: 2.3,
+        highlights: 2.6,
+        echoTint: 0.2,
+        innerWallFocus: 0,
+        bloom: 1.9,
+        dropStrength: 1.6,
+        decay: 2.4,
+        speed: 0.65,
       },
     },
     {
-      value: 'chromatic-edge', label: 'Chromatic edge',
+      value: 'chromatic-edge',
+      label: 'Chromatic edge',
       settings: {
-        ...base, depth: 2.6, dispersion: 3, relief: 0.8, caustics: 1.6,
-        highlights: 1.65, echoTint: 0, innerWallFocus: 0.9, bloom: 0.35,
-        dropStrength: 1.35, decay: 1.6, speed: 0.85,
+        ...base,
+        depth: 2.6,
+        dispersion: 3,
+        relief: 0.8,
+        caustics: 1.6,
+        highlights: 1.65,
+        echoTint: 0,
+        innerWallFocus: 0.9,
+        bloom: 0.35,
+        dropStrength: 1.35,
+        decay: 1.6,
+        speed: 0.85,
       },
     },
     {
-      value: 'sculpted', label: 'Sculpted',
+      value: 'sculpted',
+      label: 'Sculpted',
       settings: {
-        ...base, depth: 3.6, dispersion: 0.65, relief: 2.7, caustics: 1.45,
-        highlights: 1.75, echoTint: 0.6, innerWallFocus: 0.35, bloom: 0.3,
-        dropStrength: 1.8, decay: 1.8, speed: 0.9,
+        ...base,
+        depth: 3.6,
+        dispersion: 0.65,
+        relief: 2.7,
+        caustics: 1.45,
+        highlights: 1.75,
+        echoTint: 0.6,
+        innerWallFocus: 0.35,
+        bloom: 0.3,
+        dropStrength: 1.8,
+        decay: 1.8,
+        speed: 0.9,
       },
     },
     {
-      value: 'slow-melt', label: 'Slow melt',
+      value: 'slow-melt',
+      label: 'Slow melt',
       settings: {
-        ...base, depth: 2.4, dispersion: 1.45, relief: 1.2, caustics: 1.35,
-        highlights: 1.5, echoTint: 0.5, innerWallFocus: 0.15, bloom: 0.7,
-        dropStrength: 2.1, decay: 3, speed: 0.45, loopDelay: 2.4,
+        ...base,
+        depth: 2.4,
+        dispersion: 1.45,
+        relief: 1.2,
+        caustics: 1.35,
+        highlights: 1.5,
+        echoTint: 0.5,
+        innerWallFocus: 0.15,
+        bloom: 0.7,
+        dropStrength: 2.1,
+        decay: 3,
+        speed: 0.45,
+        loopDelay: 2.4,
       },
     },
     {
-      value: 'quick-snap', label: 'Quick snap',
+      value: 'quick-snap',
+      label: 'Quick snap',
       settings: {
-        ...base, depth: 2.1, dispersion: 0.8, relief: 0.75, caustics: 1.1,
-        highlights: 1.4, echoTint: 0.3, innerWallFocus: 0.6, bloom: 0.25,
-        dropStrength: 1.3, decay: 0.8, speed: 1.8, loopDelay: 1,
+        ...base,
+        depth: 2.1,
+        dispersion: 0.8,
+        relief: 0.75,
+        caustics: 1.1,
+        highlights: 1.4,
+        echoTint: 0.3,
+        innerWallFocus: 0.6,
+        bloom: 0.25,
+        dropStrength: 1.3,
+        decay: 0.8,
+        speed: 1.8,
+        loopDelay: 1,
       },
     },
   ];
@@ -252,7 +322,17 @@ const exportAspects = {
   '4:3': [4, 3],
 } as const;
 type ExportAspect = keyof typeof exportAspects;
+// By default the export lasts 2.4 s: the logo animation, then a hold on the
+// finished logo for whatever is left.
 const exportDuration = 2.4;
+/** Seconds at speed 1 until the logo stops changing; sooner over a light page. */
+const logoFinish = (background: string) =>
+  liquidGlassLogoFinishTime({ ending: 'logo', background });
+const defaultHold = (background: string) =>
+  Math.round((exportDuration - logoFinish(background)) * 100) / 100;
+const longestHold = 10;
+// A background video can lengthen the export up to this, recorded in real time.
+const longestVideoClip = 30;
 type ExportJob = {
   width: number;
   height: number;
@@ -315,20 +395,32 @@ const backgroundVideoError = 'This browser cannot play that video. Try an MP4 or
 const isVideoFile = (file: File) =>
   file.type.startsWith('video/') || (!file.type && /\.(mp4|m4v|mov|webm)$/i.test(file.name));
 
-// Reads the metadata of a chosen video, so an undecodable file is refused up front.
+// Reads the metadata of a chosen video, so an undecodable file is refused up
+// front, and measures its length: null when it cannot play, NaN when the
+// length stays unknown.
 function probeVideo(url: string) {
-  return new Promise<boolean>((resolve) => {
+  return new Promise<number | null>((resolve) => {
     const video = document.createElement('video');
-    const finish = (playable: boolean) => {
-      video.onloadedmetadata = video.onerror = null;
+    let timer = 0;
+    const finish = (duration: number | null) => {
+      clearTimeout(timer);
+      video.onloadedmetadata = video.ondurationchange = video.onerror = null;
       video.removeAttribute('src');
       video.load();
-      resolve(playable);
+      resolve(duration);
     };
+    const measured = () => Number.isFinite(video.duration) && video.duration > 0;
     video.muted = true;
     video.preload = 'metadata';
-    video.onloadedmetadata = () => finish(video.videoWidth > 0 && video.videoHeight > 0);
-    video.onerror = () => finish(false);
+    video.onloadedmetadata = () => {
+      if (!(video.videoWidth > 0 && video.videoHeight > 0)) return finish(null);
+      if (measured()) return finish(video.duration);
+      // WebM recordings can leave the length out; reading the end measures it.
+      video.ondurationchange = () => measured() && finish(video.duration);
+      timer = window.setTimeout(() => finish(NaN), 5000);
+      video.currentTime = 1e7;
+    };
+    video.onerror = () => finish(null);
     video.src = url;
   });
 }
@@ -336,7 +428,10 @@ function probeVideo(url: string) {
 function example(
   values: Values,
   logo: LogoChoice,
-  background?: BackgroundValues & { type: BackgroundType },
+  background?: BackgroundValues & {
+    type: BackgroundType;
+    section?: VideoSection & { duration: number };
+  },
 ) {
   // Colors that match the chosen theme are implied by it and stay out of the code.
   const base: Values = { ...defaults, ...liquidGlassLogoThemes[values.theme], theme: 'dark' };
@@ -348,12 +443,18 @@ function example(
         : `      ${name}={${String(value)}}`,
     );
   if (background) {
-    const { type, ...settings } = background;
+    const { type, section, ...settings } = background;
     props.push(
       type === 'video'
         ? '      backgroundVideo="/your-background.mp4"'
         : '      backgroundImage="/your-background.jpg"',
     );
+    if (type === 'video' && section) {
+      if (section.start > 0) props.push(`      backgroundVideoStart={${section.start}}`);
+      if (section.end < section.duration - 0.005) {
+        props.push(`      backgroundVideoEnd={${section.end}}`);
+      }
+    }
     for (const [name, value] of Object.entries(settings)) {
       if (value !== backgroundDefaults[name as keyof BackgroundValues]) {
         props.push(`      ${name}={${JSON.stringify(value)}}`);
@@ -391,11 +492,42 @@ export default function LiquidGlassLogoPage() {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('image');
   const [backgroundError, setBackgroundError] = useState('');
   const backgroundChoice = useRef(0);
+  // Length of a background video and the part of it the animation plays over.
+  const [backgroundDuration, setBackgroundDuration] = useState(NaN);
+  const [videoSection, setVideoSection] = useState<VideoSection>({
+    start: 0,
+    end: exportDuration,
+  });
+  const hasVideoSection =
+    backgroundSource !== '' && backgroundType === 'video' && Number.isFinite(backgroundDuration);
   const backgroundMedia = backgroundSource
     ? backgroundType === 'video'
-      ? { backgroundVideo: backgroundSource }
+      ? {
+          backgroundVideo: backgroundSource,
+          ...(hasVideoSection
+            ? { backgroundVideoStart: videoSection.start, backgroundVideoEnd: videoSection.end }
+            : {}),
+        }
       : { backgroundImage: backgroundSource }
     : {};
+  // The logo animation runs `logoLength` seconds after its delay; Speed and the
+  // timeline's Logo clip set the same thing. The export then holds the finished
+  // logo for `hold` seconds; with a video, the section is exactly that long.
+  const logoAnimationLength = logoFinish(values.background);
+  const logoLength = logoAnimationLength / values.speed;
+  const logoEnd = values.delay + logoLength;
+  const [hold, setHold] = useState(() => defaultHold(values.background));
+  // A new page color can end the animation sooner or later; the export keeps
+  // its length, so the time the logo is finished counts as hold.
+  const shownFinish = useRef(logoAnimationLength);
+  useEffect(() => {
+    const change = (shownFinish.current - logoAnimationLength) / values.speed;
+    shownFinish.current = logoAnimationLength;
+    if (change) setHold((old) => Math.round(Math.max(0, old + change) * 100) / 100);
+    // Speed stretches the animation and keeps the hold; only the finish counts here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logoAnimationLength]);
+  const clipLength = logoEnd + hold;
   const [backgroundValues, setBackgroundValues] = useState(backgroundDefaults);
   const setBackground = <K extends keyof BackgroundValues>(key: K, value: BackgroundValues[K]) => {
     setBackgroundValues((old) => ({ ...old, [key]: value }));
@@ -407,6 +539,8 @@ export default function LiquidGlassLogoPage() {
   const [exportType, setExportType] = useState<'video' | 'image'>('video');
   const [imageFormat, setImageFormat] = useState<LiquidGlassLogoImageFormat>('png');
   const [imageTime, setImageTime] = useState(0.9);
+  // A shorter video section can leave the chosen frame past the clip's end.
+  const frameTime = Math.min(imageTime, clipLength);
   const [transparentBackground, setTransparentBackground] = useState(false);
   const transparentImage = exportType === 'image' && imageFormat === 'png' && transparentBackground;
   const [exportFormat, setExportFormat] = useState<LiquidGlassLogoVideoFormat['extension']>('mp4');
@@ -442,14 +576,20 @@ export default function LiquidGlassLogoPage() {
     setBackgroundSource('');
     setBackgroundName('');
     setBackgroundError('');
+    setBackgroundDuration(NaN);
     setBackgroundValues(backgroundDefaults);
+    Object.assign(playhead.current, { offset: 0, playing: false });
+    setPlaying(false);
+    // The logo's delay is only set on the timeline, which leaves with the video.
+    setValues((old) => ({ ...old, delay: 0 }));
   };
   const chooseBackground = async (file: File) => {
     const choice = ++backgroundChoice.current;
     const url = URL.createObjectURL(file);
     const video = isVideoFile(file);
     setBackgroundError('');
-    if (video && !(await probeVideo(url))) {
+    const duration = video ? await probeVideo(url) : NaN;
+    if (duration === null) {
       URL.revokeObjectURL(url);
       if (choice === backgroundChoice.current) setBackgroundError(backgroundVideoError);
       return;
@@ -461,6 +601,9 @@ export default function LiquidGlassLogoPage() {
     setBackgroundSource(url);
     setBackgroundType(video ? 'video' : 'image');
     setBackgroundName(file.name);
+    setBackgroundDuration(duration);
+    // A new video starts with its opening, as long as the default export.
+    setVideoSection({ start: 0, end: Math.min(duration, exportDuration) || exportDuration });
     setBackgroundValues(backgroundDefaults);
   };
   useEffect(() => {
@@ -509,6 +652,8 @@ export default function LiquidGlassLogoPage() {
   const reset = () => {
     const theme = pageTheme.current ?? 'dark';
     setValues({ ...defaults, theme, ...liquidGlassLogoThemes[theme], ...logoGlass('nike') });
+    shownFinish.current = logoFinish(liquidGlassLogoThemes[theme].background);
+    setHold(defaultHold(liquidGlassLogoThemes[theme].background));
     setLogo('nike');
     setUpload('');
     setUploadName('');
@@ -565,7 +710,7 @@ export default function LiquidGlassLogoPage() {
           ? await exportLiquidGlassLogoImage({
               ...options,
               format: imageFormat,
-              seconds: imageTime,
+              seconds: frameTime,
               transparent: transparentImage,
               onProgress: (fraction, phase) => {
                 setExportPhase(phase);
@@ -576,7 +721,7 @@ export default function LiquidGlassLogoPage() {
               ...options,
               fps: exportFps,
               format: videoFormat!,
-              duration: exportDuration,
+              duration: clipLength,
               onProgress: (fraction) => {
                 setExportPhase('rendering');
                 setExportProgress(0.15 + fraction * 0.8);
@@ -584,7 +729,7 @@ export default function LiquidGlassLogoPage() {
             });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `liquid-glass-logo-${exportAspect.replace(':', 'x')}-${width}x${height}-${exportType === 'video' ? `${exportFps}fps` : `${imageTime.toFixed(2)}s${transparentImage ? '-transparent' : ''}`}.${extension}`;
+      link.download = `liquid-glass-logo-${exportAspect.replace(':', 'x')}-${width}x${height}-${exportType === 'video' ? `${exportFps}fps` : `${frameTime.toFixed(2)}s${transparentImage ? '-transparent' : ''}`}.${extension}`;
       link.click();
       setExportProgress(1);
       setExportPhase('ready');
@@ -598,26 +743,182 @@ export default function LiquidGlassLogoPage() {
     }
   };
   const logoSource = logo === 'upload' ? upload || liquidGlassLogoNoteLogo : logos[logo];
-  // A held frame also holds a background video at the same moment.
+  // With a video, the preview follows a playhead in export seconds, like an
+  // editor: it plays once to the end of the export and holds there, pauses
+  // with Space, and can be moved to any frame. A still export's playhead is
+  // its frame.
+  const timelineMode = hasVideoSection;
+  const [playing, setPlaying] = useState(false);
+  const playhead = useRef({ offset: 0, startedAt: 0, playing: false });
+  // The last frame sits just before the end, where the section would loop.
+  const lastFrame = Math.max(0, clipLength - 1 / 120);
+  const playheadTime = () => {
+    if (exportType === 'image') return frameTime;
+    const { offset, startedAt, playing } = playhead.current;
+    return playing ? Math.min(clipLength, offset + (performance.now() - startedAt) / 1000) : offset;
+  };
+  const pausePlayhead = () => {
+    const state = playhead.current;
+    if (state.playing) {
+      state.offset = Math.min(
+        clipLength,
+        state.offset + (performance.now() - state.startedAt) / 1000,
+      );
+      state.playing = false;
+      setPlaying(false);
+    }
+    ref.current?.pause();
+  };
+  const seekPlayhead = (seconds: number) => {
+    const time = Math.max(0, Math.min(clipLength, seconds));
+    if (exportType === 'image') {
+      setImageTime(Math.round(time * 100) / 100);
+      return;
+    }
+    pausePlayhead();
+    setInspectingGlass(false);
+    playhead.current.offset = time;
+    ref.current?.seek(Math.min(time, lastFrame));
+  };
+  const playPlayhead = (from?: number) => {
+    if (exportType !== 'video') return;
+    const state = playhead.current;
+    // At the end, playing starts over.
+    const start = from ?? (state.offset >= lastFrame ? 0 : state.offset);
+    Object.assign(state, { offset: start, startedAt: performance.now(), playing: true });
+    setPlaying(true);
+    setInspectingGlass(false);
+    ref.current?.seek(start);
+    ref.current?.play();
+  };
+  const togglePlayhead = () => (playhead.current.playing ? pausePlayhead() : playPlayhead());
+  // Playback stops on the export's last frame.
   useEffect(() => {
-    if (exportType === 'image') ref.current?.seek(imageTime);
-    else if (inspectingGlass) ref.current?.seek(glassPreviewTime);
-  }, [exportType, imageTime, values, logoSource, inspectingGlass, backgroundSource]);
+    if (!playing) return;
+    let frame = 0;
+    const watch = () => {
+      const state = playhead.current;
+      if (
+        state.playing &&
+        state.offset + (performance.now() - state.startedAt) / 1000 >= clipLength
+      ) {
+        pausePlayhead();
+        state.offset = clipLength;
+        ref.current?.seek(lastFrame);
+        return;
+      }
+      frame = requestAnimationFrame(watch);
+    };
+    frame = requestAnimationFrame(watch);
+    return () => cancelAnimationFrame(frame);
+    // The playhead state lives in a ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, clipLength]);
+  // A still export holds its frame, so nothing plays meanwhile.
+  useEffect(() => {
+    if (exportType === 'image' && playhead.current.playing) pausePlayhead();
+    // Only the export type matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportType]);
+  // A held frame also holds a background video at the same moment. A paused
+  // playhead redraws its frame with every change.
+  useEffect(() => {
+    if (exportType === 'image') ref.current?.seek(frameTime);
+    else if (inspectingGlass) {
+      const time = values.delay + glassPreviewTime / values.speed;
+      if (timelineMode) {
+        pausePlayhead();
+        playhead.current.offset = Math.min(time, clipLength);
+      }
+      ref.current?.seek(time);
+    } else if (timelineMode && !playhead.current.playing) {
+      ref.current?.seek(Math.min(playhead.current.offset, lastFrame));
+    }
+    // Pausing reads refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportType, frameTime, values, logoSource, inspectingGlass, backgroundSource, videoSection]);
   const replay = () => {
+    if (timelineMode) return playPlayhead(0);
     setInspectingGlass(false);
     ref.current?.replay();
     if (!values.paused) ref.current?.play();
   };
-  // A new background video starts together with the animation, as in an export.
+  // Dragging a clip on the timeline moves the playhead to its moved edge, once
+  // the preview has received the change.
+  type TimelineEdge = 'start' | 'end' | 'move';
+  const timelineScrub = useRef<{ target: TimelineTarget; edge: TimelineEdge } | null>(null);
+  const showTimelineEdge = (target: TimelineTarget, edge: TimelineEdge) =>
+    seekPlayhead(
+      target === 'section'
+        ? edge === 'end'
+          ? videoSection.end - videoSection.start
+          : 0
+        : values.delay + (edge === 'end' ? logoLength : 0),
+    );
+  const scrubTimeline = (target: TimelineTarget, edge: TimelineEdge) => {
+    if (exportType !== 'video') return;
+    timelineScrub.current = { target, edge };
+    showTimelineEdge(target, edge);
+  };
   useEffect(() => {
-    if (backgroundSource && backgroundType === 'video' && exportType === 'video') replay();
+    const pending = timelineScrub.current;
+    timelineScrub.current = null;
+    if (pending && exportType === 'video') showTimelineEdge(pending.target, pending.edge);
+    // Runs for a timeline change only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoSection, values.delay, values.speed]);
+  // Letting go leaves the playhead on that edge, paused.
+  const commitTimeline = () => {
+    timelineScrub.current = null;
+  };
+  // The section is the export: a shorter one trims the hold first, down to
+  // none, then pulls the logo in. Trimming the start keeps the logo on the same
+  // moment of the video.
+  const changeVideoSection = (next: VideoSection) => {
+    const trimmedStart = next.end === videoSection.end && next.start !== videoSection.start;
+    const shift = trimmedStart ? next.start - videoSection.start : 0;
+    const length = next.end - next.start;
+    const delay =
+      Math.round(Math.max(0, Math.min(values.delay - shift, length - logoLength)) * 100) / 100;
+    setVideoSection(next);
+    if (delay !== values.delay) setValues((old) => ({ ...old, delay }));
+    setHold(Math.round(Math.max(0, length - delay - logoLength) * 100) / 100);
+  };
+  // The Logo clip's position is the delay, and its length the speed.
+  const changeLogoClip = ({ start, length }: LogoClip) => {
+    const speed = Math.round((logoAnimationLength / length) * 1000) / 1000;
+    setValues((old) => ({ ...old, delay: start, speed }));
+  };
+  // The section follows the export when the logo or the hold changes: it grows
+  // or shrinks from its end, and moves back when the video ends first. Past the
+  // video's length the export loops it.
+  useEffect(() => {
+    if (!hasVideoSection) return;
+    setVideoSection((old) => {
+      const length = Math.min(backgroundDuration, longestVideoClip, clipLength);
+      if (Math.abs(old.end - old.start - length) < 0.006) return old;
+      const start = Math.min(old.start, Math.max(0, backgroundDuration - length));
+      const end = Math.min(backgroundDuration, Math.round((start + length) * 100) / 100);
+      return { start: Math.round(start * 100) / 100, end };
+    });
+  }, [clipLength, hasVideoSection, backgroundDuration]);
+  // A new background video plays the export once from its start; removing it
+  // brings back the plain looping preview.
+  useEffect(() => {
+    if (exportType === 'video' && (backgroundSource ? backgroundType === 'video' : true)) replay();
     // Only a new upload restarts the sequence.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backgroundSource]);
   const usage = example(
     values,
     logo,
-    backgroundSource ? { ...backgroundValues, type: backgroundType } : undefined,
+    backgroundSource
+      ? {
+          ...backgroundValues,
+          type: backgroundType,
+          section: hasVideoSection ? { ...videoSection, duration: backgroundDuration } : undefined,
+        }
+      : undefined,
   );
   const commands = Object.fromEntries(
     Object.entries({ npm: 'npx', pnpm: 'pnpm dlx', yarn: 'yarn dlx', bun: 'bunx --bun' }).map(
@@ -706,7 +1007,12 @@ export default function LiquidGlassLogoPage() {
             <LiquidGlassLogo
               ref={ref}
               {...values}
-              paused={exportType === 'image' || values.paused || inspectingGlass}
+              paused={
+                exportType === 'image' ||
+                (timelineMode ? !playing : values.paused || inspectingGlass)
+              }
+              // On the timeline the preview plays the export once, as it is saved.
+              loop={timelineMode ? false : values.loop}
               ending="logo"
               text=""
               mark=""
@@ -750,6 +1056,46 @@ export default function LiquidGlassLogoPage() {
       }
       controls={
         <>
+          {hasVideoSection && (
+            <fieldset className="reveal-control-group">
+              <legend className="reveal-group-heading">
+                <h3>Timeline</h3>
+              </legend>
+              <div className="reveal-fields">
+                <ControlField
+                  className="is-video-timeline"
+                  label="Video, logo and export"
+                  description="Drag the video section to choose the part of the video, or its edges to change its length; a shorter section trims the hold, then pulls the logo in. Drag the Logo clip to choose when the animation starts, or its edges to make it faster or slower. Drag the end of Export to change the hold. The export runs as long as the section."
+                >
+                  <VideoSectionTimeline
+                    src={backgroundSource}
+                    duration={backgroundDuration}
+                    section={videoSection}
+                    minLength={logoLength}
+                    maxLength={longestVideoClip}
+                    logo={{ start: values.delay, length: logoLength }}
+                    logoMinLength={logoAnimationLength / 4}
+                    logoMaxLength={logoAnimationLength / 0.1}
+                    logoLatestEnd={longestVideoClip - hold}
+                    clipLength={clipLength}
+                    clipMaxLength={Math.min(longestVideoClip, logoEnd + longestHold)}
+                    onClipChange={(length) =>
+                      setHold(Math.round(Math.max(0, length - logoEnd) * 100) / 100)
+                    }
+                    time={playheadTime}
+                    playing={playing}
+                    canPlay={exportType === 'video'}
+                    onTogglePlay={togglePlayhead}
+                    onSeek={seekPlayhead}
+                    onChange={changeVideoSection}
+                    onLogoChange={changeLogoClip}
+                    onScrub={scrubTimeline}
+                    onCommit={commitTimeline}
+                  />
+                </ControlField>
+              </div>
+            </fieldset>
+          )}
           <fieldset className="reveal-control-group">
             <legend className="reveal-group-heading">
               <h3>Images</h3>
@@ -1067,17 +1413,33 @@ export default function LiquidGlassLogoPage() {
                 />
               </ControlField>
               {exportType === 'video' ? (
-                <ControlField label="Frame rate" description="Frames per second.">
-                  <SelectControl
-                    label="Frame rate"
-                    value={String(exportFps)}
-                    options={[
-                      { value: '30', label: '30 fps' },
-                      { value: '60', label: '60 fps' },
-                    ]}
-                    onChange={(value) => setExportFps(Number(value))}
-                  />
-                </ControlField>
+                <>
+                  <ControlField label="Frame rate" description="Frames per second.">
+                    <SelectControl
+                      label="Frame rate"
+                      value={String(exportFps)}
+                      options={[
+                        { value: '30', label: '30 fps' },
+                        { value: '60', label: '60 fps' },
+                      ]}
+                      onChange={(value) => setExportFps(Number(value))}
+                    />
+                  </ControlField>
+                  <ControlField
+                    className="is-number"
+                    label="Hold (s)"
+                    description={`Seconds the finished logo stays on screen at the end of the video, which lasts ${clipLength.toFixed(1)} s.${hasVideoSection ? ' With a background video, trimming its section changes this too.' : ''}`}
+                  >
+                    <NumberControl
+                      label="Hold (s)"
+                      value={Math.round(hold * 100) / 100}
+                      min={0}
+                      max={longestHold}
+                      step={0.1}
+                      onChange={(value) => setHold(value)}
+                    />
+                  </ControlField>
+                </>
               ) : (
                 <ControlField
                   className="is-number"
@@ -1086,9 +1448,9 @@ export default function LiquidGlassLogoPage() {
                 >
                   <NumberControl
                     label="Frame (s)"
-                    value={imageTime}
+                    value={frameTime}
                     min={0}
-                    max={exportDuration}
+                    max={clipLength}
                     step={0.01}
                     onChange={(value) => setImageTime(value)}
                   />
@@ -1169,6 +1531,20 @@ export default function LiquidGlassLogoPage() {
           defaultValue: '—',
           description:
             'Video URL (MP4 or WebM) played muted and looping behind the animation. It follows paused, replay(), seek(), pause() and play(), and stays still with reduced motion. A backgroundImage becomes its poster.',
+        },
+        {
+          name: 'delay',
+          type: 'number',
+          defaultValue: '0',
+          description:
+            'Seconds the sequence waits before it starts, each time it plays. A background video keeps playing meanwhile.',
+        },
+        {
+          name: 'backgroundVideoStart / backgroundVideoEnd',
+          type: 'number',
+          defaultValue: '0 / video end',
+          description:
+            'The part of the background video that plays, in seconds. Animation time 0 shows the start, and the video loops back to it after the end.',
         },
         {
           name: 'backgroundX / backgroundY',

@@ -305,7 +305,7 @@
       "min": 0.1,
       "max": 4,
       "step": 0.05,
-      "description": "Playback rate of the glass sequence. At 1, the logo reveal lasts 1.8 seconds; the optional wordmark sequence lasts 3.3 seconds."
+      "description": "Playback rate of the glass sequence. At 1, the logo reveal is finished after 1.75 seconds on a dark page and 1.4 seconds on a light one; the optional wordmark sequence lasts 3.3 seconds."
     },
     {
       "name": "loop",

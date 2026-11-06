@@ -67,6 +67,7 @@
     "src/assets/soap-bubble/toggle.webp",
     "src/assets/topographic-flow-preview.webp",
     "src/assets/topographic-terrain-preview.webp",
+    "src/canvas-video-encode.ts",
     "src/catalog-component-card.tsx",
     "src/catalog-sidebar.tsx",
     "src/catalog.css",
@@ -126,6 +127,9 @@
     "src/use-popup-motion.ts",
     "src/use-preview-fullscreen.ts",
     "src/use-switch-motion.ts",
+    "src/video-file-muxer.ts",
+    "src/video-section-timeline.css",
+    "src/video-section-timeline.tsx",
     "src/viewport-entry-controls.tsx",
     "src/viewport-guides.css",
     "src/viewport-guides.tsx"

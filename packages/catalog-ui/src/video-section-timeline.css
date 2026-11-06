@@ -1,0 +1,381 @@
+/* The timeline fills its control row: label on top, tracks below. */
+.component-controls .reveal-fields > .reveal-field.is-video-timeline,
+.reveal-field.is-video-timeline {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  padding: 10px 10px 8px;
+}
+
+.video-section-timeline {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Play, the time and zoom sit at the top right, on the label's row. */
+.video-section-timeline-toolbar {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.video-section-timeline-tool {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--theme-border-strong);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--theme-ink);
+  cursor: pointer;
+}
+.video-section-timeline-tool:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--theme-ink) 8%, transparent);
+}
+.video-section-timeline-tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.video-section-timeline-tool:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.video-section-timeline-tool svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.video-section-timeline-tool.is-play svg {
+  stroke: none;
+}
+.video-section-timeline-clock {
+  min-width: 82px;
+  color: var(--theme-ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.video-section-timeline-zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.video-section-timeline-zoom-level {
+  min-width: 26px;
+  color: var(--theme-ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Labels stay put; the tracks scroll sideways when zoomed in. */
+.video-section-timeline-grid {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 2px;
+}
+.video-section-timeline-labels,
+.video-section-timeline-lanes {
+  display: grid;
+  grid-template-rows: 14px 40px 24px 18px;
+  row-gap: 5px;
+  align-items: center;
+  /* Room for edges and the playhead head, which reach past the tracks. */
+  padding: 5px 0;
+}
+.video-section-timeline-label {
+  color: var(--theme-ink-muted);
+  font-size: 11px;
+  line-height: 1;
+}
+.video-section-timeline-scroller {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.video-section-timeline-lanes {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 100%;
+  padding-inline: 12px;
+}
+/* One column: the playhead layer overlaps the tracks instead of taking a column. */
+.video-section-timeline-lanes > * {
+  grid-column: 1;
+}
+
+.video-section-timeline-ruler {
+  grid-row: 1;
+  position: relative;
+  cursor: ew-resize;
+  touch-action: none;
+  height: 100%;
+  border-bottom: 1px solid var(--theme-border);
+  color: var(--theme-ink-faint, var(--theme-ink-muted));
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.video-section-timeline-ruler span {
+  position: absolute;
+  bottom: 0;
+  padding: 0 0 3px 3px;
+  border-left: 1px solid var(--theme-border-strong);
+  white-space: nowrap;
+}
+
+.video-section-timeline-track {
+  position: relative;
+  height: 100%;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--theme-ink) 5%, transparent);
+}
+.video-section-timeline-track.is-video {
+  cursor: pointer;
+  background: color-mix(in srgb, var(--theme-ink) 8%, transparent);
+}
+.is-fixed .video-section-timeline-track.is-video {
+  cursor: default;
+}
+.video-section-timeline-strip {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  pointer-events: none;
+}
+/* Past its end, the clip plays the video again from the section start. */
+.video-section-timeline-loop {
+  position: absolute;
+  top: 0;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--theme-ink) 16%, transparent) 0 5px,
+    transparent 5px 10px
+  );
+  color: var(--theme-ink-muted);
+  font-size: 10px;
+  pointer-events: none;
+}
+.video-section-timeline-shade {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: color-mix(in srgb, var(--theme-background) 68%, transparent);
+  pointer-events: none;
+}
+
+.video-section-timeline-section {
+  position: absolute;
+  top: -3px;
+  box-sizing: border-box;
+  height: calc(100% + 6px);
+  min-width: 2px;
+  border: 2px solid var(--theme-ink);
+  border-radius: 4px;
+  cursor: grab;
+  touch-action: none;
+}
+.is-dragging-section .video-section-timeline-section,
+.is-dragging-logo .video-section-timeline-clip.is-animation {
+  cursor: grabbing;
+}
+.is-fixed .video-section-timeline-section {
+  cursor: default;
+}
+.video-section-timeline-handle {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 10px;
+  background: var(--theme-ink);
+  cursor: ew-resize;
+  touch-action: none;
+}
+.video-section-timeline-handle.is-start {
+  left: -10px;
+  border-radius: 4px 0 0 4px;
+}
+.video-section-timeline-handle.is-end {
+  right: -10px;
+  border-radius: 0 4px 4px 0;
+}
+.video-section-timeline-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 2px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 1px;
+  background: var(--theme-background);
+}
+.is-fixed .video-section-timeline-section .video-section-timeline-handle {
+  display: none;
+}
+.video-section-timeline-section:focus-visible,
+.video-section-timeline-clip.is-animation:focus-visible,
+.video-section-timeline-handle:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+
+.video-section-timeline-clip {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 6px;
+  overflow: hidden;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.video-section-timeline-clip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The logo animation moves and stretches like the section, with its own edges. */
+.video-section-timeline-clip.is-animation {
+  /* Above the hold, which its end edge overlaps. */
+  z-index: 1;
+  overflow: visible;
+  background: var(--theme-ink);
+  color: var(--theme-background);
+  cursor: grab;
+  touch-action: none;
+}
+.is-export .video-section-timeline-handle {
+  top: -1px;
+  bottom: -1px;
+  right: -9px;
+  width: 8px;
+  pointer-events: auto;
+  border-radius: 0 4px 4px 0;
+  background: color-mix(in srgb, var(--theme-ink) 72%, var(--theme-background));
+}
+.is-export .video-section-timeline-handle::after {
+  left: 3px;
+  height: 8px;
+  margin-top: -4px;
+}
+.is-logo .video-section-timeline-handle {
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: color-mix(in srgb, var(--theme-ink) 72%, var(--theme-background));
+}
+.is-logo .video-section-timeline-handle.is-start {
+  left: -8px;
+}
+.is-logo .video-section-timeline-handle.is-end {
+  right: -8px;
+}
+.is-logo .video-section-timeline-handle::after {
+  left: 3px;
+  height: 10px;
+  margin-top: -5px;
+}
+.video-section-timeline-clip.is-animation.has-hold {
+  border-radius: 4px 0 0 4px;
+}
+.video-section-timeline-clip.is-hold {
+  /* Clear of the logo's end edge. */
+  padding-left: 12px;
+  border-radius: 0 4px 4px 0;
+  background: color-mix(in srgb, var(--theme-ink) 22%, transparent);
+  color: var(--theme-ink);
+}
+/* Dragging the hold, or its end edge, sets how long the finished logo stays. */
+.video-section-timeline-clip.is-hold.is-adjustable {
+  overflow: visible;
+  cursor: ew-resize;
+  touch-action: none;
+}
+/* With no hold, a sliver past the logo's end edge keeps the hold's edge in reach. */
+.video-section-timeline-clip.is-hold.is-empty {
+  padding-right: 0;
+  background: none;
+}
+.video-section-timeline-clip.is-hold.is-empty .video-section-timeline-clip-label {
+  display: none;
+}
+.is-dragging-export .video-section-timeline-clip.is-hold {
+  cursor: ew-resize;
+}
+.video-section-timeline-track.is-export {
+  cursor: ew-resize;
+  touch-action: none;
+}
+/* The export clip lets clicks through to its track, which moves the playhead;
+   only its end edge, which sets the hold, takes the pointer. */
+.video-section-timeline-clip.is-export {
+  overflow: visible;
+  pointer-events: none;
+  border: 1px solid var(--theme-ink);
+  background: color-mix(in srgb, var(--theme-ink) 12%, transparent);
+  color: var(--theme-ink);
+}
+
+/* The playhead runs over every track. The ruler and the Export track move it;
+   it takes focus for frame steps with the arrow keys. */
+.video-section-timeline-overlay {
+  grid-row: 1 / -1;
+  position: relative;
+  z-index: 2;
+  align-self: stretch;
+  pointer-events: none;
+}
+.video-section-timeline-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: #ff4d4f;
+  outline: none;
+}
+.video-section-timeline-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px 2px 5px 5px;
+  background: #ff4d4f;
+}
+.video-section-timeline-playhead:focus-visible::before {
+  box-shadow:
+    0 0 0 2px var(--theme-background),
+    0 0 0 4px #ff4d4f;
+}
+
+.video-section-timeline-summary {
+  margin: 0;
+  color: var(--theme-ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}

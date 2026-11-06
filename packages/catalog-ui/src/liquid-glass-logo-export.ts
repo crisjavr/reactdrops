@@ -1,6 +1,10 @@
+import { liquidGlassLogoVideoTime } from '../../components/src/liquid-glass-logo';
+import { canvasVideoEncoderCodec, encodeCanvasVideo } from './canvas-video-encode';
+
 // Exports the Liquid Glass Logo as a still image or a video. Both use the same
 // background composition and explicitly seek the animation before copying it.
-// Video frames are delivered in real time for MediaRecorder's timestamps.
+// Video is encoded frame by frame at exact times where WebCodecs allows, and
+// otherwise follows the recording clock so slow rendering does not stretch time.
 // A background video shares that clock: frame t of the export shows the
 // background at t seconds (looping), exactly like the preview after a replay.
 
@@ -39,6 +43,9 @@ type FrameOptions = {
   backgroundImage?: string;
   /** Takes the place of backgroundImage, like the component's backgroundVideo. */
   backgroundVideo?: string;
+  /** Section of the background video, as in the component: export time 0 shows the start. */
+  backgroundVideoStart?: number;
+  backgroundVideoEnd?: number;
   backgroundX?: number;
   backgroundY?: number;
   backgroundScale?: number;
@@ -107,16 +114,18 @@ async function loadVideo(src: string) {
 /**
  * Keeps a background video at the export time. Stills seek to the exact frame;
  * a recording plays along in real time, like the recording clock, and only seeks
- * when the two drift apart (at the start, or after a slow frame).
+ * when the two drift apart (at the start, after a slow frame, or where the
+ * section loops back to its start).
  */
-function createVideoClock(video: HTMLVideoElement, live: boolean) {
-  const length = () =>
-    Number.isFinite(video.duration) && video.duration > 0 ? video.duration : Infinity;
+function createVideoClock(video: HTMLVideoElement, live: boolean, start?: number, end?: number) {
   return async (seconds: number) => {
-    const target = Number.isFinite(length()) ? seconds % length() : seconds;
-    const gap = Math.abs(video.currentTime - target);
-    const drift = Number.isFinite(length()) ? Math.min(gap, length() - gap) : gap;
-    if (drift > (live && !video.paused ? 0.12 : 0.001)) {
+    // A time right on a frame boundary can land on the frame before it; half a
+    // millisecond later is still the same frame at any frame rate.
+    const target = Math.min(
+      liquidGlassLogoVideoTime(seconds, video.duration, start, end) + 0.0005,
+      Number.isFinite(video.duration) ? Math.max(0, video.duration - 0.001) : Infinity,
+    );
+    if (Math.abs(video.currentTime - target) > (live && !video.paused ? 0.12 : 0.001)) {
       const seeked = waitForVideo(video, 'seeked', 'The background video could not be read.');
       video.currentTime = target;
       await seeked;
@@ -160,6 +169,8 @@ async function createFramePainter(
     background,
     backgroundImage,
     backgroundVideo,
+    backgroundVideoStart,
+    backgroundVideoEnd,
     backgroundX = 0,
     backgroundY = 0,
     backgroundScale = 1,
@@ -176,7 +187,9 @@ async function createFramePainter(
   const video = !transparent && backgroundVideo ? await loadVideo(backgroundVideo) : null;
   const image =
     video ?? (!transparent && backgroundImage ? await loadImage(backgroundImage) : null);
-  const syncVideo = video ? createVideoClock(video, live) : null;
+  const syncVideo = video
+    ? createVideoClock(video, live, backgroundVideoStart, backgroundVideoEnd)
+    : null;
   // The WebGL canvas does not keep its buffer, so it is copied right after each seek.
   // The video frame is ready first, so the background and the glass stay in step.
   const paint = async (seconds: number) => {
@@ -254,44 +267,66 @@ export async function exportLiquidGlassLogoImage(
   return { blob, extension: options.format === 'jpeg' ? 'jpg' : options.format };
 }
 
-export async function recordLiquidGlassLogoVideo(options: RecordOptions) {
+/** Real-time recording where WebCodecs is missing; frames slower than the frame rate are dropped. */
+async function recordInRealTime(
+  options: RecordOptions,
+  frame: HTMLCanvasElement,
+  paintFrame: (seconds: number) => Promise<void>,
+) {
   const { width, height, fps, format, duration, onProgress } = options;
-  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported(format.mimeType)) {
+  const stream = frame.captureStream(0);
+  const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
+  const recorder = new MediaRecorder(stream, {
+    mimeType: format.mimeType,
+    videoBitsPerSecond: Math.round(width * height * fps * 0.12),
+  });
+  const chunks: Blob[] = [];
+  recorder.ondataavailable = (event) => {
+    if (event.data.size) chunks.push(event.data);
+  };
+  const stopped = new Promise<void>((resolve) => {
+    recorder.onstop = () => resolve();
+  });
+  const paint = async (seconds: number) => {
+    await paintFrame(seconds);
+    track.requestFrame();
+  };
+  await paint(0);
+  recorder.start();
+  const frames = Math.max(1, Math.round(duration * fps));
+  const start = performance.now();
+  for (let index = 0; index <= frames; index++) {
+    await wait(start + (index * 1000) / fps - performance.now());
+    await paint(index / fps);
+    onProgress?.(index / frames);
+  }
+  await wait(1000 / fps);
+  recorder.stop();
+  await stopped;
+  track.stop();
+  return { blob: new Blob(chunks, { type: format.mimeType }), extension: format.extension };
+}
+
+/**
+ * Exports the video frame by frame where the browser can encode it (WebCodecs):
+ * every frame lands on its exact time, background video included, however slowly
+ * it renders. Elsewhere it records in real time, which drops slow frames.
+ */
+export async function recordLiquidGlassLogoVideo(options: RecordOptions) {
+  const { format } = options;
+  const probe = { ...options, canvas: options.source, paint: () => {} };
+  const codec = await canvasVideoEncoderCodec(probe);
+  if (
+    !codec &&
+    (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported(format.mimeType))
+  ) {
     throw new Error(`This browser cannot record ${format.extension.toUpperCase()} video.`);
   }
-  const { frame, paint: paintFrame, dispose } = await createFramePainter(options, { live: true });
+  const { frame, paint, dispose } = await createFramePainter(options, { live: !codec });
   try {
-    const stream = frame.captureStream(0);
-    const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
-    const recorder = new MediaRecorder(stream, {
-      mimeType: format.mimeType,
-      videoBitsPerSecond: Math.round(width * height * fps * 0.12),
-    });
-    const chunks: Blob[] = [];
-    recorder.ondataavailable = (event) => {
-      if (event.data.size) chunks.push(event.data);
-    };
-    const stopped = new Promise<void>((resolve) => {
-      recorder.onstop = () => resolve();
-    });
-    const paint = async (seconds: number) => {
-      await paintFrame(seconds);
-      track.requestFrame();
-    };
-    await paint(0);
-    recorder.start();
-    const frames = Math.max(1, Math.round(duration * fps));
-    const start = performance.now();
-    for (let index = 0; index <= frames; index++) {
-      await wait(start + (index * 1000) / fps - performance.now());
-      await paint(index / fps);
-      onProgress?.(index / frames);
-    }
-    await wait(1000 / fps);
-    recorder.stop();
-    await stopped;
-    track.stop();
-    return { blob: new Blob(chunks, { type: format.mimeType }), extension: format.extension };
+    return codec
+      ? await encodeCanvasVideo({ ...options, canvas: frame, paint }, codec)
+      : await recordInRealTime(options, frame, paint);
   } finally {
     dispose();
   }
