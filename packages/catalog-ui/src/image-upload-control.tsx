@@ -14,6 +14,8 @@ type ImageUploadControlProps = {
   validate?: (file: File) => string | null;
   /** URL of the current image, shown as the thumbnail. */
   preview?: string;
+  /** Kind of file the preview URL points to; a video shows its opening frame. */
+  previewType?: 'image' | 'video';
   /** Name of the uploaded file. A remove button appears while it is set. */
   fileName?: string;
   /** How the thumbnail fills its square. */
@@ -49,6 +51,7 @@ export function ImageUploadControl({
   accept = 'image/*',
   validate = imageOnly,
   preview = '',
+  previewType = 'image',
   fileName = '',
   fit = 'cover',
   surface,
@@ -113,7 +116,10 @@ export function ImageUploadControl({
           style={preview && surface ? { background: surface } : undefined}
           onClick={browse}
         >
-          {preview ? (
+          {preview && previewType === 'video' ? (
+            // A still frame: the main preview already plays the video.
+            <video src={preview} muted playsInline preload="auto" aria-hidden="true" />
+          ) : preview ? (
             <img src={preview} alt="" />
           ) : (
             <svg viewBox="0 0 24 24" aria-hidden="true">

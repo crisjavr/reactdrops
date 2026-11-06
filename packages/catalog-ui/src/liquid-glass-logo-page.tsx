@@ -279,7 +279,7 @@ const backgroundNumbers = [
     min: -100,
     max: 100,
     step: 1,
-    description: 'Move the image left or right, as a percentage of the frame width.',
+    description: 'Move the background left or right, as a percentage of the frame width.',
   },
   {
     name: 'backgroundY',
@@ -287,7 +287,7 @@ const backgroundNumbers = [
     min: -100,
     max: 100,
     step: 1,
-    description: 'Move the image up or down, as a percentage of the frame height.',
+    description: 'Move the background up or down, as a percentage of the frame height.',
   },
   {
     name: 'backgroundScale',
@@ -295,7 +295,7 @@ const backgroundNumbers = [
     min: 1,
     max: 3,
     step: 0.05,
-    description: 'Enlarge the image to keep the frame covered while moving it.',
+    description: 'Enlarge the background to keep the frame covered while moving it.',
   },
   {
     name: 'backgroundTintOpacity',
@@ -308,7 +308,36 @@ const backgroundNumbers = [
   },
 ] as const;
 
-function example(values: Values, logo: LogoChoice, background?: BackgroundValues) {
+type BackgroundType = 'image' | 'video';
+const backgroundAccept =
+  'image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,video/x-m4v';
+const backgroundVideoError = 'This browser cannot play that video. Try an MP4 or WebM file.';
+const isVideoFile = (file: File) =>
+  file.type.startsWith('video/') || (!file.type && /\.(mp4|m4v|mov|webm)$/i.test(file.name));
+
+// Reads the metadata of a chosen video, so an undecodable file is refused up front.
+function probeVideo(url: string) {
+  return new Promise<boolean>((resolve) => {
+    const video = document.createElement('video');
+    const finish = (playable: boolean) => {
+      video.onloadedmetadata = video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
+      resolve(playable);
+    };
+    video.muted = true;
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => finish(video.videoWidth > 0 && video.videoHeight > 0);
+    video.onerror = () => finish(false);
+    video.src = url;
+  });
+}
+
+function example(
+  values: Values,
+  logo: LogoChoice,
+  background?: BackgroundValues & { type: BackgroundType },
+) {
   // Colors that match the chosen theme are implied by it and stay out of the code.
   const base: Values = { ...defaults, ...liquidGlassLogoThemes[values.theme], theme: 'dark' };
   const props = Object.entries(values)
@@ -319,8 +348,13 @@ function example(values: Values, logo: LogoChoice, background?: BackgroundValues
         : `      ${name}={${String(value)}}`,
     );
   if (background) {
-    props.push('      backgroundImage="/your-background.jpg"');
-    for (const [name, value] of Object.entries(background)) {
+    const { type, ...settings } = background;
+    props.push(
+      type === 'video'
+        ? '      backgroundVideo="/your-background.mp4"'
+        : '      backgroundImage="/your-background.jpg"',
+    );
+    for (const [name, value] of Object.entries(settings)) {
       if (value !== backgroundDefaults[name as keyof BackgroundValues]) {
         props.push(`      ${name}={${JSON.stringify(value)}}`);
       }
@@ -352,7 +386,16 @@ export default function LiquidGlassLogoPage() {
   const [upload, setUpload] = useState('');
   const [uploadName, setUploadName] = useState('');
   const [backgroundName, setBackgroundName] = useState('');
-  const [backgroundImage, setBackgroundImage] = useState('');
+  // Object URL of the uploaded background, an image or a video.
+  const [backgroundSource, setBackgroundSource] = useState('');
+  const [backgroundType, setBackgroundType] = useState<BackgroundType>('image');
+  const [backgroundError, setBackgroundError] = useState('');
+  const backgroundChoice = useRef(0);
+  const backgroundMedia = backgroundSource
+    ? backgroundType === 'video'
+      ? { backgroundVideo: backgroundSource }
+      : { backgroundImage: backgroundSource }
+    : {};
   const [backgroundValues, setBackgroundValues] = useState(backgroundDefaults);
   const setBackground = <K extends keyof BackgroundValues>(key: K, value: BackgroundValues[K]) => {
     setBackgroundValues((old) => ({ ...old, [key]: value }));
@@ -391,9 +434,35 @@ export default function LiquidGlassLogoPage() {
   };
   useEffect(() => () => (upload ? URL.revokeObjectURL(upload) : undefined), [upload]);
   useEffect(
-    () => () => (backgroundImage ? URL.revokeObjectURL(backgroundImage) : undefined),
-    [backgroundImage],
+    () => () => (backgroundSource ? URL.revokeObjectURL(backgroundSource) : undefined),
+    [backgroundSource],
   );
+  const clearBackground = () => {
+    backgroundChoice.current++;
+    setBackgroundSource('');
+    setBackgroundName('');
+    setBackgroundError('');
+    setBackgroundValues(backgroundDefaults);
+  };
+  const chooseBackground = async (file: File) => {
+    const choice = ++backgroundChoice.current;
+    const url = URL.createObjectURL(file);
+    const video = isVideoFile(file);
+    setBackgroundError('');
+    if (video && !(await probeVideo(url))) {
+      URL.revokeObjectURL(url);
+      if (choice === backgroundChoice.current) setBackgroundError(backgroundVideoError);
+      return;
+    }
+    if (choice !== backgroundChoice.current) {
+      URL.revokeObjectURL(url);
+      return;
+    }
+    setBackgroundSource(url);
+    setBackgroundType(video ? 'video' : 'image');
+    setBackgroundName(file.name);
+    setBackgroundValues(backgroundDefaults);
+  };
   useEffect(() => {
     const supported = liquidGlassLogoVideoFormats();
     setVideoFormats(supported);
@@ -443,9 +512,7 @@ export default function LiquidGlassLogoPage() {
     setLogo('nike');
     setUpload('');
     setUploadName('');
-    setBackgroundImage('');
-    setBackgroundName('');
-    setBackgroundValues(backgroundDefaults);
+    clearBackground();
     replay();
   };
   // Renders the sequence off screen at the exact output size, framed like the
@@ -490,7 +557,7 @@ export default function LiquidGlassLogoPage() {
         width,
         height,
         background: values.background,
-        backgroundImage: backgroundImage || undefined,
+        ...backgroundMedia,
         ...backgroundValues,
       };
       const { blob, extension } =
@@ -531,16 +598,27 @@ export default function LiquidGlassLogoPage() {
     }
   };
   const logoSource = logo === 'upload' ? upload || liquidGlassLogoNoteLogo : logos[logo];
+  // A held frame also holds a background video at the same moment.
   useEffect(() => {
     if (exportType === 'image') ref.current?.seek(imageTime);
     else if (inspectingGlass) ref.current?.seek(glassPreviewTime);
-  }, [exportType, imageTime, values, logoSource, inspectingGlass]);
+  }, [exportType, imageTime, values, logoSource, inspectingGlass, backgroundSource]);
   const replay = () => {
     setInspectingGlass(false);
     ref.current?.replay();
     if (!values.paused) ref.current?.play();
   };
-  const usage = example(values, logo, backgroundImage ? backgroundValues : undefined);
+  // A new background video starts together with the animation, as in an export.
+  useEffect(() => {
+    if (backgroundSource && backgroundType === 'video' && exportType === 'video') replay();
+    // Only a new upload restarts the sequence.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backgroundSource]);
+  const usage = example(
+    values,
+    logo,
+    backgroundSource ? { ...backgroundValues, type: backgroundType } : undefined,
+  );
   const commands = Object.fromEntries(
     Object.entries({ npm: 'npx', pnpm: 'pnpm dlx', yarn: 'yarn dlx', bun: 'bunx --bun' }).map(
       ([manager, runner]) => [
@@ -634,7 +712,7 @@ export default function LiquidGlassLogoPage() {
               mark=""
               aria-label={logo === 'upload' ? 'Logo' : logoNames[logo]}
               logo={logoSource}
-              backgroundImage={transparentImage ? undefined : backgroundImage || undefined}
+              {...(transparentImage ? {} : backgroundMedia)}
               {...backgroundValues}
               style={{
                 height: '100%',
@@ -661,8 +739,9 @@ export default function LiquidGlassLogoPage() {
                 logo={logoSource}
                 logoSize={exportJob.logoSize}
                 maxDpr={exportJob.pixelRatio}
-                backgroundImage={transparentImage ? undefined : backgroundImage || undefined}
-                {...backgroundValues}
+                // The export draws the background itself; here only the plate
+                // must turn see-through, as it does over the preview background.
+                tile={values.tile && (transparentImage || !backgroundSource)}
                 style={{ height: '100%', minHeight: 0 }}
               />
             </div>
@@ -678,21 +757,20 @@ export default function LiquidGlassLogoPage() {
             <div className="reveal-fields liquid-glass-logo-image-fields">
               <ImageUploadControl
                 label="Background"
-                description="Image behind the glass logo. Drop an image here or click to choose one."
-                accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml"
-                preview={backgroundImage}
+                description="Image or video behind the glass logo. Videos play muted and loop, and exports include them. Drop a file here or click to choose one."
+                hint="Image or video · drop or click"
+                accept={backgroundAccept}
+                validate={(file) =>
+                  file.type.startsWith('image/') || isVideoFile(file)
+                    ? null
+                    : 'Use an image or a video file.'
+                }
+                preview={backgroundSource}
+                previewType={backgroundType}
                 fit="cover"
                 fileName={backgroundName}
-                onFile={(file) => {
-                  setBackgroundImage(URL.createObjectURL(file));
-                  setBackgroundName(file.name);
-                  setBackgroundValues(backgroundDefaults);
-                }}
-                onClear={() => {
-                  setBackgroundImage('');
-                  setBackgroundName('');
-                  setBackgroundValues(backgroundDefaults);
-                }}
+                onFile={(file) => void chooseBackground(file)}
+                onClear={clearBackground}
               />
               <ImageUploadControl
                 label="Logo"
@@ -726,9 +804,14 @@ export default function LiquidGlassLogoPage() {
                   replay();
                 }}
               />
+              {backgroundError && (
+                <p className="image-upload-control-error" role="alert">
+                  {backgroundError}
+                </p>
+              )}
             </div>
           </fieldset>
-          {backgroundImage && (
+          {backgroundSource && (
             <fieldset className="reveal-control-group">
               <legend className="reveal-group-heading">
                 <h3>Background</h3>
@@ -754,7 +837,7 @@ export default function LiquidGlassLogoPage() {
                 <ControlField
                   className="is-color"
                   label="Tint color"
-                  description="Color layered over the background image, behind the glass and logo."
+                  description="Color layered over the background, behind the glass and logo."
                 >
                   <ColorControl
                     label="Tint color"
@@ -849,14 +932,14 @@ export default function LiquidGlassLogoPage() {
                 className="is-boolean"
                 label="Icon plate"
                 description={
-                  backgroundImage
-                    ? 'Off while a background image is set: the glass stays see-through.'
+                  backgroundSource
+                    ? `Off while a background ${backgroundType} is set: the glass stays see-through.`
                     : 'Show the dark glass plate behind the logo.'
                 }
               >
                 <SwitchControl
                   label="Icon plate"
-                  checked={values.tile && !backgroundImage}
+                  checked={values.tile && !backgroundSource}
                   onChange={(value) => set('tile', value)}
                 />
               </ControlField>
@@ -1015,7 +1098,7 @@ export default function LiquidGlassLogoPage() {
                 <ControlField
                   className="is-boolean"
                   label="Transparent background"
-                  description="Remove the background color, uploaded image and tint. Keep only the glass and logo in the PNG."
+                  description="Remove the background color, uploaded image or video and tint. Keep only the glass and logo in the PNG."
                 >
                   <SwitchControl
                     label="Transparent background"
@@ -1081,23 +1164,31 @@ export default function LiquidGlassLogoPage() {
             'Image URL drawn behind the animation, covering the container. The plate turns see-through so the image shows through the glass.',
         },
         {
+          name: 'backgroundVideo',
+          type: 'string',
+          defaultValue: '—',
+          description:
+            'Video URL (MP4 or WebM) played muted and looping behind the animation. It follows paused, replay(), seek(), pause() and play(), and stays still with reduced motion. A backgroundImage becomes its poster.',
+        },
+        {
           name: 'backgroundX / backgroundY',
           type: 'number',
           defaultValue: '0',
-          description: 'Image offsets from the center, from -100 to 100 percent of the frame size.',
+          description:
+            'Background offsets from the center, from -100 to 100 percent of the frame size.',
         },
         {
           name: 'backgroundScale',
           type: 'number',
           defaultValue: '1',
-          description: 'Zoom of the cover image, from 1 to 3.',
+          description: 'Zoom of the cover image or video, from 1 to 3.',
         },
         {
           name: 'backgroundTint',
           type: 'string',
           defaultValue: '#000000',
           description:
-            'Overlay color between the background image and the logo. Black darkens the image.',
+            'Overlay color between the background and the logo. Black darkens the image or video.',
         },
         {
           name: 'backgroundTintOpacity',

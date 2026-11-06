@@ -15,6 +15,9 @@
   height: 100%;
   pointer-events: none;
 }
+video.liquid-glass-logo-background {
+  object-fit: cover;
+}
 .liquid-glass-logo > canvas {
   opacity: 0;
 }
