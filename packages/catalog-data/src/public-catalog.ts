@@ -10,6 +10,7 @@ import topographicFlowJson from './components/topographic-flow.json';
 import chromaticButtonJson from './components/chromatic-button.json';
 import showcasePointerJson from './components/showcase-pointer.json';
 import soapBubbleJson from './components/soap-bubble.json';
+import depthFieldJson from './components/depth-field.json';
 import { isPublishedComponent } from './publication.mjs';
 export type { ComponentMetadata } from '@reactdrops/component-schema';
 export { isPublishedComponent, componentPath } from './publication.mjs';
@@ -25,7 +26,9 @@ export const fractalGlass = fractalGlassJson as ComponentMetadata;
 export const refractedText = refractedTextJson as ComponentMetadata;
 export const showcasePointer = showcasePointerJson as ComponentMetadata;
 export const soapBubble = soapBubbleJson as ComponentMetadata;
+export const depthField = depthFieldJson as ComponentMetadata;
 export const components = [
+  depthField,
   soapBubble,
   showcasePointer,
   refractedText,

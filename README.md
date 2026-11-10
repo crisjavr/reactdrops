@@ -16,7 +16,7 @@
 <p>
   <a href="https://github.com/crisjavr/reactdrops/stargazers"><img src="https://img.shields.io/github/stars/crisjavr/reactdrops?style=flat&logo=github&label=Stars&color=111111" alt="GitHub stars" /></a>
   <a href="https://github.com/crisjavr/reactdrops/commits/main"><img src="https://img.shields.io/github/last-commit/crisjavr/reactdrops?style=flat&label=Last%20drop&color=111111" alt="Last commit" /></a>
-  <a href="https://reactdrops.dev/components"><img src="https://img.shields.io/badge/components-11-111111?style=flat" alt="11 components" /></a>
+  <a href="https://reactdrops.dev/components"><img src="https://img.shields.io/badge/components-12-111111?style=flat" alt="12 components" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-ReactDrops%20Component%201.0-111111?style=flat" alt="License" /></a>
 </p>
 <p>
@@ -70,6 +70,7 @@ export function Hero() {
 
 | Component | Category | Description | Dependencies |
 | --- | --- | --- | --- |
+| [**Depth Field**](https://reactdrops.dev/components/hero/depth-field) | Hero | A hero where your photos emerge from depth and orbit around the heading, with an entrance pulse and scroll impulses. | — |
 | [**Bubble UI**](https://reactdrops.dev/components/button/soap-bubble) | Button | Soap-film buttons, menus, search, switches and sliders with configurable glass and oil. | `html-to-image` |
 | [**Liquid Glass Orb**](https://reactdrops.dev/components/ai/liquid-glass-orb) | AI | A liquid glass orb for AI interfaces with agent states, voice response and six palettes. | `gsap` |
 | [**Refracted Text**](https://reactdrops.dev/components/text-effect/refracted-text) | Text Effect | Glass letters with a character lift, a refracted light beam and spectral colors. | — |
@@ -86,6 +87,7 @@ export function Hero() {
 <summary><strong>Install all components</strong></summary>
 
 ```sh
+npx shadcn@latest add https://reactdrops.dev/r/depth-field.json
 npx shadcn@latest add https://reactdrops.dev/r/soap-bubble.json
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-orb.json
 npx shadcn@latest add https://reactdrops.dev/r/refracted-text.json
@@ -106,6 +108,34 @@ Bubble UI follows the catalog defaults: **Light glass on light pages and Rainbow
 ## Usage
 
 Each example assumes you installed the component with the command shown. Visit the component page for every prop and a live customizer.
+
+<details>
+<summary><strong>Depth Field</strong>: a hero with photos emerging from depth</summary>
+
+```sh
+npx shadcn@latest add https://reactdrops.dev/r/depth-field.json
+```
+
+```tsx
+import { DepthField } from './components/depth-field';
+
+export function Example() {
+  return (
+    <DepthField
+      images={['/images/one.webp', '/images/two.webp', '/images/three.webp']}
+      title={'Follow your\ncuriosity.'}
+      height="100svh"
+    />
+  );
+}
+```
+
+- Photos keep their proportions, emerge one by one from the vanishing point and orbit around the heading. The heading and buttons are visible from the first frame.
+- `entryDuration` (2.8 s by default) and `entryBurst` shape the entrance, and `entryDelay` waits before it starts. Scrolling adds a brief forward impulse.
+- Installs `depth-field.tsx`, `depth-model.ts`, `depth-renderer.ts` and `depth-field.css`. No runtime library beyond React.
+- The heading uses Plus Jakarta Sans (600) when your page loads it; set `fontFamily` to use another font.
+
+</details>
 
 <details>
 <summary><strong>Liquid Glass Orb</strong>: AI agent states and voice</summary>

@@ -29,3 +29,5 @@ export {
 } from './generated/showcase-pointer-source';
 
 export { soapBubbleSourceFiles, soapBubbleUsage } from './generated/soap-bubble-source';
+
+export { depthFieldSourceFiles, depthFieldUsage } from './generated/depth-field-source';

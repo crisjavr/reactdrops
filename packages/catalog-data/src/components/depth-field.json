@@ -1,0 +1,162 @@
+{
+  "slug": "depth-field",
+  "name": "Depth Field",
+  "family": {
+    "slug": "hero",
+    "name": "Hero"
+  },
+  "version": "1.4.19",
+  "description": "An emerging image cloud with circular rotation, pronounced perspective growth, a shared entrance pulse and fading scroll impulses.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 8,
+  "publishedAt": "2026-11-10",
+  "styles": [
+    "minimal"
+  ],
+  "types": [
+    "hero",
+    "gallery",
+    "image"
+  ],
+  "interactions": [
+    "scroll"
+  ],
+  "technologies": [
+    "react"
+  ],
+  "scopes": [
+    "section"
+  ],
+  "compatibility": [
+    "react",
+    "nextjs",
+    "vite"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "speed",
+      "label": "Drift speed",
+      "type": "number",
+      "defaultValue": 5,
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "description": "Continuous forward travel speed through the cloud, in depth units per second."
+    },
+    {
+      "name": "entryBurst",
+      "label": "Entry speed",
+      "type": "number",
+      "defaultValue": 70,
+      "min": 0,
+      "max": 500,
+      "step": 2,
+      "description": "Peak forward speed of the entrance pulse. Rotation shares the same speed multiplier; both ease back to their normal speeds. Changing it replays the catalog preview."
+    },
+    {
+      "name": "entryDuration",
+      "label": "Entry duration (s)",
+      "type": "number",
+      "defaultValue": 2.8,
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "description": "Duration of the entrance pulse from an empty image field. The first quarter accelerates; the remaining three quarters ease back into drift."
+    },
+    {
+      "name": "entryDelay",
+      "label": "Entry delay (s)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "description": "Wait before the entrance starts. The heading and buttons are already visible while the image field stays empty. Only time on screen counts, and it has no effect when Entry duration is 0. Changing it replays the catalog preview."
+    },
+    {
+      "name": "scrollBoost",
+      "label": "Scroll acceleration",
+      "type": "number",
+      "defaultValue": 50,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "description": "Strength of a brief forward impulse while scrolling in either direction. Acceleration ramps up smoothly and fades after scrolling stops."
+    },
+    {
+      "name": "rotationSpeed",
+      "label": "Rotation speed (°/s)",
+      "type": "number",
+      "defaultValue": 11,
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "description": "Circular angular speed in degrees per second. A uniform screen scale keeps the orbit circular at every viewport shape. The entrance shares the forward speed multiplier."
+    },
+    {
+      "name": "rotationDirection",
+      "label": "Rotation direction",
+      "type": "select",
+      "defaultValue": "counterclockwise",
+      "options": [
+        "counterclockwise",
+        "clockwise"
+      ],
+      "description": "Choose counterclockwise or clockwise rotation."
+    },
+    {
+      "name": "spread",
+      "label": "Spread",
+      "type": "number",
+      "defaultValue": 12,
+      "min": 2,
+      "max": 20,
+      "step": 0.5,
+      "description": "Distance from the center of the image field. Larger values leave more space around the text."
+    },
+    {
+      "name": "depth",
+      "label": "Depth",
+      "type": "number",
+      "defaultValue": 96,
+      "min": 20,
+      "max": 160,
+      "step": 1,
+      "description": "Distance across which images approach and fade in. Source images are assigned independently of spatial and arrival order, so repeated images do not progress as a spiral."
+    },
+    {
+      "name": "count",
+      "label": "Image count",
+      "type": "number",
+      "defaultValue": 36,
+      "min": 6,
+      "max": 80,
+      "step": 1,
+      "description": "Number of image planes. The supplied images repeat through the field."
+    },
+    {
+      "name": "imageSize",
+      "label": "Image size",
+      "type": "number",
+      "defaultValue": 3.8,
+      "min": 0.3,
+      "max": 8,
+      "step": 0.1,
+      "description": "Base size of each image’s longest edge. Approaching images grow more strongly while moving outward from the vanishing point and beyond the viewport."
+    },
+    {
+      "name": "imageRadius",
+      "label": "Image border radius (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 120,
+      "step": 1,
+      "description": "Corner radius on the fixed base image box; scales with the image. Zero keeps sharp corners."
+    }
+  ]
+}

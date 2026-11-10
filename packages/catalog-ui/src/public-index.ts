@@ -30,3 +30,5 @@ export {
 } from './showcase-pointer-page';
 
 export { default as SoapBubbleCatalogPage, soapBubbleMeta } from './soap-bubble-page';
+
+export { default as DepthFieldCatalogPage, depthFieldMeta } from './depth-field-page';

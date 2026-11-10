@@ -6,6 +6,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/chromatic-button')),
   },
   {
+    path: '/components/hero/depth-field',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/depth-field')),
+  },
+  {
     path: '/components/gallery/fan-gallery',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/fan-gallery')),
   },

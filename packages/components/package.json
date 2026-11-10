@@ -18,7 +18,8 @@
     "./fractal-glass": "./src/fractal-glass/index.ts",
     "./refracted-text": "./src/refracted-text/index.ts",
     "./showcase-pointer": "./src/showcase-pointer/index.ts",
-    "./soap-bubble": "./src/soap-bubble/index.ts"
+    "./soap-bubble": "./src/soap-bubble/index.ts",
+    "./depth-field": "./src/depth-field/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -41,6 +42,11 @@
     "src/chromatic-surface/chromatic-field.ts",
     "src/chromatic-surface/chromatic-shaders.ts",
     "src/chromatic-surface/chromatic-surface.tsx",
+    "src/depth-field/depth-field.css",
+    "src/depth-field/depth-field.tsx",
+    "src/depth-field/depth-model.ts",
+    "src/depth-field/depth-renderer.ts",
+    "src/depth-field/index.ts",
     "src/fan-gallery/fan-gallery.css",
     "src/fan-gallery/fan-gallery.tsx",
     "src/fan-gallery/fan-layout.ts",

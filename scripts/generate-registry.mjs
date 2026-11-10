@@ -16,6 +16,7 @@ import { packageFractalGlass } from './package-fractal-glass.mjs';
 import { packageSoapBubble, soapBubbleUsage } from './package-soap-bubble.mjs';
 import { packageRefractedText } from './package-refracted-text.mjs';
 import { packageShowcasePointer, showcasePointerUsage } from './package-showcase-pointer.mjs';
+import { packageDepthField } from './package-depth-field.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -30,6 +31,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'depth-field': {
+    sourceSlug: 'depth-field',
+    symbol: 'DepthField',
+    prefix: 'depthField',
+    package: () => packageDepthField(root),
+    element: `<DepthField images={['/images/first.jpg', '/images/second.jpg', '/images/third.jpg']} title="Follow your curiosity." />`,
+  },
   'soap-bubble': {
     sourceSlug: 'soap-bubble',
     symbol: 'SoapBubbleButton',

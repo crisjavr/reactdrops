@@ -19,7 +19,8 @@
     "./pages/fractal-glass": "./src/fractal-glass-page.tsx",
     "./pages/refracted-text": "./src/refracted-text-page.tsx",
     "./pages/showcase-pointer": "./src/showcase-pointer-page.tsx",
-    "./pages/soap-bubble": "./src/soap-bubble-page.tsx"
+    "./pages/soap-bubble": "./src/soap-bubble-page.tsx",
+    "./pages/depth-field": "./src/depth-field-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -37,6 +38,7 @@
   "files": [
     "LICENSE",
     "src/assets/chromatic-button-preview.webp",
+    "src/assets/depth-field-preview.webp",
     "src/assets/fan-gallery-preview.webp",
     "src/assets/fractal-glass-preview.webp",
     "src/assets/liquid-glass-logo-preview-dark.webp",
@@ -87,6 +89,8 @@
     "src/copy-prompt-menu.tsx",
     "src/customizer-controls.css",
     "src/customizer-controls.tsx",
+    "src/depth-field-page.css",
+    "src/depth-field-page.tsx",
     "src/dropdown-surface.css",
     "src/dropdown-surface.tsx",
     "src/fan-gallery-page.css",

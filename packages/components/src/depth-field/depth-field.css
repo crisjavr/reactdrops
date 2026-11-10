@@ -1,0 +1,122 @@
+.depth-field {
+  position: relative;
+  container-type: inline-size;
+  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.depth-field-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: visible;
+  perspective: var(--depth-perspective, 1000px);
+  transform-style: preserve-3d;
+  pointer-events: none;
+  user-select: none;
+}
+.depth-field[data-ready='false'] .depth-field-field {
+  visibility: hidden;
+}
+.depth-field-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  width: var(--depth-image-width, 150px);
+  height: var(--depth-image-height, 150px);
+  opacity: 0;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+  object-fit: contain;
+}
+.depth-field-copy {
+  position: relative;
+  z-index: 1001;
+  width: min(84%, 1100px);
+  text-align: center;
+}
+.depth-field .depth-field-copy h2 {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.055em;
+  white-space: pre-line;
+  text-wrap: balance;
+}
+.depth-field .depth-field-copy p {
+  max-width: 36rem;
+  margin: 1.25rem auto 0;
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+.depth-field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+.depth-field .depth-field-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.45rem;
+  padding: 0.58rem 1.25rem;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 999px;
+  background: #171717;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 450;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: background-color 180ms ease;
+}
+.depth-field .depth-field-button:hover {
+  background: #333;
+}
+.depth-field .depth-field-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 5px #171717;
+}
+.depth-field .depth-field-button-secondary {
+  background: #f2f2f2;
+  color: #171717;
+}
+.depth-field .depth-field-button-secondary:hover {
+  background: #e5e5e5;
+}
+.depth-field[data-text-align='left'] .depth-field-copy {
+  text-align: left;
+}
+.depth-field[data-text-align='right'] .depth-field-copy {
+  text-align: right;
+}
+.depth-field[data-text-align='left'] .depth-field-copy p {
+  margin-left: 0;
+  margin-right: auto;
+}
+.depth-field[data-text-align='right'] .depth-field-copy p {
+  margin-left: auto;
+  margin-right: 0;
+}
+.depth-field[data-text-align='left'] .depth-field-actions {
+  justify-content: flex-start;
+}
+.depth-field[data-text-align='right'] .depth-field-actions {
+  justify-content: flex-end;
+}

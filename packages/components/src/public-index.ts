@@ -13,3 +13,5 @@ export * from './refracted-text';
 export * from './showcase-pointer';
 
 export * from './soap-bubble';
+
+export * from './depth-field';
