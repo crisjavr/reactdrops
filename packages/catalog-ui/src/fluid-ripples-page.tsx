@@ -56,42 +56,21 @@ const defaults: Values = {
 const colorNames = ['backgroundColor', 'blueColor', 'lavenderColor', 'highlightColor'] as const;
 type ColorName = (typeof colorNames)[number];
 const effectPresetKeys = Object.keys(fluidTypingPresets['rose-lagoon']) as (keyof Values)[];
-const originalAppearance: Partial<Values> = {
-  ...fluidRipplesDefaults,
-  borderRadius: 0,
-};
-const effectPresets = [
-  {
-    value: 'original',
-    label: 'Original',
-    settings: Object.fromEntries(
-      effectPresetKeys.map((name) => [name, originalAppearance[name]]),
-    ) as Partial<Values>,
-  },
-  {
-    value: 'rose-lagoon',
-    label: fluidRipplesPresets['rose-lagoon'].label,
-    settings: fluidTypingPresets['rose-lagoon'],
-  },
-];
+// Every palette keeps the Rose Lagoon refraction, ripple shape and click interaction in light colors.
+const effectPresets = (
+  [
+    'rose-lagoon',
+    ...Object.keys(fluidRipplesPresets).filter((name) => name !== 'rose-lagoon'),
+  ] as (keyof typeof fluidRipplesPresets)[]
+).map((palette) => ({
+  value: palette,
+  label: fluidRipplesPresets[palette].label,
+  settings: { ...fluidTypingPresets['rose-lagoon'], palette } as Partial<Values>,
+}));
 const paletteColors = (palette: Values['palette'], theme: 'light' | 'dark') =>
   Object.fromEntries(
     colorNames.map((name, index) => [name, resolveFluidRipplesPalette(palette, theme)[index]]),
   ) as Record<ColorName, string>;
-const paletteVariants = [
-  { palette: 'auto' as Values['palette'], label: 'Original' },
-  ...Object.entries(fluidRipplesPresets).map(([palette, preset]) => ({
-    palette: palette as Values['palette'],
-    label: preset.label,
-  })),
-].flatMap(({ palette, label }) =>
-  (['light', 'dark'] as const).map((theme) => ({
-    value: `${palette}:${theme}`,
-    label: `${label} (${theme === 'light' ? 'Light' : 'Dark'})`,
-    palette,
-    theme,
-  })),
-);
 
 function example(values = defaults) {
   const changed = Object.entries(values).filter(
@@ -143,12 +122,6 @@ export default function FluidRipplesPage() {
   const activeTheme =
     values.theme === 'dark' || (values.theme === 'auto' && autoDark) ? 'dark' : 'light';
   const colors = paletteColors(values.palette, activeTheme);
-  const automaticPalette = colorNames.every((name) => !values[name]);
-  const selectedPalette = automaticPalette
-    ? values.palette === 'auto' && values.theme === 'auto'
-      ? 'auto'
-      : `${values.palette}:${activeTheme}`
-    : 'custom';
   const selectedEffectPreset =
     effectPresets.find(({ settings }) =>
       effectPresetKeys.every((name) => values[name] === (settings as Partial<Values>)[name]),
@@ -270,7 +243,7 @@ export default function FluidRipplesPage() {
             <div className="reveal-fields">
               <ControlField
                 label="Effect preset"
-                description="Restore saved colors, refraction, ripple shape, size, and click interaction together. Text, typing speed, theme, and playback stay editable."
+                description="Choose the colors. Every preset keeps the Rose Lagoon refraction, ripple shape and click interaction in light colors on any page theme. Text, typing and playback stay editable."
               >
                 <SelectControl
                   label="Effect preset"
@@ -435,7 +408,7 @@ export default function FluidRipplesPage() {
             <div className="reveal-fields">
               <ControlField
                 label="Theme"
-                description="Automatic follows the page theme. Selecting a Light or Dark palette sets this theme explicitly."
+                description="Light keeps the preset colors on any page theme. Automatic follows the page theme, and Dark uses the palette's dark variation."
               >
                 <SelectControl
                   label="Theme"
@@ -447,37 +420,6 @@ export default function FluidRipplesPage() {
                   ]}
                   onChange={(value) => {
                     set('theme', value as Values['theme']);
-                  }}
-                />
-              </ControlField>
-              <ControlField
-                label="Palette"
-                description="Light and Dark versions are always available together. Select either independently of the page theme; individual colors remain editable."
-              >
-                <SelectControl
-                  label="Palette"
-                  value={selectedPalette}
-                  options={[
-                    { value: 'auto', label: 'Automatic' },
-                    ...paletteVariants,
-                    { value: 'custom', label: 'Custom' },
-                  ]}
-                  onChange={(value) => {
-                    const variant = paletteVariants.find((option) => option.value === value);
-                    setValues((old) => ({
-                      ...old,
-                      ...(variant
-                        ? { palette: variant.palette, theme: variant.theme }
-                        : value === 'auto'
-                          ? { palette: 'auto' as const, theme: 'auto' as const }
-                          : {}),
-                      ...Object.fromEntries(
-                        colorNames.map((name) => [
-                          name,
-                          value === 'custom' ? old[name] || colors[name] : '',
-                        ]),
-                      ),
-                    }));
                   }}
                 />
               </ControlField>

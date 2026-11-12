@@ -10,8 +10,7 @@ import fanGalleryPreview from './assets/fan-gallery-preview.webp';
 import shapePhysicsPreview from './assets/shape-physics-preview.webp';
 import topographicFlowPreview from './assets/topographic-flow-preview.webp';
 import chromaticButtonPreview from './assets/chromatic-button-preview.webp';
-import fluidRipplesPreviewDark from './assets/fluid-ripples-preview-dark.webp';
-import fluidRipplesPreviewLight from './assets/fluid-ripples-preview-light.webp';
+import fluidRipplesPreview from './assets/fluid-ripples-preview.webp';
 import liquidGlassLogoPreviewDark from './assets/liquid-glass-logo-preview-dark.webp';
 import liquidGlassLogoPreviewLight from './assets/liquid-glass-logo-preview-light.webp';
 import showcasePointerPreview from './assets/showcase-pointer-preview.svg';
@@ -20,7 +19,6 @@ import soapBubblePreviewLight from './assets/soap-bubble/button-light.webp';
 
 // Cards with one preview per site theme; CSS shows the one matching the page.
 const themedPreviews: Record<string, { dark: string; light: string }> = {
-  'fluid-ripples': { dark: fluidRipplesPreviewDark, light: fluidRipplesPreviewLight },
   'liquid-glass-logo': { dark: liquidGlassLogoPreviewDark, light: liquidGlassLogoPreviewLight },
   'soap-bubble': { dark: soapBubblePreview, light: soapBubblePreviewLight },
 };
@@ -30,25 +28,27 @@ export function CatalogComponentCard({ component }: { component: ComponentMetada
   const preview =
     component.slug === 'depth-field'
       ? depthFieldPreview
-      : component.slug === 'showcase-pointer'
-        ? showcasePointerPreview
-        : component.slug === 'refracted-text'
-          ? refractedTextPreview
-          : component.slug === 'fractal-glass'
-            ? fractalGlassPreview
-            : isOrb
-              ? liquidGlassOrbPreview
-              : component.slug === 'topographic-terrain'
-                ? topographicTerrainPreview
-                : component.slug === 'fan-gallery'
-                  ? fanGalleryPreview
-                  : component.slug === 'shape-physics'
-                    ? shapePhysicsPreview
-                    : component.slug === 'topographic-flow'
-                      ? topographicFlowPreview
-                      : component.slug === 'chromatic-button'
-                        ? chromaticButtonPreview
-                        : null;
+      : component.slug === 'fluid-ripples'
+        ? fluidRipplesPreview
+        : component.slug === 'showcase-pointer'
+          ? showcasePointerPreview
+          : component.slug === 'refracted-text'
+            ? refractedTextPreview
+            : component.slug === 'fractal-glass'
+              ? fractalGlassPreview
+              : isOrb
+                ? liquidGlassOrbPreview
+                : component.slug === 'topographic-terrain'
+                  ? topographicTerrainPreview
+                  : component.slug === 'fan-gallery'
+                    ? fanGalleryPreview
+                    : component.slug === 'shape-physics'
+                      ? shapePhysicsPreview
+                      : component.slug === 'topographic-flow'
+                        ? topographicFlowPreview
+                        : component.slug === 'chromatic-button'
+                          ? chromaticButtonPreview
+                          : null;
   const themed = themedPreviews[component.slug];
   return (
     <Link

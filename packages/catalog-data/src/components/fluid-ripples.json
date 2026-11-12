@@ -5,7 +5,7 @@
     "slug": "background",
     "name": "Background"
   },
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Fixed and animated text or visitor-written text over liquid ripples, with click interaction and palettes for light and dark themes.",
   "access": "free",
   "status": "published",
@@ -325,19 +325,19 @@
         "solar",
         "graphite"
       ],
-      "description": "Choose Original, Turquoise, Rose Lagoon, or another gradient palette. The catalog lists Light and Dark versions together; selecting one sets its theme independently of the page. The Effect preset selector restores refraction and ripple settings too."
+      "description": "Gradient palette. Rose Lagoon is the default; Turquoise, Silk, Opal, Aurora, Rose, Glacier, Solar and Graphite are also available, and \"auto\" uses the original page-adaptive colors. The catalog applies palettes from its Preset menu."
     },
     {
       "name": "theme",
       "label": "Theme",
       "type": "select",
-      "defaultValue": "auto",
+      "defaultValue": "light",
       "options": [
         "auto",
         "light",
         "dark"
       ],
-      "description": "Follow the page theme automatically or explicitly use a light or dark variation. Both variations remain available in the Palette selector."
+      "description": "Light keeps the palette's light colors on any page theme. Automatic follows the page theme, and Dark uses the palette's dark variation."
     },
     {
       "name": "backgroundColor",

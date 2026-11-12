@@ -47,6 +47,8 @@ type Wave = { strength: number; size: number };
 export const fluidTypingPresets = {
   'rose-lagoon': {
     palette: 'rose-lagoon',
+    // Light colors on any page theme; theme="auto" follows the page instead.
+    theme: 'light',
     backgroundColor: '',
     blueColor: '',
     lavenderColor: '',
