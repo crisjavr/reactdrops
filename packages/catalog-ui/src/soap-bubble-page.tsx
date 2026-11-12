@@ -263,17 +263,23 @@ const tunedDark = {
   ...themeDefaults.dark,
   ...tunedFilm,
   surface: 'bubble',
-  seeThrough: 0.3,
+  seeThrough: 0.21,
   refractionWidth: 19,
   refractionClear: 0,
   tint: '#000000',
-  opacity: 0.89,
+  opacity: 0,
 } as Values;
-// On a light page the same glass, tuned by hand too, is clear: a white tint
-// with no body and no oil, so its bevel and narrow edge bend the page.
+// On a light page the same glass, tuned by hand too, has a white tint and no
+// oil, and shows a little more of what it covers.
 const tunedGlass: Record<Theme, Values> = {
   dark: tunedDark,
-  light: { ...tunedDark, tint: '#ffffff', opacity: 0, oilOpacity: 0, clearCenter: 0.07 },
+  light: {
+    ...tunedDark,
+    seeThrough: 0.3,
+    tint: '#ffffff',
+    oilOpacity: 0,
+    clearCenter: 0.07,
+  },
 };
 // The film and its motion over live glass, which blurs and bends the page as
 // it is: nothing captures it, and the film draws no body of its own. On a light
@@ -356,7 +362,7 @@ const round3 = (value: number) => Math.round(value * 1000) / 1000;
 function newChatMaterial(values: Values) {
   // Left at the page's own tint, + is the green accent; any other tint (and
   // its opacity) it shares with the rest. Its film keeps the shared colours.
-  // Tuned Glass's black body counts as the dark page's own.
+  // Tuned Glass's black tint counts as the dark page's own.
   return values.tint === 'auto' || values.tint === bubbleDefaults.tint || values.tint === '#000000'
     ? { tint: 'rgb(52 199 89)', opacity: 0.92 }
     : {};
@@ -1036,7 +1042,7 @@ export default function SoapBubblePage() {
               <>
                 <ControlField
                   label="Preset"
-                  description="Bubble Glass is the soap film refracting the captured page. Bubble Liquid lays the film over live liquid glass that blurs and bends the page as it is, so nothing is captured; Liquid Glass is that glass alone. Tuned Glass is a film tuned on a phone screen: dark-bodied on dark pages, clear on light ones."
+                  description="Bubble Glass is the soap film refracting the captured page. Bubble Liquid lays the film over live liquid glass that blurs and bends the page as it is, so nothing is captured; Liquid Glass is that glass alone. Tuned Glass is a clear film tuned on a phone screen, tinted black on dark pages and white on light ones."
                 >
                   <SelectControl
                     label="Preset"
