@@ -266,26 +266,6 @@
       "description": "Reflections of the objects around the bubble, wrapped around its rim. Needs a backdrop."
     },
     {
-      "name": "seeThrough",
-      "label": "See-through",
-      "type": "number",
-      "defaultValue": 0.3,
-      "min": 0,
-      "max": 1,
-      "step": 0.01,
-      "description": "How much of what a surface covers shows through it, bent like light through glass: text, images and other bubbles alike. 0 shows only the bare page behind; 1 shows everything, up to what Opacity hides."
-    },
-    {
-      "name": "seeThroughBend",
-      "label": "Bend",
-      "type": "number",
-      "defaultValue": 0.3,
-      "min": 0,
-      "max": 2,
-      "step": 0.01,
-      "description": "How far the covered bubbles bend, as a multiple of the surface's own refraction. 0 shows them straight."
-    },
-    {
       "name": "opacity",
       "label": "Opacity",
       "type": "number",

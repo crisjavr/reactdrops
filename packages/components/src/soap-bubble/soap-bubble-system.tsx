@@ -42,10 +42,6 @@ export const soapBubbleSystemDefaults: Partial<SoapBubbleSettings> = {
   dispersion: 1,
   reflectivity: 1.3,
   mirage: 0.7,
-  // A surface over another bubble (an open menu over a field) shows a little
-  // of it, bent.
-  seeThrough: 0.3,
-  seeThroughBend: 1.01,
   reach: 2,
   bevel: 14,
   environment: 'auto',

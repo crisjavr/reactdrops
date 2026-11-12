@@ -282,9 +282,6 @@ const uniformNames = [
   'uFilmScale',
   'uReflectivity',
   'uMirage',
-  'uSeeThrough',
-  'uCoveredBend',
-  'uHasCovered',
   'uFloorLight',
   'uReach',
   'uRefraction',
@@ -505,11 +502,7 @@ function releaseOwnContext(canvas: HTMLCanvasElement) {
 
 /** Drops a context's backdrop textures, which go with the context. */
 function forgetUploads(gl: WebGL2RenderingContext) {
-  for (const entry of backdrops.values()) {
-    entry.uploads.delete(gl);
-    entry.groundUploads.delete(gl);
-    for (const view of entry.covered.values()) view.uploads.delete(gl);
-  }
+  for (const entry of backdrops.values()) entry.uploads.delete(gl);
 }
 
 // Firefox has no parallel compile: making a context there blocks for about
@@ -711,8 +704,6 @@ export function createSoapBubbleContext(
     gl.uniform1i(u.uBackdrop, 0);
     gl.uniform1i(gl.getUniformLocation(program, 'uFilmTable'), 1);
     gl.uniform1i(gl.getUniformLocation(program, 'uNoise'), 2);
-    gl.uniform1i(gl.getUniformLocation(program, 'uCovered'), 3);
-    gl.uniform1i(gl.getUniformLocation(program, 'uGround'), 4);
     linked = true;
   };
   build();
@@ -905,58 +896,7 @@ export function createSoapBubbleContext(
  */
 export function backdropTexture(gl: WebGL2RenderingContext, backdrop: SoapBubbleBackdrop) {
   const entry = backdrop as BackdropEntry;
-  return uploaded(gl, entry.uploads, entry.source, entry.version, true);
-}
-
-/**
- * What the backdrop looks like with its bubbles in it, for a surface that
- * shows the bubbles it covers: null until that is captured. A floating
- * surface (in a group, as a menu's panel) passes null; one laid among the
- * others passes its own element, which that view then leaves out so the
- * surface does not see itself.
- */
-export function coveredTexture(
-  gl: WebGL2RenderingContext,
-  backdrop: SoapBubbleBackdrop,
-  self: CoveredKey,
-) {
-  const entry = backdrop as BackdropEntry;
-  const view = entry.covered.get(self);
-  if (!view?.canvas || !entry.ground) return null;
-  // Panels can soften covered controls just like the ordinary backdrop.
-  // Built only when the settled capture changes, never on animation frames.
-  return {
-    covered: uploaded(gl, view.uploads, view.canvas, view.version, true, true),
-    ground: uploaded(gl, entry.groundUploads, entry.ground, entry.groundVersion, true),
-  };
-}
-
-/**
- * Counts the surfaces that show what they cover, per view, and how many of
- * them are on screen: a view kept for a hidden surface (a closed menu's
- * panel) is refreshed only once one shows it again.
- */
-export function wantCoveredBackdrop(
-  backdrop: SoapBubbleBackdrop,
-  self: CoveredKey,
-  want: number,
-  shown: number,
-) {
-  const entry = backdrop as BackdropEntry;
-  let view = entry.covered.get(self);
-  if (!view) {
-    if (want <= 0) return;
-    entry.covered.set(
-      self,
-      (view = { canvas: null, version: 0, uploads: new Map(), wanted: 0, shown: 0 }),
-    );
-    compose(entry, self, view);
-  }
-  view.wanted += want;
-  view.shown += shown;
-  if (view.wanted > 0) return scheduleLayer(entry);
-  deleteUploads(view.uploads);
-  entry.covered.delete(self);
+  return uploaded(gl, entry.uploads, entry.source, entry.version);
 }
 
 function deleteUploads(uploads: Uploads) {
@@ -970,44 +910,29 @@ function uploaded(
   uploads: Uploads,
   source: TexImageSource | null,
   version: number,
-  mipmaps: boolean,
-  premultiplied = false,
 ) {
   let upload = uploads.get(gl);
-  if (!upload)
-    uploads.set(gl, (upload = { texture: createBackdropTexture(gl, mipmaps), version: 0 }));
+  if (!upload) uploads.set(gl, (upload = { texture: createBackdropTexture(gl), version: 0 }));
   if (source && upload.version !== version) {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, upload.texture);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premultiplied);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-    if (mipmaps) gl.generateMipmap(gl.TEXTURE_2D);
+    gl.generateMipmap(gl.TEXTURE_2D);
     upload.version = version;
   }
   return upload.texture;
 }
 
-function createBackdropTexture(gl: WebGL2RenderingContext, mipmaps = true) {
+function createBackdropTexture(gl: WebGL2RenderingContext) {
   const texture = gl.createTexture()!;
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_MIN_FILTER,
-    mipmaps ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR,
-  );
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return texture;
 }
-
-/**
- * Which view of the backdrop a surface shows: a surface over other bubbles has
- * its own, one in a group shares null, and 'page' is for one over the page alone.
- */
-export type CoveredKey = Element | null | 'page';
 
 export type SoapBubbleBackdrop = {
   element: HTMLElement;
@@ -1021,47 +946,6 @@ type BackdropEntry = SoapBubbleBackdrop & {
   source: TexImageSource | null;
   version: number;
   uploads: Uploads;
-  /**
-   * What lies on the backdrop: its text and images, and its bubbles (groups
-   * left out, and the surface a view is for), over nothing, so that a view's
-   * alpha says where something lies. For surfaces that show what they cover,
-   * which is every one with a body to see through. Every view is put
-   * together from one capture of the bubbles' content, taken only while a
-   * view is wanted, and then only when the page has settled after a change.
-   */
-  covered: Map<CoveredKey, CoveredView>;
-  /** The backdrop with nothing on it, which surfaces see past what they cover. */
-  ground: TexImageSource | null;
-  groundVersion: number;
-  groundUploads: Uploads;
-  layer: {
-    canvas: HTMLCanvasElement | null;
-    /** The same without any surface, for the 'page' view. */
-    page: HTMLCanvasElement | null;
-    /**
-     * Which parts the page changed under since they were captured: its text,
-     * images, size or scroll show in every one.
-     */
-    stale: { ground: boolean; page: boolean; bubbles: boolean };
-    /**
-     * Bubbles whose own content changed since the bubbles were captured. They
-     * are not in the 'page' view, and only matter to a view whose surfaces
-     * lie over them: a button pressed elsewhere costs no capture.
-     */
-    changed: Set<Element>;
-    /**
-     * What attributes and text inside bubbles were when the bubbles were
-     * captured, for those changed since: a press that plays out and settles
-     * where it started has changed nothing.
-     */
-    was: Map<Node, Map<string, string | null>>;
-    /** Where each bubble was on the backdrop when the bubbles were captured. */
-    boxes: Map<Element, DOMRect>;
-    capturing: boolean;
-    /** Asked for while capturing, so looked at again once done. */
-    again: boolean;
-    timer: number;
-  };
   fontEmbedCSS: Promise<string> | null;
   listeners: Set<() => void>;
   capturing: boolean;
@@ -1074,14 +958,6 @@ type BackdropEntry = SoapBubbleBackdrop & {
   resize: ResizeObserver;
 };
 
-type CoveredView = {
-  canvas: HTMLCanvasElement | null;
-  version: number;
-  uploads: Uploads;
-  wanted: number;
-  shown: number;
-};
-
 const backdrops = new Map<HTMLElement, BackdropEntry>();
 
 // Changes inside any surface (labels, moving thumbs, ready flags) are left
@@ -1090,11 +966,6 @@ const backdrops = new Map<HTMLElement, BackdropEntry>();
 const bubbleSelector = '[data-soap-bubble], [data-soap-bubble-group]';
 const insideSurface = (node: Node) =>
   (node instanceof Element ? node : node.parentElement)?.closest(bubbleSelector) != null;
-const groupSelector = '[data-soap-bubble-group]';
-const insideGroup = (node: Node) =>
-  (node instanceof Element ? node : node.parentElement)?.closest(groupSelector) != null;
-const surfaceOf = (node: Node) =>
-  (node instanceof Element ? node : node.parentElement)?.closest('[data-soap-bubble]') ?? null;
 const scrollAttribute = 'data-soap-bubble-scroll';
 
 /** A snapshot clones the page without its scroll offsets, so its children carry them instead. */
@@ -1128,21 +999,6 @@ export function subscribeBackdrop(
       source: null,
       version: 0,
       uploads: new Map(),
-      covered: new Map(),
-      ground: null,
-      groundVersion: 0,
-      groundUploads: new Map(),
-      layer: {
-        canvas: null,
-        page: null,
-        stale: { ground: true, page: true, bubbles: true },
-        changed: new Set(),
-        was: new Map(),
-        boxes: new Map(),
-        capturing: false,
-        again: false,
-        timer: 0,
-      },
       fontEmbedCSS: null,
       size: null,
       failed: false,
@@ -1150,54 +1006,24 @@ export function subscribeBackdrop(
       capturing: false,
       dirty: false,
       timer: 0,
-      mutations: new MutationObserver((all) => {
-        const records = all.filter((record) => record.attributeName !== scrollAttribute);
-        if (records.some((record) => !insideSurface(record.target))) schedule(created);
-        // The bubbles are in the covered views; a menu opening is not, nor the
-        // flags surfaces set on their canvases. A change inside a bubble is
-        // only seen by the surfaces over it.
-        let page = false;
-        let bubbles = false;
-        for (const { target, type, attributeName, oldValue } of records) {
-          if (insideGroup(target) || attributeName === 'data-backdrop') continue;
-          const bubble = surfaceOf(target);
-          if (!bubble) {
-            page = true;
-            continue;
-          }
-          bubbles = true;
-          if (type === 'childList') {
-            created.layer.changed.add(bubble);
-            continue;
-          }
-          let values = created.layer.was.get(target);
-          if (!values) created.layer.was.set(target, (values = new Map()));
-          if (!values.has(attributeName ?? '')) values.set(attributeName ?? '', oldValue);
-        }
-        if (page) staleCovered(created);
-        else if (bubbles) scheduleLayer(created);
+      mutations: new MutationObserver((records) => {
+        if (
+          records.some(
+            (record) => record.attributeName !== scrollAttribute && !insideSurface(record.target),
+          )
+        )
+          schedule(created);
       }),
-      resize: new ResizeObserver(() => {
-        schedule(created);
-        staleCovered(created);
-      }),
+      resize: new ResizeObserver(() => schedule(created)),
       // Scrolling moves what is seen through the film without a mutation.
-      // A menu's list scrolling is in no snapshot; a bubble's own content
-      // scrolling is only in the bubbles' view.
+      // What scrolls inside a surface or a menu is hidden in the snapshot.
       scrolled: (event) => {
         const { target } = event;
         if (target instanceof Element) {
-          if (insideGroup(target)) return;
+          if (insideSurface(target)) return;
           created.scrollers.add(target);
-          const bubble = surfaceOf(target);
-          if (bubble) {
-            created.layer.changed.add(bubble);
-            scheduleLayer(created);
-            return;
-          }
         }
         schedule(created);
-        staleCovered(created);
       },
       scrollers: new Set(),
     };
@@ -1207,8 +1033,6 @@ export function subscribeBackdrop(
       childList: true,
       characterData: true,
       attributes: true,
-      attributeOldValue: true,
-      characterDataOldValue: true,
     });
     created.resize.observe(element);
     backdrops.set(element, created);
@@ -1227,9 +1051,6 @@ export function subscribeBackdrop(
     current.resize.disconnect();
     element.removeEventListener('scroll', current.scrolled, { capture: true });
     deleteUploads(current.uploads);
-    deleteUploads(current.groundUploads);
-    window.clearTimeout(current.layer.timer);
-    for (const view of current.covered.values()) deleteUploads(view.uploads);
     backdrops.delete(element);
   };
 }
@@ -1289,7 +1110,6 @@ async function capture(entry: BackdropEntry) {
         ? [source.naturalWidth, source.naturalHeight]
         : [source.width, source.height];
     entry.failed = false;
-    staleCovered(entry);
   } catch {
     entry.failed = !entry.size;
   } finally {
@@ -1305,294 +1125,6 @@ function fontEmbedCSS(entry: BackdropEntry) {
     .then(({ getFontEmbedCSS }) => getFontEmbedCSS(entry.element))
     .catch(() => '');
   return entry.fontEmbedCSS;
-}
-
-function staleCovered(entry: BackdropEntry) {
-  const { stale } = entry.layer;
-  stale.ground = stale.page = stale.bubbles = true;
-  scheduleLayer(entry);
-}
-
-// Each part of the covered views costs a rasterisation, so it waits for the
-// page to settle (a slider being dragged, a theme switching) and is skipped
-// while no surface that shows it would see the change.
-function scheduleLayer(entry: BackdropEntry) {
-  const { layer } = entry;
-  if (layer.capturing) {
-    layer.again = true;
-    return;
-  }
-  const due = layerDue(entry, false);
-  if (!entry.source || (!due.page && !due.bubbles)) return;
-  window.clearTimeout(layer.timer);
-  layer.timer = window.setTimeout(() => void captureLayer(entry), 700);
-}
-
-/**
- * Which parts of the covered views to capture again: the page's for a 'page'
- * view, the bubbles' for any other. A view not made yet needs its part
- * whatever happened; once made, it is only refreshed while a surface shows
- * it, and for a bubble that changed, only if that surface lies over it. That
- * last test is left until the capture is due (exact), when a menu's panel has
- * finished opening.
- */
-function layerDue(entry: BackdropEntry, exact: boolean) {
-  const { layer } = entry;
-  const due = { page: false, bubbles: false };
-  let changed: Set<Element> | undefined;
-  for (const [key, view] of entry.covered) {
-    if (key === 'page') {
-      due.page ||= !view.canvas || (view.shown > 0 && layer.stale.page);
-      continue;
-    }
-    if (due.bubbles || (view.canvas && view.shown <= 0)) continue;
-    if (!view.canvas || layer.stale.bubbles) due.bubbles = true;
-    else if (layer.changed.size || layer.was.size)
-      due.bubbles = !exact || seesChange(entry, key, (changed ??= changedBubbles(layer)));
-  }
-  return due;
-}
-
-// The bubbles whose content is not what was captured: one that gained or lost
-// a node, or whose attributes or text differ from then.
-function changedBubbles(layer: BackdropEntry['layer']) {
-  const changed = new Set(layer.changed);
-  for (const [node, values] of layer.was) {
-    const bubble = node.isConnected ? surfaceOf(node) : null;
-    if (!bubble || changed.has(bubble)) continue;
-    for (const [name, value] of values) {
-      const now = name ? (node as Element).getAttribute(name) : (node as CharacterData).data;
-      if (now === value) continue;
-      changed.add(bubble);
-      break;
-    }
-  }
-  return changed;
-}
-
-// How far past its box a surface sees what it covers: its lens bends in
-// what lies just outside.
-const lensReach = 16;
-
-// Whether the surfaces showing a view (one laid among the others, or every
-// floating one) lie over a bubble that changed, where it is now or was when
-// the bubbles were captured. A surface's own changes are left out of its view.
-function seesChange(entry: BackdropEntry, key: Element | null, changed: Set<Element>) {
-  if (!changed.size) return false;
-  const { element, layer } = entry;
-  const origin = element.getBoundingClientRect();
-  const areas: DOMRect[] = [];
-  const surfaces = key ? [key] : element.querySelectorAll(`${groupSelector} [data-soap-bubble]`);
-  for (const surface of surfaces) {
-    const box = onBackdrop(surface, origin);
-    // A closed menu's panel takes no room and sees nothing.
-    if (box.width > 0 && box.height > 0)
-      areas.push(
-        new DOMRect(
-          box.x - lensReach,
-          box.y - lensReach,
-          box.width + 2 * lensReach,
-          box.height + 2 * lensReach,
-        ),
-      );
-  }
-  for (const bubble of changed) {
-    if (key && (key.contains(bubble) || bubble.contains(key))) continue;
-    const then = layer.boxes.get(bubble);
-    const now = bubble.isConnected ? onBackdrop(bubble, origin) : undefined;
-    if (areas.some((area) => overlaps(area, then) || overlaps(area, now))) return true;
-  }
-  return false;
-}
-
-// An element's box from the backdrop's corner, which holds while the page
-// around the backdrop scrolls.
-function onBackdrop(element: Element, origin: DOMRect) {
-  const box = element.getBoundingClientRect();
-  return new DOMRect(box.x - origin.x, box.y - origin.y, box.width, box.height);
-}
-
-function overlaps(area: DOMRect, box: DOMRect | undefined) {
-  return (
-    box != null &&
-    box.width > 0 &&
-    box.height > 0 &&
-    area.left < box.right &&
-    box.left < area.right &&
-    area.top < box.bottom &&
-    box.top < area.bottom
-  );
-}
-
-async function captureLayer(entry: BackdropEntry) {
-  const { element, layer } = entry;
-  if (layer.capturing || !entry.source) return;
-  const due = layerDue(entry, true);
-  if (!due.page && !due.bubbles) return;
-  layer.capturing = true;
-  const withGround = layer.stale.ground || !entry.ground;
-  layer.stale.ground = false;
-  if (due.page) layer.stale.page = false;
-  if (due.bubbles) {
-    layer.stale.bubbles = false;
-    layer.changed.clear();
-    layer.was.clear();
-  }
-  try {
-    const rect = element.getBoundingClientRect();
-    if (rect.width < 1 || rect.height < 1) return;
-    let canvas: HTMLCanvasElement | null = null;
-    let page: HTMLCanvasElement | null = null;
-    let ground: TexImageSource | null = withGround ? entry.source : null;
-    const boxes = new Map<Element, DOMRect>();
-    if (due.bubbles)
-      for (const bubble of element.querySelectorAll('[data-soap-bubble]'))
-        if (!insideGroup(bubble)) boxes.set(bubble, onBackdrop(bubble, rect));
-    if (element instanceof HTMLImageElement || element instanceof HTMLCanvasElement) {
-      if (due.bubbles)
-        canvas = Object.assign(document.createElement('canvas'), {
-          width: entry.size![0],
-          height: entry.size![1],
-        });
-    } else {
-      // Everything stays where it is laid out (leaving a surface out would
-      // let the rest close up); only the films, drawn apart, are skipped.
-      // At the backdrop's own scale, so the page matches it pixel for pixel.
-      const { toCanvas } = await import('html-to-image');
-      const snapshot = {
-        transform: 'none',
-        position: 'relative',
-        left: '0',
-        top: '0',
-        right: 'auto',
-        bottom: 'auto',
-        margin: '0',
-      };
-      // The ground has no text: no fonts to inline.
-      if (withGround)
-        ground = await toCanvas(element, {
-          width: rect.width,
-          height: rect.height,
-          pixelRatio: Math.min(2, window.devicePixelRatio || 1),
-          style: snapshot,
-          filter: () => false,
-          skipFonts: true,
-        });
-      const content = (hidden: string) =>
-        fontEmbedCSS(entry).then((fonts) =>
-          toCanvas(element, {
-            width: rect.width,
-            height: rect.height,
-            pixelRatio: Math.min(2, window.devicePixelRatio || 1),
-            includeQueryParams: true,
-            fontEmbedCSS: `${fonts}\n${scrollOffsets(entry)}${hidden}`,
-            style: { ...snapshot, background: 'transparent' },
-            filter: (node) => !(node instanceof Element && node.localName === 'canvas'),
-          }),
-        );
-      if (due.page)
-        page = await content(
-          `${bubbleSelector}, [data-soap-bubble] *, [data-soap-bubble-group] * { visibility: hidden !important; }`,
-        );
-      // Groups are never part of a covered view. Hide their paint in the
-      // snapshot while preserving layout: erasing at their live position
-      // afterwards can leave a ghost if they move during rasterisation.
-      if (due.bubbles)
-        canvas = await content(
-          `${groupSelector}, ${groupSelector} * { visibility: hidden !important; }`,
-        );
-    }
-    if (backdrops.get(element) !== entry) return;
-    if (ground) {
-      entry.ground = ground;
-      entry.groundVersion++;
-    }
-    if (page) layer.page = page;
-    if (canvas) {
-      layer.canvas = canvas;
-      layer.boxes = boxes;
-    }
-    // Only the views whose part was captured again are put together again.
-    for (const [self, view] of entry.covered)
-      if (self === 'page' ? page : canvas) compose(entry, self, view);
-    entry.listeners.forEach((listener) => listener());
-  } catch {
-    // Without it, surfaces show the backdrop alone.
-  } finally {
-    layer.capturing = false;
-    if (layer.again) {
-      layer.again = false;
-      scheduleLayer(entry);
-    }
-  }
-}
-
-// One view from the content layer: groups were hidden during capture; erase
-// the surface it is for, then draw the other bubbles' films underneath. A
-// surface over the page alone has none to see: its view is the layer without any.
-function compose(entry: BackdropEntry, self: CoveredKey, view: CoveredView) {
-  const { element, layer } = entry;
-  if (self === 'page') {
-    if (layer.page) {
-      view.canvas = layer.page;
-      view.version++;
-    }
-    return;
-  }
-  if (!layer.canvas || !entry.source) return;
-  const rect = element.getBoundingClientRect();
-  const scale = layer.canvas.width / Math.max(1, rect.width);
-  const canvas = Object.assign(document.createElement('canvas'), {
-    width: layer.canvas.width,
-    height: layer.canvas.height,
-  });
-  const context = canvas.getContext('2d');
-  if (!context) return;
-  context.drawImage(layer.canvas, 0, 0);
-  const leftOut = [...element.querySelectorAll(groupSelector), ...(self ? [self] : [])];
-  if (self && !insideGroup(self)) eraseContent(context, self, rect, scale);
-  context.globalCompositeOperation = 'destination-over';
-  for (const film of element.querySelectorAll<HTMLCanvasElement>('[data-soap-bubble] canvas')) {
-    if (!film.width || leftOut.some((root) => root.contains(film))) continue;
-    const box = film.getBoundingClientRect();
-    context.drawImage(
-      film,
-      (box.left - rect.left) * scale,
-      (box.top - rect.top) * scale,
-      box.width * scale,
-      box.height * scale,
-    );
-  }
-  view.canvas = canvas;
-  view.version++;
-}
-
-// Clears what a surface draws itself, its text and icons, from the layer.
-function eraseContent(
-  context: CanvasRenderingContext2D,
-  root: Element,
-  origin: DOMRect,
-  scale: number,
-) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
-  const range = document.createRange();
-  for (let node: Node | null = walker.currentNode; node; node = walker.nextNode()) {
-    let boxes: Iterable<DOMRect>;
-    if (node.nodeType === Node.TEXT_NODE) {
-      if (!node.textContent?.trim()) continue;
-      range.selectNodeContents(node);
-      boxes = range.getClientRects();
-    } else if (node instanceof SVGSVGElement || node instanceof HTMLImageElement) {
-      boxes = [node.getBoundingClientRect()];
-    } else continue;
-    for (const box of boxes)
-      context.clearRect(
-        (box.left - origin.left) * scale - 1,
-        (box.top - origin.top) * scale - 1,
-        box.width * scale + 2,
-        box.height * scale + 2,
-      );
-  }
 }
 
 // One animation frame drives every surface on the page, instead of one

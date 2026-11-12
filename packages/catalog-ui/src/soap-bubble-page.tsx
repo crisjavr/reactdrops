@@ -257,18 +257,22 @@ const tunedFilm = {
   keyLight: false,
   refraction: 0.68,
   dispersion: 0.4,
-  seeThroughBend: 1.12,
 } satisfies Partial<Values>;
-const tunedGlass = {
+const tunedDark = {
   ...themeDefaults.dark,
   ...tunedFilm,
   surface: 'bubble',
-  seeThrough: 0.3,
   refractionWidth: 19,
   refractionClear: 0,
   tint: '#000000',
   opacity: 0.89,
 } as Values;
+// On a light page the same glass, tuned by hand too, is clear: a white tint
+// with no body and no oil, so its bevel and narrow edge bend the page.
+const tunedGlass: Record<Theme, Values> = {
+  dark: tunedDark,
+  light: { ...tunedDark, tint: '#ffffff', opacity: 0, oilOpacity: 0, clearCenter: 0.07 },
+};
 // The film and its motion over live glass, which blurs and bends the page as
 // it is: nothing captures it, and the film draws no body of its own. On a light
 // page it keeps the light glass film, lit over the page's own colour.
@@ -278,58 +282,34 @@ const bubbleLiquid: Record<Theme, Values> = {
     ...tunedFilm,
     ...liveGlass,
     surface: 'bubble-liquid',
-    seeThrough: 0,
   } as Values,
   light: {
     ...themeDefaults.light,
     ...liveGlass,
     surface: 'bubble-liquid',
-    seeThrough: 0,
     paper: '#f7f7f8',
     liquidRimWidth: 17,
     liquidBend: 0.9,
   } as Values,
 };
-// Glass with no film on it: no bevel to see, no key reflection and no oil,
-// only the bending at the edge a bevel would cause. It goes over the current
-// material.
-const clearLens = {
-  surface: 'bubble',
-  glass: 1,
-  iridescence: 0,
-  oilOpacity: 0,
-  oilCoverage: 0,
-  oilEdge: 0,
-  bevel: 0,
-  refraction: 0.88,
-  refractionWidth: 24,
-  refractionClear: 1,
-  seeThrough: 1,
-  seeThroughBend: 1.96,
-  dispersion: 1,
-  keyLight: false,
-} satisfies Partial<Values>;
 const surfacePresets = [
   { value: 'bubble-glass', label: 'Bubble Glass' },
   { value: 'bubble-liquid', label: 'Bubble Liquid' },
   { value: 'tuned-glass', label: 'Tuned Glass' },
-  { value: 'clear-lens', label: 'Clear Lens' },
   { value: 'liquid-glass', label: 'Liquid Glass' },
 ] as const;
 type SurfacePreset = (typeof surfacePresets)[number]['value'];
 const matches = (values: Values, preset: Partial<Values>) =>
   Object.entries(preset).every(([key, value]) => values[key as keyof Values] === value);
-function surfacePresetOf(values: Values): SurfacePreset {
+function surfacePresetOf(values: Values, theme: Theme): SurfacePreset {
   if (values.surface === 'liquid-glass') return 'liquid-glass';
   if (values.surface === 'bubble-liquid') return 'bubble-liquid';
-  if (matches(values, clearLens)) return 'clear-lens';
-  if (matches(values, tunedGlass)) return 'tuned-glass';
+  if (matches(values, tunedGlass[theme])) return 'tuned-glass';
   return 'bubble-glass';
 }
 function applySurfacePreset(preset: SurfacePreset, values: Values, theme: Theme): Values {
   if (preset === 'bubble-liquid') return { ...bubbleLiquid[theme] };
-  if (preset === 'tuned-glass') return { ...tunedGlass };
-  if (preset === 'clear-lens') return { ...values, ...clearLens };
+  if (preset === 'tuned-glass') return { ...tunedGlass[theme] };
   // The glass on its own takes the page's tint; a colour picked afterwards
   // tints it.
   if (preset === 'liquid-glass')
@@ -338,8 +318,6 @@ function applySurfacePreset(preset: SurfacePreset, values: Values, theme: Theme)
 }
 // What the live glass's rim lens does instead, so these would do nothing.
 const replacedByLiveGlass = new Set<keyof Values>([
-  'seeThrough',
-  'seeThroughBend',
   'refraction',
   'refractionWidth',
   'refractionClear',
@@ -1052,11 +1030,11 @@ export default function SoapBubblePage() {
               <>
                 <ControlField
                   label="Preset"
-                  description="Bubble Glass is the soap film refracting the captured page. Bubble Liquid lays the film over live liquid glass that blurs and bends the page as it is, so nothing is captured; Liquid Glass is that glass alone. Tuned Glass is a dark-bodied film tuned on a phone screen, and Clear Lens turns the current material into clear glass that bends only at its edge."
+                  description="Bubble Glass is the soap film refracting the captured page. Bubble Liquid lays the film over live liquid glass that blurs and bends the page as it is, so nothing is captured; Liquid Glass is that glass alone. Tuned Glass is a film tuned on a phone screen: dark-bodied on dark pages, clear on light ones."
                 >
                   <SelectControl
                     label="Preset"
-                    value={surfacePresetOf(values)}
+                    value={surfacePresetOf(values, theme)}
                     options={surfacePresets.map(({ value, label }) => ({ value, label }))}
                     onChange={(value) =>
                       setValues(applySurfacePreset(value as SurfacePreset, values, theme))
@@ -1112,8 +1090,6 @@ export default function SoapBubblePage() {
                 'Transparency',
                 <>
                   {numbers([
-                    'seeThrough',
-                    'seeThroughBend',
                     'refraction',
                     'refractionWidth',
                     'refractionClear',
