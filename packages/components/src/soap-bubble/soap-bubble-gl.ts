@@ -1512,6 +1512,15 @@ async function captureLayer(entry: BackdropEntry) {
       layer.canvas = canvas;
       layer.boxes = boxes;
     }
+    // The views take the other bubbles' films as they are drawn, so those are
+    // drawn over the new ground first (some browsers only in the next frame):
+    // after a theme switch they would still show the old page, and an open
+    // panel would keep them so.
+    if (ground) {
+      entry.listeners.forEach((listener) => listener());
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (backdrops.get(element) !== entry) return;
+    }
     // Only the views whose part was captured again are put together again.
     for (const [self, view] of entry.covered)
       if (self === 'page' ? page : canvas) compose(entry, self, view);
