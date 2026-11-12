@@ -6,10 +6,13 @@ import {
   requestSoapBubbleFrame,
   soapBubbleResolution,
   backdropTexture,
+  coveredTexture,
+  type CoveredKey,
   releaseSoapBubbleOwnContext,
   soapBubbleContext,
   soapBubbleOwnContext,
   subscribeBackdrop,
+  wantCoveredBackdrop,
   type SoapBubbleBackdrop,
   type SoapBubbleContext,
   type SoapBubbleRect,
@@ -97,6 +100,13 @@ export type SoapBubbleTuning = {
   reflectivity: number;
   /** Reflections of the nearby page in the rim of the bubble. */
   mirage: number;
+  /**
+   * How much of the bubbles behind this one show through its film, which
+   * the backdrop leaves out. 0 shows the backdrop alone.
+   */
+  seeThrough: number;
+  /** How far those bubbles bend, in multiples of the backdrop's refraction. */
+  seeThroughBend: number;
   /**
    * How solid the tint fills the bubble, over the tint's own alpha: 1 is an
    * opaque body, 0 none. Below 0 (the default) the tint's alpha is used.
@@ -237,6 +247,8 @@ export const soapBubbleDefaults: SoapBubbleTuning = {
   soapHighlightColor: 'auto',
   reflectivity: 1.6,
   mirage: 1,
+  seeThrough: 0,
+  seeThroughBend: 0.3,
   opacity: -1,
   floorLight: 1,
   windowLight: false,
@@ -372,6 +384,8 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
         : d.soapHighlightColor,
     reflectivity: clamp(v.reflectivity, 0, 6, d.reflectivity),
     mirage: clamp(v.mirage, 0, 3, d.mirage),
+    seeThrough: clamp(v.seeThrough, 0, 1, d.seeThrough),
+    seeThroughBend: clamp(v.seeThroughBend, 0, 2, d.seeThroughBend),
     opacity: clamp(v.opacity, -1, 1, d.opacity),
     floorLight: clamp(v.floorLight, 0, 1, d.floorLight),
     windowLight: Boolean(v.windowLight),
@@ -725,6 +739,56 @@ export function createSoapBubbleRenderer(
   let backdrop: SoapBubbleBackdrop | null = null;
   let backdropElement: HTMLElement | null = null;
   let releaseBackdrop = () => {};
+  // The surface whose element a covered view leaves out, so that it does
+  // not see itself.
+  const self = canvas.closest('[data-soap-bubble]') ?? host;
+  // Which view of the bubbles it covers this surface shows, if it covers
+  // any: the shared one when it floats in a group (a menu's panel), else one
+  // without itself. Covering nothing, it shows none and costs nothing.
+  let covering: CoveredKey | undefined;
+  const overlapsAnother = (page: HTMLElement) => {
+    const own = self.getBoundingClientRect();
+    for (const other of page.querySelectorAll('[data-soap-bubble]')) {
+      // Only drawn bubbles count, not a burst's droplets.
+      if (other === self || other.contains(self) || self.contains(other)) continue;
+      if (!other.querySelector('canvas')) continue;
+      const box = other.getBoundingClientRect();
+      const left = Math.max(own.left, box.left);
+      const right = Math.min(own.right, box.right);
+      const top = Math.max(own.top, box.top);
+      const bottom = Math.min(own.bottom, box.bottom);
+      if (left >= right || top >= bottom) continue;
+      // Only a bubble below this one is seen through it: whichever the page
+      // hit-tests first in the overlap lies on top.
+      const stack = document.elementsFromPoint((left + right) / 2, (top + bottom) / 2);
+      const mine = stack.findIndex((element) => self.contains(element));
+      const theirs = stack.findIndex((element) => other.contains(element));
+      if (mine >= 0 && (theirs < 0 || mine < theirs)) return true;
+    }
+    return false;
+  };
+  let coveringShown = false;
+  const showCovered = () => {
+    let next: CoveredKey | undefined;
+    // A solid body hides what lies behind: nothing to show then. A floating
+    // surface (a menu's panel) keeps the shared view while it is hidden, so
+    // that it is ready the moment it opens; on screen, a surface over another
+    // bubble needs a view with that bubble in it, and any other the page's.
+    const shownNow = visible && !document.hidden;
+    if (backdrop && tint[3] < 1) {
+      const floating = self.closest('[data-soap-bubble-group]') != null;
+      if (floating) next = null;
+      else next = overlapsAnother(backdrop.element) ? self : 'page';
+    }
+    const shownNext = next !== undefined && shownNow;
+    if (next === covering && shownNext === coveringShown) return;
+    if (backdrop && covering !== undefined)
+      wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
+    covering = next;
+    coveringShown = shownNext;
+    if (backdrop && covering !== undefined)
+      wantCoveredBackdrop(backdrop, covering, 1, coveringShown ? 1 : 0);
+  };
 
   /**
    * filmOnly: only the film has moved since the last draw, so the bubble's
@@ -930,6 +994,7 @@ export function createSoapBubbleRenderer(
     set.f1(u.uSwirl, tuning.swirl);
     set.f1(u.uReflectivity, tuning.reflectivity);
     set.f1(u.uMirage, tuning.mirage);
+    set.f1(u.uSeeThrough, tuning.seeThrough);
     set.f1(u.uFloorLight, tuning.floorLight);
     set.f1(u.uReach, tuning.reach);
     set.f1(u.uRefraction, tuning.refraction);
@@ -957,6 +1022,17 @@ export function createSoapBubbleRenderer(
     set.m3(u.uEnvRotation, rotation);
     const captured = backdrop?.size ? backdrop : null;
     set.i1(u.uHasBackdrop, captured ? 1 : 0);
+    // Uploaded before the backdrop is bound, as an upload binds unit 0.
+    const covered =
+      captured && covering !== undefined ? coveredTexture(gl, captured, covering) : null;
+    set.i1(u.uHasCovered, covered ? 1 : 0);
+    if (covered) {
+      set.f1(u.uCoveredBend, tuning.seeThroughBend);
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, covered.covered);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, covered.ground);
+    }
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, captured ? backdropTexture(gl, captured) : context.emptyTexture);
     if (captured) {
@@ -1093,6 +1169,7 @@ export function createSoapBubbleRenderer(
     const pixelHeight = Math.max(1, Math.round(height * dpr));
     if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
     if (canvas.height !== pixelHeight) canvas.height = pixelHeight;
+    showCovered();
     draw();
     request();
   };
@@ -1104,6 +1181,7 @@ export function createSoapBubbleRenderer(
   resizeObserver.observe(host);
   const visibility = new IntersectionObserver(([entry]) => {
     visible = entry?.isIntersecting ?? true;
+    showCovered();
     last = 0;
     if (visible) request();
   });
@@ -1111,6 +1189,7 @@ export function createSoapBubbleRenderer(
   const releaseResolution = onSoapBubbleResolution(resize);
   const onMotion = () => {
     still = reduced?.matches ?? false;
+    showCovered();
     if (still) {
       pressure.value = pressure.velocity = 0;
       host.style.removeProperty('--soap-bubble-press');
@@ -1167,6 +1246,7 @@ export function createSoapBubbleRenderer(
       tuning = next;
       tint = tintOf(next);
       paper = cssColour(next.paper);
+      showCovered();
       soapColor = paletteColour(next.soapColor);
       soapShadeColor = paletteColour(next.soapShadeColor);
       soapHighlightColor = paletteColour(next.soapHighlightColor);
@@ -1178,6 +1258,10 @@ export function createSoapBubbleRenderer(
     },
     setBackdrop(element) {
       if (element === backdropElement) return;
+      if (backdrop && covering !== undefined)
+        wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
+      covering = undefined;
+      coveringShown = false;
       releaseBackdrop();
       backdropElement = element;
       backdrop = null;
@@ -1185,6 +1269,7 @@ export function createSoapBubbleRenderer(
       releaseBackdrop = element
         ? subscribeBackdrop(element, (next) => {
             backdrop = next;
+            showCovered();
             const state = next.size ? 'captured' : 'failed';
             if (canvas.dataset.backdrop !== state) canvas.dataset.backdrop = state;
             draw();
@@ -1198,6 +1283,7 @@ export function createSoapBubbleRenderer(
       if (lightTheme === light) return;
       lightTheme = light;
       tint = tintOf(tuning);
+      showCovered();
       dirtyFrame = true;
       request();
     },
@@ -1288,6 +1374,8 @@ export function createSoapBubbleRenderer(
       cancelSoapBubbleFrame(tick);
       unwatch();
       window.clearTimeout(retry);
+      if (backdrop && covering !== undefined)
+        wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
       releaseBackdrop();
       resizeObserver.disconnect();
       visibility.disconnect();

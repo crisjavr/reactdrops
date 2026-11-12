@@ -61,6 +61,8 @@ const materialKeys = [
   'soapHighlightColor',
   'reflectivity',
   'mirage',
+  'seeThrough',
+  'seeThroughBend',
   'opacity',
   'floorLight',
   'reach',

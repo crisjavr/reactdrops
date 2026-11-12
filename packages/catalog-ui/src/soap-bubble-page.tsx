@@ -257,11 +257,13 @@ const tunedFilm = {
   keyLight: false,
   refraction: 0.68,
   dispersion: 0.4,
+  seeThroughBend: 1.12,
 } satisfies Partial<Values>;
 const tunedDark = {
   ...themeDefaults.dark,
   ...tunedFilm,
   surface: 'bubble',
+  seeThrough: 0.3,
   refractionWidth: 19,
   refractionClear: 0,
   tint: '#000000',
@@ -282,11 +284,13 @@ const bubbleLiquid: Record<Theme, Values> = {
     ...tunedFilm,
     ...liveGlass,
     surface: 'bubble-liquid',
+    seeThrough: 0,
   } as Values,
   light: {
     ...themeDefaults.light,
     ...liveGlass,
     surface: 'bubble-liquid',
+    seeThrough: 0,
     paper: '#f7f7f8',
     liquidRimWidth: 17,
     liquidBend: 0.9,
@@ -318,6 +322,8 @@ function applySurfacePreset(preset: SurfacePreset, values: Values, theme: Theme)
 }
 // What the live glass's rim lens does instead, so these would do nothing.
 const replacedByLiveGlass = new Set<keyof Values>([
+  'seeThrough',
+  'seeThroughBend',
   'refraction',
   'refractionWidth',
   'refractionClear',
@@ -1090,6 +1096,8 @@ export default function SoapBubblePage() {
                 'Transparency',
                 <>
                   {numbers([
+                    'seeThrough',
+                    'seeThroughBend',
                     'refraction',
                     'refractionWidth',
                     'refractionClear',

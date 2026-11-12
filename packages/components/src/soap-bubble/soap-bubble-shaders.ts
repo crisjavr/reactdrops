@@ -57,6 +57,11 @@ uniform float uSwirl;
 uniform float uFilmScale;      // size of the film's colour bands
 uniform float uReflectivity;
 uniform float uMirage;
+uniform float uSeeThrough;     // share of the covered bubbles seen through the film
+uniform float uCoveredBend;    // how far they bend, relative to the backdrop's refraction
+uniform bool uHasCovered;
+uniform sampler2D uCovered;    // what lies on the backdrop, premultiplied: its text, images and bubbles
+uniform sampler2D uGround;     // the backdrop with nothing on it
 uniform float uFloorLight;
 uniform float uReach;         // radius of the reflected surroundings, in radii
 uniform float uRefraction;
@@ -450,8 +455,34 @@ vec3 transmittedSample(sampler2D image, vec2 uv) {
   return toLinear(color);
 }
 
+// What lies on the backdrop, in linear light, with how much of it is there.
+vec4 coveredSample(vec2 uv) {
+  float lod = transmittedLod();
+  vec4 color = textureLod(uCovered, clamp(uv, 0.0, 1.0), lod);
+  if (uBackdropBlur >= 1e-5) {
+    vec2 dx = vec2(uBackdropScale.x * uBackdropBlur, 0.0);
+    vec2 dy = vec2(0.0, uBackdropScale.y * uBackdropBlur);
+    color *= 0.25;
+    color += 0.125 * (
+      textureLod(uCovered, clamp(uv + dx, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dx, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv + dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dy, 0.0, 1.0), lod));
+    color += 0.0625 * (
+      textureLod(uCovered, clamp(uv + dx + dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv + dx - dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dx + dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dx - dy, 0.0, 1.0), lod));
+  }
+  return vec4(toLinear(color.rgb / max(color.a, 1e-4)), color.a);
+}
+
 vec3 pageThrough(vec2 xy) {
-  return transmittedSample(uBackdrop, uBackdropOrigin + vec2(xy.x, -xy.y) * uBackdropScale);
+  vec2 uv = uBackdropOrigin + vec2(xy.x, -xy.y) * uBackdropScale;
+  // See-through decides how much of what lies on the page shows, so the light
+  // from behind is only the bare page then.
+  if (uHasCovered) return transmittedSample(uGround, uv);
+  return transmittedSample(uBackdrop, uv);
 }
 
 // What lies behind a point of the bubble, in linear light. Over a captured
@@ -829,6 +860,8 @@ void main() {
   bool onPaper = !uHasBackdrop && uPaper.a > 0.0;
   vec3 behind = onPaper ? toLinear(uPaper.rgb) : vec3(0.0);
   float behindAlpha = uHasBackdrop || onPaper ? 1.0 : 0.0;
+  vec3 covered = vec3(0.0);
+  float coveredWeight = 0.0;
   if (uHasBackdrop || uHasLayer) {
     vec2 exitXY = p;
     vec3 outward = view;
@@ -879,6 +912,23 @@ void main() {
     if (split > 1e-4 && dot(shift, shift) > 1e-8) {
       behind.r = behindAt(p + shift * (1.0 - split)).r;
       behind.b = behindAt(p + shift * (1.0 + split)).b;
+    }
+    // Everything this one covers (text, images, other bubbles) seen along the
+    // same ray bent as far as asked.
+    if (uHasCovered) {
+      vec2 bent = p + shift * uCoveredBend;
+      vec2 uv = uBackdropOrigin + vec2(bent.x, -bent.y) * uBackdropScale;
+      vec4 seen = coveredSample(uv);
+      covered = seen.rgb;
+      // Only where something lies: over the bare page the film stays whole.
+      coveredWeight = seen.a;
+      if (split > 1e-4 && dot(shift, shift) > 1e-8) {
+        vec2 reach = shift * uCoveredBend;
+        vec2 red = p + reach * (1.0 - split);
+        vec2 blue = p + reach * (1.0 + split);
+        covered.r = coveredSample(uBackdropOrigin + vec2(red.x, -red.y) * uBackdropScale).r;
+        covered.b = coveredSample(uBackdropOrigin + vec2(blue.x, -blue.y) * uBackdropScale).b;
+      }
     }
   }
   // User-controlled tint under the film, independent of the page theme.
@@ -993,6 +1043,12 @@ void main() {
     // Reflected light adds to what is there rather than covering it.
     colour = 1.0 - (1.0 - colour) * (1.0 - min(reflected, vec3(1.0)));
     through *= 1.0 - max(light, twin);
+  }
+  // Laid over the film rather than under it, so See-through reads the same
+  // on a light page, where the film's bright reflections would bury it.
+  if (uHasCovered) {
+    // What lies behind, so a solid body (Opacity) hides it as it hides the page.
+    colour = mix(colour, covered, uSeeThrough * coveredWeight * (1.0 - bodyTint.a));
   }
   vec3 encoded = pow(max(colour, 0.0), vec3(1.0 / 2.2));
   vec4 bubble;
