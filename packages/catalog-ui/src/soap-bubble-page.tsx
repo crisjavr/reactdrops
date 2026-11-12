@@ -227,6 +227,128 @@ const themeDefaults: Record<Theme, Values> = {
   } as Values,
 };
 
+// The live glass Bubble Liquid and Liquid Glass start from.
+const liveGlass = {
+  liquidTint: bubbleDefaults.liquidTint,
+  liquidDensity: bubbleDefaults.liquidDensity,
+  liquidPanelDensity: bubbleDefaults.liquidPanelDensity,
+  liquidBlur: bubbleDefaults.liquidBlur,
+  liquidSaturation: bubbleDefaults.liquidSaturation,
+  liquidBrightness: bubbleDefaults.liquidBrightness,
+  liquidLens: bubbleDefaults.liquidLens,
+  liquidRimWidth: bubbleDefaults.liquidRimWidth,
+  liquidBend: bubbleDefaults.liquidBend,
+  liquidSplit: bubbleDefaults.liquidSplit,
+  liquidEdgeLight: bubbleDefaults.liquidEdgeLight,
+  liquidInnerLight: bubbleDefaults.liquidInnerLight,
+  liquidShadow: bubbleDefaults.liquidShadow,
+} satisfies Partial<Values>;
+// Tuned by hand on a dark phone screen: the full rainbow film with a narrow
+// bevel, strong reflections and no key light, refracting the captured page
+// through a dark body.
+const tunedFilm = {
+  bevel: 8,
+  backdropBlur: 1,
+  oilOpacity: 0.83,
+  oilEdge: 24,
+  oilEdgeFade: 0.72,
+  clearCenter: 1,
+  reflectivity: 2.45,
+  keyLight: false,
+  refraction: 0.68,
+  dispersion: 0.4,
+  seeThroughBend: 1.12,
+} satisfies Partial<Values>;
+const tunedGlass = {
+  ...themeDefaults.dark,
+  ...tunedFilm,
+  surface: 'bubble',
+  seeThrough: 0.3,
+  refractionWidth: 19,
+  refractionClear: 0,
+  tint: '#000000',
+  opacity: 0.89,
+} as Values;
+// The film and its motion over live glass, which blurs and bends the page as
+// it is: nothing captures it, and the film draws no body of its own. On a light
+// page it keeps the light glass film, lit over the page's own colour.
+const bubbleLiquid: Record<Theme, Values> = {
+  dark: {
+    ...themeDefaults.dark,
+    ...tunedFilm,
+    ...liveGlass,
+    surface: 'bubble-liquid',
+    seeThrough: 0,
+  } as Values,
+  light: {
+    ...themeDefaults.light,
+    ...liveGlass,
+    surface: 'bubble-liquid',
+    seeThrough: 0,
+    paper: '#f7f7f8',
+    liquidRimWidth: 17,
+    liquidBend: 0.9,
+  } as Values,
+};
+// Glass with no film on it: no bevel to see, no key reflection and no oil,
+// only the bending at the edge a bevel would cause. It goes over the current
+// material.
+const clearLens = {
+  surface: 'bubble',
+  glass: 1,
+  iridescence: 0,
+  oilOpacity: 0,
+  oilCoverage: 0,
+  oilEdge: 0,
+  bevel: 0,
+  refraction: 0.88,
+  refractionWidth: 24,
+  refractionClear: 1,
+  seeThrough: 1,
+  seeThroughBend: 1.96,
+  dispersion: 1,
+  keyLight: false,
+} satisfies Partial<Values>;
+const surfacePresets = [
+  { value: 'bubble-glass', label: 'Bubble Glass' },
+  { value: 'bubble-liquid', label: 'Bubble Liquid' },
+  { value: 'tuned-glass', label: 'Tuned Glass' },
+  { value: 'clear-lens', label: 'Clear Lens' },
+  { value: 'liquid-glass', label: 'Liquid Glass' },
+] as const;
+type SurfacePreset = (typeof surfacePresets)[number]['value'];
+const matches = (values: Values, preset: Partial<Values>) =>
+  Object.entries(preset).every(([key, value]) => values[key as keyof Values] === value);
+function surfacePresetOf(values: Values): SurfacePreset {
+  if (values.surface === 'liquid-glass') return 'liquid-glass';
+  if (values.surface === 'bubble-liquid') return 'bubble-liquid';
+  if (matches(values, clearLens)) return 'clear-lens';
+  if (matches(values, tunedGlass)) return 'tuned-glass';
+  return 'bubble-glass';
+}
+function applySurfacePreset(preset: SurfacePreset, values: Values, theme: Theme): Values {
+  if (preset === 'bubble-liquid') return { ...bubbleLiquid[theme] };
+  if (preset === 'tuned-glass') return { ...tunedGlass };
+  if (preset === 'clear-lens') return { ...values, ...clearLens };
+  // The glass on its own takes the page's tint; a colour picked afterwards
+  // tints it.
+  if (preset === 'liquid-glass')
+    return { ...values, ...liveGlass, surface: 'liquid-glass', tint: 'auto', opacity: 0 };
+  return { ...themeDefaults[theme] };
+}
+// What the live glass's rim lens does instead, so these would do nothing.
+const replacedByLiveGlass = new Set<keyof Values>([
+  'seeThrough',
+  'seeThroughBend',
+  'refraction',
+  'refractionWidth',
+  'refractionClear',
+  'backdropBlur',
+  'dispersion',
+  'mirage',
+  'reach',
+]);
+
 // Corners belong to each component; the system shares only material.
 const componentOnly: (keyof Values)[] = ['radius'];
 
@@ -250,7 +372,8 @@ const round3 = (value: number) => Math.round(value * 1000) / 1000;
 function newChatMaterial(values: Values) {
   // Left at the page's own tint, + is the green accent; any other tint (and
   // its opacity) it shares with the rest. Its film keeps the shared colours.
-  return values.tint === 'auto' || values.tint === bubbleDefaults.tint
+  // Tuned Glass's black body counts as the dark page's own.
+  return values.tint === 'auto' || values.tint === bubbleDefaults.tint || values.tint === '#000000'
     ? { tint: 'rgb(52 199 89)', opacity: 0.92 }
     : {};
 }
@@ -269,7 +392,9 @@ function systemExample(values: Values = themeDefaults.light, theme: Theme = 'lig
     )
     .join(' ');
   const font = round3(baseFont * scale);
-  return `import { useRef, useState } from 'react';\nimport {\n  SoapBubbleButton,\n  SoapBubbleIconButton,\n  SoapBubbleMaterial,\n  SoapBubbleMenu,\n  SoapBubbleSearch,\n  SoapBubbleSlider,\n  SoapBubbleToggle,\n} from './components/soap-bubble';\n\nexport function Example() {\n  const page = useRef<HTMLDivElement>(null);\n  const [wifi, setWifi] = useState(true);\n  const [volume, setVolume] = useState(40);\n  return (\n    <div ref={page} className="page" data-theme="${theme}" style={{ background: '${theme === 'light' ? '#f7f7f8' : '#000'}', color: '${theme === 'light' ? '#1b1d22' : '#f2f3f7'}' }}>\n      <SoapBubbleMaterial backdrop={page}${props.length ? `\n        ${props.join('\n        ')}\n      ` : ''}>\n        <div style={{ display: 'grid', gap: '1em', fontSize: ${font} }}>\n        <header style={{ display: 'flex', gap: '0.55em' }}>\n          <SoapBubbleMenu\n            round\n            label="•••"\n            triggerLabel="More"\n            items={[{ label: 'Select chats' }, { label: 'Read all' }]}\n          />\n          <SoapBubbleIconButton aria-label="Camera" style={{ marginLeft: 'auto' }}>📷</SoapBubbleIconButton>\n          <SoapBubbleIconButton aria-label="New" ${newChatProps}>+</SoapBubbleIconButton>\n        </header>\n        <SoapBubbleSearch placeholder="Search" />\n        <SoapBubbleToggle checked={wifi} onCheckedChange={setWifi} aria-label="Wi-Fi" scale={${round3(2.75 * scale)}} />\n        <SoapBubbleSlider value={volume} onValueChange={setVolume} label="Volume" from="${soapBubbleSliderColor(values.tint)}" scale={${round3(3 * scale)}} />\n        <SoapBubbleButton>Continue</SoapBubbleButton>\n        </div>\n      </SoapBubbleMaterial>\n    </div>\n  );\n}`;
+  // Live glass reads the page as it is, so it has no backdrop to capture.
+  const captured = values.surface === 'bubble';
+  return `import { ${captured ? 'useRef, ' : ''}useState } from 'react';\nimport {\n  SoapBubbleButton,\n  SoapBubbleIconButton,\n  SoapBubbleMaterial,\n  SoapBubbleMenu,\n  SoapBubbleSearch,\n  SoapBubbleSlider,\n  SoapBubbleToggle,\n} from './components/soap-bubble';\n\nexport function Example() {\n${captured ? '  const page = useRef<HTMLDivElement>(null);\n' : ''}  const [wifi, setWifi] = useState(true);\n  const [volume, setVolume] = useState(40);\n  return (\n    <div ${captured ? 'ref={page} ' : ''}className="page" data-theme="${theme}" style={{ background: '${theme === 'light' ? '#f7f7f8' : '#000'}', color: '${theme === 'light' ? '#1b1d22' : '#f2f3f7'}' }}>\n      <SoapBubbleMaterial${captured ? ' backdrop={page}' : ''}${props.length ? `\n        ${props.join('\n        ')}\n      ` : ''}>\n        <div style={{ display: 'grid', gap: '1em', fontSize: ${font} }}>\n        <header style={{ display: 'flex', gap: '0.55em' }}>\n          <SoapBubbleMenu\n            round\n            label="•••"\n            triggerLabel="More"\n            items={[{ label: 'Select chats' }, { label: 'Read all' }]}\n          />\n          <SoapBubbleIconButton aria-label="Camera" style={{ marginLeft: 'auto' }}>📷</SoapBubbleIconButton>\n          <SoapBubbleIconButton aria-label="New" ${newChatProps}>+</SoapBubbleIconButton>\n        </header>\n        <SoapBubbleSearch placeholder="Search" />\n        <SoapBubbleToggle checked={wifi} onCheckedChange={setWifi} aria-label="Wi-Fi" scale={${round3(2.75 * scale)}} />\n        <SoapBubbleSlider value={volume} onValueChange={setVolume} label="Volume" from="${soapBubbleSliderColor(values.tint)}" scale={${round3(3 * scale)}} />\n        <SoapBubbleButton>Continue</SoapBubbleButton>\n        </div>\n      </SoapBubbleMaterial>\n    </div>\n  );\n}`;
 }
 
 export function soapBubbleMeta() {
@@ -729,7 +854,7 @@ export default function SoapBubblePage() {
     ),
   ) as Record<ComponentPackageManager, string>;
   const prompt = (code: string) =>
-    `Install the existing ReactDrops component "Bubble UI" (ID: "soap-bubble") with:\n\n${commands.npm}\n\nUse the installed files as the source of truth. Preserve the spectral thin-film interference, gravity drainage and Marangoni swirls, the upright outer and inverted inner reflections, the mirrored surroundings in the rims, the liquid glass blend, the shared WebGL context and backdrop capture, the thumbs that refract their tracks, the pointer wobble and press squash, keyboard support, reduced-motion support and the CSS fallbacks. Installation defaults must match the catalog preview: use Light glass on light pages and Rainbow glass on dark pages, following the host application's theme. Use another material or color preset only when the user has explicitly selected one.\n\nApproved default material settings:\n${JSON.stringify({ light: lightMaterial, dark: materialPresets['rainbow glass'] }, null, 2)}\n\nThe React configuration below is authoritative for the selected theme, preset and all user edits. If the user modified any Oil control (Oil film, size, opacity, coverage, edges, clear centre, thickness, drainage or swirl), preserve its exact configured value instead of resetting it to a default preset. A value of 0 is intentional, including Oil film set to 0 by a color preset. Apply the theme defaults only where the user has not supplied an override. Preserve the shown lighting and reflection settings too.\n\nIntegrate the downloaded components with this configuration:\n\n${code}`;
+    `Install the existing ReactDrops component "Bubble UI" (ID: "soap-bubble") with:\n\n${commands.npm}\n\nUse the installed files as the source of truth. Preserve the spectral thin-film interference, gravity drainage and Marangoni swirls, the upright outer and inverted inner reflections, the mirrored surroundings in the rims, the liquid glass blend, the shared WebGL context and backdrop capture, the thumbs that refract their tracks, the pointer wobble and press squash, keyboard support, reduced-motion support and the CSS fallbacks. Installation defaults must match the catalog preview: use Light glass on light pages and Rainbow glass on dark pages, following the host application's theme. Use another material or color preset only when the user has explicitly selected one. The Bubble Liquid and Liquid Glass presets set surface to "bubble-liquid" or "liquid-glass": live glass that blurs and bends the page as it is, so no backdrop is captured; keep their liquid settings exactly as configured.\n\nApproved default material settings:\n${JSON.stringify({ light: lightMaterial, dark: materialPresets['rainbow glass'] }, null, 2)}\n\nThe React configuration below is authoritative for the selected theme, preset and all user edits. If the user modified any Oil control (Oil film, size, opacity, coverage, edges, clear centre, thickness, drainage or swirl), preserve its exact configured value instead of resetting it to a default preset. A value of 0 is intentional, including Oil film set to 0 by a color preset. Apply the theme defaults only where the user has not supplied an override. Preserve the shown lighting and reflection settings too.\n\nIntegrate the downloaded components with this configuration:\n\n${code}`;
   const files: ComponentSourceFile[] = [
     { id: 'usage', label: 'usage', code: usage, language: 'typescript' },
     ...soapBubbleSourceFiles.map((file) => ({
@@ -778,28 +903,32 @@ export default function SoapBubblePage() {
     </ControlField>
   );
   const control = (name: keyof Values) => soapBubble.controls.find((item) => item.name === name)!;
+  const live = values.surface !== 'bubble';
+  const film = values.surface !== 'liquid-glass';
   const numbers = (names: NumericKey[]) =>
-    names.map((name) => {
-      const control = soapBubble.controls.find((item) => item.name === name)!;
-      return (
-        <ControlField
-          key={name}
-          className="is-number"
-          label={control.label}
-          description={control.description ?? ''}
-        >
-          <NumberControl
+    names
+      .filter((name) => !(live && replacedByLiveGlass.has(name)))
+      .map((name) => {
+        const control = soapBubble.controls.find((item) => item.name === name)!;
+        return (
+          <ControlField
+            key={name}
+            className="is-number"
             label={control.label}
-            value={values[name]}
-            min={control.min}
-            max={control.max}
-            step={control.step}
-            normalizeValue={name === 'seed' ? Math.round : undefined}
-            onChange={(value) => set(name, value)}
-          />
-        </ControlField>
-      );
-    });
+            description={control.description ?? ''}
+          >
+            <NumberControl
+              label={control.label}
+              value={values[name]}
+              min={control.min}
+              max={control.max}
+              step={control.step}
+              normalizeValue={name === 'seed' ? Math.round : undefined}
+              onChange={(value) => set(name, value)}
+            />
+          </ControlField>
+        );
+      });
   const group = (title: string, children: ReactNode) => (
     <fieldset className="reveal-control-group">
       <legend className="reveal-group-heading">
@@ -919,46 +1048,99 @@ export default function SoapBubblePage() {
             hidden={panelTab !== 'controls'}
           >
             {group(
-              'Motion',
+              'Preset',
               <>
-                {numbers(['wobble', 'speed', 'seed'])}
                 <ControlField
-                  className="is-boolean"
-                  label="Paused"
-                  description="Hold the film. Bubbles still wobble under the pointer."
+                  label="Preset"
+                  description="Bubble Glass is the soap film refracting the captured page. Bubble Liquid lays the film over live liquid glass that blurs and bends the page as it is, so nothing is captured; Liquid Glass is that glass alone. Tuned Glass is a dark-bodied film tuned on a phone screen, and Clear Lens turns the current material into clear glass that bends only at its edge."
                 >
-                  <SwitchControl
-                    label="Paused"
-                    checked={values.paused}
-                    onChange={(value) => set('paused', value)}
-                  />
-                </ControlField>
-              </>,
-            )}
-            {group(
-              'Transparency',
-              <>
-                {numbers(['seeThrough', 'seeThroughBend', 'refraction', 'opacity', 'oilOpacity'])}
-                <ControlField
-                  className="is-color"
-                  label="Tint"
-                  description="Color of the bubble's body; Opacity sets how solid it is. Auto is the page's own, white on light pages and black on dark ones. The film's oil keeps its own colors."
-                >
-                  <ColorControl
-                    label="Tint"
-                    allowAuto
-                    value={values.tint}
+                  <SelectControl
+                    label="Preset"
+                    value={surfacePresetOf(values)}
+                    options={surfacePresets.map(({ value, label }) => ({ value, label }))}
                     onChange={(value) =>
-                      setValues((old) => ({
-                        ...old,
-                        tint: value,
-                        opacity: value === 'auto' ? old.opacity : colorAlpha(value),
-                      }))
+                      setValues(applySurfacePreset(value as SurfacePreset, values, theme))
                     }
                   />
                 </ControlField>
+                {live && numbers(['liquidSplit'])}
               </>,
             )}
+            {live && group('Tint', numbers(['liquidTint', 'liquidDensity', 'liquidPanelDensity']))}
+            {live &&
+              group('Backdrop', numbers(['liquidBlur', 'liquidSaturation', 'liquidBrightness']))}
+            {live &&
+              group(
+                'Rim lens',
+                <>
+                  <ControlField
+                    className="is-boolean"
+                    label={control('liquidLens').label}
+                    description={control('liquidLens').description ?? ''}
+                  >
+                    <SwitchControl
+                      label={control('liquidLens').label}
+                      checked={values.liquidLens}
+                      onChange={(value) => set('liquidLens', value)}
+                    />
+                  </ControlField>
+                  {numbers(['liquidRimWidth', 'liquidBend'])}
+                </>,
+              )}
+            {!film &&
+              group('Light', numbers(['liquidEdgeLight', 'liquidInnerLight', 'liquidShadow']))}
+            {film &&
+              group(
+                'Motion',
+                <>
+                  {numbers(['wobble', 'speed', 'seed'])}
+                  <ControlField
+                    className="is-boolean"
+                    label="Paused"
+                    description="Hold the film. Bubbles still wobble under the pointer."
+                  >
+                    <SwitchControl
+                      label="Paused"
+                      checked={values.paused}
+                      onChange={(value) => set('paused', value)}
+                    />
+                  </ControlField>
+                </>,
+              )}
+            {film &&
+              group(
+                'Transparency',
+                <>
+                  {numbers([
+                    'seeThrough',
+                    'seeThroughBend',
+                    'refraction',
+                    'refractionWidth',
+                    'refractionClear',
+                    'backdropBlur',
+                    'opacity',
+                    'oilOpacity',
+                  ])}
+                  <ControlField
+                    className="is-color"
+                    label="Tint"
+                    description="Color of the bubble's body; Opacity sets how solid it is. Auto is the page's own, white on light pages and black on dark ones. The film's oil keeps its own colors."
+                  >
+                    <ColorControl
+                      label="Tint"
+                      allowAuto
+                      value={values.tint}
+                      onChange={(value) =>
+                        setValues((old) => ({
+                          ...old,
+                          tint: value,
+                          opacity: value === 'auto' ? old.opacity : colorAlpha(value),
+                        }))
+                      }
+                    />
+                  </ControlField>
+                </>,
+              )}
             {group(
               'Theme',
               <ControlField
@@ -1011,59 +1193,21 @@ export default function SoapBubblePage() {
                 />
               </ControlField>,
             )}
-            {group(
-              'Material',
-              <>
-                {presetControl(
-                  'Material preset',
-                  'Installation defaults match this preview: Light glass for light pages and Rainbow glass for dark pages. A selected preset or edited Oil setting takes precedence. Color presets are kept when switching material.',
-                  materialPresets,
-                )}
-                {presetControl(
-                  'Color preset',
-                  'Color presets set Oil film to 0 and Oil size to 6. Each keeps its own editable six-color spectrum if you turn Oil film back on. The base, shades and highlights follow the preset too; Original restores the natural palette.',
-                  colorPresets,
-                )}
-                {(['soapColor', 'soapShadeColor', 'soapHighlightColor'] as const).map((name) => (
-                  <ControlField
-                    key={name}
-                    className="is-color"
-                    label={control(name).label}
-                    description={control(name).description ?? ''}
-                  >
-                    <ColorControl
-                      label={control(name).label}
-                      value={values[name]}
-                      allowAuto
-                      onChange={(value) => set(name, value)}
-                    />
-                  </ControlField>
-                ))}
-                <ControlField
-                  label="Soap palette"
-                  description={control('soapPalette').description ?? ''}
-                >
-                  <SelectControl
-                    label="Soap palette"
-                    value={values.soapPalette}
-                    options={[
-                      { value: 'natural', label: 'Original iridescence' },
-                      { value: 'custom', label: 'Custom colors' },
-                    ]}
-                    onChange={(value) => set('soapPalette', value as Values['soapPalette'])}
-                  />
-                </ControlField>
-                {values.soapPalette === 'custom' &&
-                  (
-                    [
-                      'soapPaletteRed',
-                      'soapPaletteGold',
-                      'soapPaletteGreen',
-                      'soapPaletteCyan',
-                      'soapPaletteBlue',
-                      'soapPaletteViolet',
-                    ] as const
-                  ).map((name) => (
+            {film &&
+              group(
+                'Material',
+                <>
+                  {presetControl(
+                    'Material preset',
+                    'Installation defaults match this preview: Light glass for light pages and Rainbow glass for dark pages. A selected preset or edited Oil setting takes precedence. Color presets are kept when switching material.',
+                    materialPresets,
+                  )}
+                  {presetControl(
+                    'Color preset',
+                    'Color presets set Oil film to 0 and Oil size to 6. Each keeps its own editable six-color spectrum if you turn Oil film back on. The base, shades and highlights follow the preset too; Original restores the natural palette.',
+                    colorPresets,
+                  )}
+                  {(['soapColor', 'soapShadeColor', 'soapHighlightColor'] as const).map((name) => (
                     <ControlField
                       key={name}
                       className="is-color"
@@ -1073,166 +1217,208 @@ export default function SoapBubblePage() {
                       <ColorControl
                         label={control(name).label}
                         value={values[name]}
+                        allowAuto
                         onChange={(value) => set(name, value)}
                       />
                     </ControlField>
                   ))}
-                {numbers([
-                  'glass',
-                  'iridescence',
-                  'filmScale',
-                  'oilCoverage',
-                  'oilEdge',
-                  'oilEdgeFade',
-                  'clearCenter',
-                  'thickness',
-                  'drainage',
-                  'swirl',
-                  'reflectivity',
-                  'dispersion',
-                  'bevel',
-                ])}
-              </>,
-            )}
-            {group(
-              'Reflections',
-              <>
-                <ControlField
-                  label="Lighting"
-                  description={
-                    soapBubble.controls.find((item) => item.name === 'environment')?.description ??
-                    ''
-                  }
-                >
-                  <SelectControl
+                  <ControlField
+                    label="Soap palette"
+                    description={control('soapPalette').description ?? ''}
+                  >
+                    <SelectControl
+                      label="Soap palette"
+                      value={values.soapPalette}
+                      options={[
+                        { value: 'natural', label: 'Original iridescence' },
+                        { value: 'custom', label: 'Custom colors' },
+                      ]}
+                      onChange={(value) => set('soapPalette', value as Values['soapPalette'])}
+                    />
+                  </ControlField>
+                  {values.soapPalette === 'custom' &&
+                    (
+                      [
+                        'soapPaletteRed',
+                        'soapPaletteGold',
+                        'soapPaletteGreen',
+                        'soapPaletteCyan',
+                        'soapPaletteBlue',
+                        'soapPaletteViolet',
+                      ] as const
+                    ).map((name) => (
+                      <ControlField
+                        key={name}
+                        className="is-color"
+                        label={control(name).label}
+                        description={control(name).description ?? ''}
+                      >
+                        <ColorControl
+                          label={control(name).label}
+                          value={values[name]}
+                          onChange={(value) => set(name, value)}
+                        />
+                      </ControlField>
+                    ))}
+                  {numbers([
+                    'glass',
+                    'iridescence',
+                    'filmScale',
+                    'oilCoverage',
+                    'oilEdge',
+                    'oilEdgeFade',
+                    'clearCenter',
+                    'thickness',
+                    'drainage',
+                    'swirl',
+                    'reflectivity',
+                    'dispersion',
+                    'bevel',
+                  ])}
+                </>,
+              )}
+            {film &&
+              group(
+                'Reflections',
+                <>
+                  <ControlField
                     label="Lighting"
-                    value={values.environment}
-                    options={soapBubbleLightings.map((value) => ({
-                      value,
-                      label: value[0].toUpperCase() + value.slice(1),
-                    }))}
-                    onChange={(value) => set('environment', value as Values['environment'])}
-                  />
-                </ControlField>
-                <ControlField
-                  className="is-boolean"
-                  label={control('bottomShade').label}
-                  description={control('bottomShade').description ?? ''}
-                >
-                  <SwitchControl
+                    description={
+                      soapBubble.controls.find((item) => item.name === 'environment')
+                        ?.description ?? ''
+                    }
+                  >
+                    <SelectControl
+                      label="Lighting"
+                      value={values.environment}
+                      options={soapBubbleLightings.map((value) => ({
+                        value,
+                        label: value[0].toUpperCase() + value.slice(1),
+                      }))}
+                      onChange={(value) => set('environment', value as Values['environment'])}
+                    />
+                  </ControlField>
+                  <ControlField
+                    className="is-boolean"
                     label={control('bottomShade').label}
-                    checked={values.bottomShade}
-                    onChange={(value) => set('bottomShade', value)}
-                  />
-                </ControlField>
-                <ControlField
-                  className="is-color"
-                  label={control('bottomShadeColor').label}
-                  description={control('bottomShadeColor').description ?? ''}
-                >
-                  <ColorControl
+                    description={control('bottomShade').description ?? ''}
+                  >
+                    <SwitchControl
+                      label={control('bottomShade').label}
+                      checked={values.bottomShade}
+                      onChange={(value) => set('bottomShade', value)}
+                    />
+                  </ControlField>
+                  <ControlField
+                    className="is-color"
                     label={control('bottomShadeColor').label}
-                    value={values.bottomShadeColor}
-                    allowAuto
-                    onChange={(value) => set('bottomShadeColor', value)}
-                  />
-                </ControlField>
-                {numbers(['mirage', 'reach', 'tilt'])}
-                {presetControl(
-                  'Reflection preset',
-                  'Soft gradient is a smaller window that fades almost out towards its right end; Glossy a brighter, blunt window with a long top highlight; Checkpoint the earlier look, with the original gradient and a crisp top highlight.',
-                  reflectionPresets,
-                )}
-                <ControlField
-                  className="is-boolean"
-                  label={control('windowLight').label}
-                  description={control('windowLight').description ?? ''}
-                >
-                  <SwitchControl
+                    description={control('bottomShadeColor').description ?? ''}
+                  >
+                    <ColorControl
+                      label={control('bottomShadeColor').label}
+                      value={values.bottomShadeColor}
+                      allowAuto
+                      onChange={(value) => set('bottomShadeColor', value)}
+                    />
+                  </ControlField>
+                  {numbers(['mirage', 'reach', 'tilt'])}
+                  {presetControl(
+                    'Reflection preset',
+                    'Soft gradient is a smaller window that fades almost out towards its right end; Glossy a brighter, blunt window with a long top highlight; Checkpoint the earlier look, with the original gradient and a crisp top highlight.',
+                    reflectionPresets,
+                  )}
+                  <ControlField
+                    className="is-boolean"
                     label={control('windowLight').label}
-                    checked={values.windowLight}
-                    onChange={(value) => set('windowLight', value)}
-                  />
-                </ControlField>
-                <ControlField
-                  label={control('windowStyle').label}
-                  description={control('windowStyle').description ?? ''}
-                >
-                  <SelectControl
+                    description={control('windowLight').description ?? ''}
+                  >
+                    <SwitchControl
+                      label={control('windowLight').label}
+                      checked={values.windowLight}
+                      onChange={(value) => set('windowLight', value)}
+                    />
+                  </ControlField>
+                  <ControlField
                     label={control('windowStyle').label}
-                    value={values.windowStyle}
-                    options={[
-                      { value: 'edge', label: 'Edge' },
-                      { value: 'bubble', label: 'Bubble (original)' },
-                    ]}
-                    onChange={(value) => set('windowStyle', value as Values['windowStyle'])}
-                  />
-                </ControlField>
-                {numbers([
-                  'windowSize',
-                  'windowWidth',
-                  'windowHead',
-                  'windowTail',
-                  'windowIntensity',
-                  'windowGradient',
-                  'windowLength',
-                  'windowMargin',
-                  'windowBend',
-                ])}
-                <ControlField
-                  label={control('glintShape').label}
-                  description={control('glintShape').description ?? ''}
-                >
-                  <SelectControl
+                    description={control('windowStyle').description ?? ''}
+                  >
+                    <SelectControl
+                      label={control('windowStyle').label}
+                      value={values.windowStyle}
+                      options={[
+                        { value: 'edge', label: 'Edge' },
+                        { value: 'bubble', label: 'Bubble (original)' },
+                      ]}
+                      onChange={(value) => set('windowStyle', value as Values['windowStyle'])}
+                    />
+                  </ControlField>
+                  {numbers([
+                    'windowSize',
+                    'windowWidth',
+                    'windowHead',
+                    'windowTail',
+                    'windowIntensity',
+                    'windowGradient',
+                    'windowLength',
+                    'windowMargin',
+                    'windowBend',
+                  ])}
+                  <ControlField
                     label={control('glintShape').label}
-                    value={values.glintShape}
-                    options={soapBubbleGlintShapes.map((value) => ({
-                      value,
-                      label: value[0].toUpperCase() + value.slice(1),
-                    }))}
-                    onChange={(value) => set('glintShape', value as Values['glintShape'])}
-                  />
-                </ControlField>
-                {numbers(['glintSize', 'glintIntensity', 'glintDistance', 'glintHeight'])}
-                <ControlField
-                  className="is-boolean"
-                  label={control('windowTwin').label}
-                  description={control('windowTwin').description ?? ''}
-                >
-                  <SwitchControl
+                    description={control('glintShape').description ?? ''}
+                  >
+                    <SelectControl
+                      label={control('glintShape').label}
+                      value={values.glintShape}
+                      options={soapBubbleGlintShapes.map((value) => ({
+                        value,
+                        label: value[0].toUpperCase() + value.slice(1),
+                      }))}
+                      onChange={(value) => set('glintShape', value as Values['glintShape'])}
+                    />
+                  </ControlField>
+                  {numbers(['glintSize', 'glintIntensity', 'glintDistance', 'glintHeight'])}
+                  <ControlField
+                    className="is-boolean"
                     label={control('windowTwin').label}
-                    checked={values.windowTwin}
-                    onChange={(value) => set('windowTwin', value)}
-                  />
-                </ControlField>
-                <ControlField
-                  label={control('windowTwinShape').label}
-                  description={control('windowTwinShape').description ?? ''}
-                >
-                  <SelectControl
+                    description={control('windowTwin').description ?? ''}
+                  >
+                    <SwitchControl
+                      label={control('windowTwin').label}
+                      checked={values.windowTwin}
+                      onChange={(value) => set('windowTwin', value)}
+                    />
+                  </ControlField>
+                  <ControlField
                     label={control('windowTwinShape').label}
-                    value={values.windowTwinShape}
-                    options={soapBubbleTwinShapes.map((value) => ({
-                      value,
-                      label: value[0].toUpperCase() + value.slice(1),
-                    }))}
-                    onChange={(value) => set('windowTwinShape', value as Values['windowTwinShape'])}
-                  />
-                </ControlField>
-                <ControlField
-                  className="is-boolean"
-                  label={control('keyLight').label}
-                  description={control('keyLight').description ?? ''}
-                >
-                  <SwitchControl
+                    description={control('windowTwinShape').description ?? ''}
+                  >
+                    <SelectControl
+                      label={control('windowTwinShape').label}
+                      value={values.windowTwinShape}
+                      options={soapBubbleTwinShapes.map((value) => ({
+                        value,
+                        label: value[0].toUpperCase() + value.slice(1),
+                      }))}
+                      onChange={(value) =>
+                        set('windowTwinShape', value as Values['windowTwinShape'])
+                      }
+                    />
+                  </ControlField>
+                  <ControlField
+                    className="is-boolean"
                     label={control('keyLight').label}
-                    checked={values.keyLight}
-                    onChange={(value) => set('keyLight', value)}
-                  />
-                </ControlField>
-                {numbers(['topLength', 'topFade', 'topTail'])}
-              </>,
-            )}
+                    description={control('keyLight').description ?? ''}
+                  >
+                    <SwitchControl
+                      label={control('keyLight').label}
+                      checked={values.keyLight}
+                      onChange={(value) => set('keyLight', value)}
+                    />
+                  </ControlField>
+                  {numbers(['topLength', 'topFade', 'topTail'])}
+                </>,
+              )}
           </div>
         </>
       }

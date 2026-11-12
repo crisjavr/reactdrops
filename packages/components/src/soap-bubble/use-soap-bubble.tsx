@@ -7,17 +7,21 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type Context,
   type ReactNode,
   type RefObject,
 } from 'react';
 import {
   createSoapBubbleRenderer,
   normalizeSoapBubble,
+  soapBubbleLiquidKeys,
+  soapBubbleRgba,
   type SoapBubbleLayer,
   type SoapBubbleRenderer,
   type SoapBubbleSettings,
   type SoapBubbleTuning,
 } from './soap-bubble-renderer';
+import { attachSoapBubbleLens, soapBubbleLensSupported } from './soap-bubble-lens';
 
 export type SoapBubbleBackdropProp = RefObject<HTMLElement | null> | HTMLElement | null;
 
@@ -32,6 +36,7 @@ export type SoapBubbleMaterialProps = Partial<SoapBubbleSettings> & {
 const materialKeys = [
   'radius',
   'bevel',
+  'backdropBlur',
   'thickness',
   'iridescence',
   'drainage',
@@ -43,6 +48,7 @@ const materialKeys = [
   'oilEdgeFade',
   'clearCenter',
   'tint',
+  'paper',
   'soapColor',
   'soapPalette',
   'soapPaletteRed',
@@ -61,6 +67,8 @@ const materialKeys = [
   'floorLight',
   'reach',
   'refraction',
+  'refractionWidth',
+  'refractionClear',
   'glass',
   'dispersion',
   'environment',
@@ -94,8 +102,64 @@ const materialKeys = [
   'bottomShadeColor',
   'seed',
   'maxDpr',
+  ...soapBubbleLiquidKeys,
 ] as const;
 const materialKeySet = new Set<string>([...materialKeys, 'backdrop']);
+const liquidKeySet = new Set<string>(soapBubbleLiquidKeys);
+
+// The live glass's body: from a thin tint to a dense one, scaled by Tint.
+const thinGlass = 0.16;
+const denseGlass = 0.38;
+const darkGlass = [20, 20, 24];
+const glassSelector = '.soap-bubble-surface:not(.soap-bubble-menu-panel), .soap-bubble-menu-clip';
+// A live glass is a backdrop root: a surface inside one sees only that glass,
+// so it has nothing to bend.
+const glassLensRoots =
+  '.soap-bubble-surface[data-soap-bubble-glass]:not(.soap-bubble-menu-panel), .soap-bubble-menu-panel[data-soap-bubble-glass] > .soap-bubble-menu-clip';
+
+/** How the live glass looks on one surface, as CSS custom properties. */
+function liquidStyle(tuning: SoapBubbleTuning, light: boolean, panel: boolean) {
+  const scale = tuning.liquidTint;
+  const tinted = tuning.tint.trim().toLowerCase() !== 'auto';
+  const colour = tinted ? soapBubbleRgba(tuning.tint) : null;
+  const own = colour ? colour.slice(0, 3) : null;
+  // An explicit tint is the surface's own colour (a coloured action): the
+  // glass takes it under the film on dark pages, while on light ones the film
+  // paints all of it and glass beneath would only darken it. Opacity, when
+  // set, is its strength; otherwise the colour's own alpha.
+  const ownAlpha = colour ? (tuning.opacity < 0 ? colour[3] : tuning.opacity) : 0;
+  const accent = own !== null && ownAlpha > 0;
+  const base = (thinGlass + (denseGlass - thinGlass) * tuning.liquidDensity) * scale;
+  const alpha = accent
+    ? tuning.surface === 'bubble-liquid' && light
+      ? 0
+      : ownAlpha
+    : base * (panel ? tuning.liquidPanelDensity : 1);
+  const rgb = accent ? own : light ? [255, 255, 255] : darkGlass;
+  const settle = Math.min(1, scale);
+  // On white the glass lifts the page behind it rather than dimming it.
+  const brightness = 1 + (tuning.liquidBrightness - (light ? 0.7 : 1)) * settle;
+  const saturation = 1 + (tuning.liquidSaturation - 1) * settle;
+  const edge = tuning.liquidEdgeLight;
+  const shadow = tuning.liquidShadow;
+  const white = (strength: number) => `rgb(255 255 255 / ${Math.min(1, strength * edge)})`;
+  return {
+    accent,
+    properties: {
+      '--soap-bubble-liquid-rgb': rgb.join(' '),
+      '--soap-bubble-liquid-alpha': String(Math.min(1, alpha)),
+      '--soap-bubble-liquid-filter': `blur(${tuning.liquidBlur}px) saturate(${saturation}) brightness(${brightness})`,
+      '--soap-bubble-liquid-inner': String(tuning.liquidInnerLight),
+      '--soap-bubble-liquid-edge': [
+        `inset 1.5px 1.5px 1px -1px ${white(light ? 0.9 : 0.32)}`,
+        `inset -1.5px -1.5px 1px -1px ${white(light ? 0.6 : 0.18)}`,
+        `inset 0 0 0 0.5px ${white(light ? 0.5 : 0.1)}`,
+        `0 0 0 0.5px rgb(0 0 0 / ${light ? 0.06 : 0.3})`,
+        `0 6px 24px rgb(0 0 0 / ${Math.min(1, (light ? 0.12 : 0.3) * shadow)})`,
+      ].join(', '),
+    } as Record<string, string>,
+  };
+}
 
 /** Splits material props from everything else a component receives. */
 export function splitMaterial<T extends SoapBubbleMaterialProps>(props: T) {
@@ -112,7 +176,16 @@ export function splitMaterial<T extends SoapBubbleMaterialProps>(props: T) {
   ] as const;
 }
 
-const MaterialContext = createContext<SoapBubbleMaterialProps>({});
+// Kept outside the module: hot reloading evaluates this file again, and a new
+// context would cut the controls off from the Material already on the page, so
+// they would fall back to the default material.
+const materialContexts = globalThis as unknown as Record<
+  symbol,
+  Context<SoapBubbleMaterialProps> | undefined
+>;
+const materialContextKey = Symbol.for('reactdrops.soap-bubble.material');
+const MaterialContext = (materialContexts[materialContextKey] ??=
+  createContext<SoapBubbleMaterialProps>({}));
 
 /** Shares one material and backdrop with every soap bubble component inside. */
 export function SoapBubbleMaterial({
@@ -164,7 +237,10 @@ export function useSoapBubble({
   defaults,
   material,
   interactive = true,
+  hoverOnly = false,
   pointerTarget,
+  glass,
+  panel = false,
   adjust,
 }: {
   host: RefObject<HTMLElement | null>;
@@ -172,8 +248,14 @@ export function useSoapBubble({
   defaults?: Partial<SoapBubbleSettings>;
   material: SoapBubbleMaterialProps;
   interactive?: boolean;
+  /** Only a slight response to the pointer passing over, for a large surface that is not pressed. */
+  hoverOnly?: boolean;
   /** Element that receives pointer events; the host by default. */
   pointerTarget?: RefObject<HTMLElement | null>;
+  /** Element that carries the live glass and its rim lens; the host by default. */
+  glass?: RefObject<HTMLElement | null>;
+  /** A panel over text (a menu's): its live glass is denser by Panel density. */
+  panel?: boolean;
   /** Last word on the merged material, for parts that must stand out. */
   adjust?: (tuning: SoapBubbleTuning) => Partial<SoapBubbleTuning>;
 }) {
@@ -197,7 +279,61 @@ export function useSoapBubble({
   const [ready, setReady] = useState(false);
   const latest = useRef(tuning);
   latest.current = tuning;
-  const key = JSON.stringify(tuning);
+  // The film redraws for what it reads; the live glass is CSS alone.
+  const key = JSON.stringify(tuning, (name, value) => (liquidKeySet.has(name) ? undefined : value));
+  const live = tuning.surface !== 'bubble';
+  // Liquid glass on its own has no film to draw, so it needs no WebGL.
+  const film = tuning.surface !== 'liquid-glass';
+  const light = scheme === 'light';
+  const liquid = live ? liquidStyle(tuning, light, panel) : null;
+  const liquidKey = liquid ? JSON.stringify(liquid) : '';
+  // Marked on the component's own root: the surface, or a control's frame.
+  useLayoutEffect(() => {
+    const root = (pointerTarget ?? host).current;
+    if (!root) return;
+    const properties: Record<string, string> = liquid?.properties ?? {};
+    if (liquid) {
+      root.dataset.soapBubbleGlass = tuning.surface;
+      root.toggleAttribute('data-soap-bubble-glass-light', light);
+      root.toggleAttribute('data-soap-bubble-accent', liquid.accent);
+      for (const [name, value] of Object.entries(properties)) root.style.setProperty(name, value);
+    }
+    return () => {
+      delete root.dataset.soapBubbleGlass;
+      root.removeAttribute('data-soap-bubble-glass-light');
+      root.removeAttribute('data-soap-bubble-accent');
+      for (const name of Object.keys(properties)) root.style.removeProperty(name);
+    };
+    // liquidKey stands for everything liquid holds.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [host, pointerTarget, liquidKey, tuning.surface, light]);
+  // The rim lens, where the browser draws one: on surfaces and a menu's clip,
+  // and not on one inside another live glass, which only sees that glass.
+  const lens = live && tuning.liquidLens;
+  const lensSettings = {
+    rimWidth: tuning.liquidRimWidth,
+    bend: tuning.liquidBend,
+    split: tuning.liquidSplit,
+  };
+  const lensRef = useRef<ReturnType<typeof attachSoapBubbleLens> | null>(null);
+  useEffect(() => {
+    const target = (glass ?? host).current;
+    const corners = host.current;
+    if (!lens || !target || !corners || !soapBubbleLensSupported()) return;
+    if (!target.matches(glassSelector) || target.parentElement?.closest(glassLensRoots)) return;
+    const attached = attachSoapBubbleLens(target, corners, lensSettings);
+    lensRef.current = attached;
+    return () => {
+      attached.dispose();
+      lensRef.current = null;
+    };
+    // The settings reach the lens below without making it again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lens, glass, host]);
+  useEffect(() => {
+    lensRef.current?.update(lensSettings);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lensSettings.rimWidth, lensSettings.bend, lensSettings.split]);
   useLayoutEffect(() => {
     host.current?.style.setProperty(
       '--soap-bubble-tint',
@@ -248,7 +384,7 @@ export function useSoapBubble({
   }, [host, tuning.wobble]);
 
   useEffect(() => {
-    if (!canvas.current || !host.current) return;
+    if (!film || !canvas.current || !host.current) return;
     let renderer: SoapBubbleRenderer | null = null;
     try {
       renderer = createSoapBubbleRenderer(canvas.current, host.current, latest.current, () =>
@@ -261,8 +397,9 @@ export function useSoapBubble({
     return () => {
       renderer?.dispose();
       engine.current = null;
+      setReady(false);
     };
-  }, [canvas, host]);
+  }, [canvas, host, film]);
   useEffect(() => {
     const explicit = host.current?.closest('[data-theme]')?.getAttribute('data-theme');
     const light =
@@ -272,8 +409,9 @@ export function useSoapBubble({
   }, [scheme, host]);
   useLayoutEffect(() => engine.current?.update(latest.current), [key]);
   const backdropElement = backdrop && 'current' in backdrop ? backdrop.current : (backdrop ?? null);
+  // Live glass reads the page as it is: nothing captures it.
   useEffect(() => {
-    engine.current?.setBackdrop(backdropElement);
+    engine.current?.setBackdrop(live ? null : backdropElement);
   });
 
   useEffect(() => {
@@ -290,14 +428,15 @@ export function useSoapBubble({
         -(event.clientY - rect.top - rect.height / 2) / radius,
       ] as const;
     };
-    const disabled = () => (element as HTMLButtonElement).disabled === true;
+    const strength = hoverOnly ? 0.15 : 1;
+    const disabled = () => hoverOnly || (element as HTMLButtonElement).disabled === true;
     const onMove = (event: PointerEvent) => {
       const [x, y] = local(event);
-      engine.current?.pointer(x, y, true);
+      engine.current?.pointer(x, y, true, strength);
     };
     const onLeave = (event: PointerEvent) => {
       const [x, y] = local(event);
-      engine.current?.pointer(x, y, false);
+      engine.current?.pointer(x, y, false, strength);
       engine.current?.press(false);
     };
     const onDown = () => {
@@ -331,7 +470,7 @@ export function useSoapBubble({
     listeners.forEach(([type, listener]) => element.addEventListener(type, listener));
     return () =>
       listeners.forEach(([type, listener]) => element.removeEventListener(type, listener));
-  }, [interactive, host, pointerTarget]);
+  }, [interactive, hoverOnly, host, pointerTarget]);
 
   return {
     ready,

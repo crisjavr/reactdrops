@@ -483,6 +483,11 @@ export const SoapBubbleSlider = forwardRef<HTMLDivElement, SoapBubbleSliderProps
             '--soap-bubble-control-bleed': pixels(bleed),
             '--soap-bubble-thumb-width': pixels(thumbSize.width),
             '--soap-bubble-thumb-height': pixels(thumbSize.height),
+            // The track and fill, for liquid glass without the film to draw them.
+            '--soap-bubble-slider-track': pixels(trackHeight),
+            '--soap-bubble-slider-fill': pixels(center),
+            '--soap-bubble-slider-from': from,
+            '--soap-bubble-slider-to': to ?? from,
             ...style,
           } as CSSProperties
         }
@@ -581,6 +586,8 @@ export type SoapBubbleMenuItem = {
 };
 
 export type SoapBubbleMenuProps = SoapBubbleMaterialProps & {
+  /** Overrides for the floating panel without changing the trigger's material. */
+  panelMaterial?: SoapBubbleMaterialProps;
   /** Content of the trigger button. */
   label: ReactNode;
   /** Accessible name of the trigger; needed when label is an icon. */
@@ -607,6 +614,7 @@ export function SoapBubbleMenu({
   align = 'start',
   className = '',
   style,
+  panelMaterial: panelOverrides,
   ...props
 }: SoapBubbleMenuProps) {
   const [material] = splitMaterial(props);
@@ -637,7 +645,7 @@ export function SoapBubbleMenu({
   const triggerEngine = useRef<SoapBubbleRenderer | null>(null);
   const menuJiggle = useRef(1);
   const id = useId();
-  const panelMaterial = { ...material, radius: material.radius ?? 32 };
+  const panelMaterial = { ...material, radius: material.radius ?? 32, ...panelOverrides };
   const {
     ready: panelReady,
     tuning: panelTuning,
@@ -646,7 +654,10 @@ export function SoapBubbleMenu({
     host: panel,
     canvas: panelCanvas,
     material: panelMaterial,
-    interactive: false,
+    hoverOnly: true,
+    // Live glass sits on the clip, which is what animates.
+    glass: clip,
+    panel: true,
     defaults: soapBubbleSystemDefaults,
   });
   menuJiggle.current = Math.min(1.6, panelTuning.wobble / 0.4);

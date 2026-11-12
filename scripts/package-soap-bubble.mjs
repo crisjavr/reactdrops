@@ -9,6 +9,7 @@ const modules = [
   'soap-bubble-renderer.ts',
   'soap-bubble-motion.ts',
   'soap-bubble-gl.ts',
+  'soap-bubble-lens.ts',
   'soap-bubble-shaders.ts',
   'soap-bubble.css',
 ];

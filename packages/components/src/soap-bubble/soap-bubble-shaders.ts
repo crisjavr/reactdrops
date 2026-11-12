@@ -30,7 +30,10 @@ uniform vec2 uCenter;          // bubble centre, device pixels from the bottom l
 uniform float uRadius;         // short half side, device pixels
 uniform vec2 uExtent;          // half size in radii (x >= 1 for a pill)
 uniform float uCorner;         // corner radius in radii (1 is fully round)
-uniform float uBevel;          // glass bevel width in radii
+uniform float uBevel;          // glass bevel width in radii; 0 leaves a flat face
+uniform float uLensWidth;      // width of the rim lens in radii; 0 follows the bevel
+uniform float uLensClear;      // how far the tint clears over the rim lens
+uniform float uBackdropBlur;   // transmitted blur in radii
 uniform vec4 uModeBasis;       // l=2 amplitude × (cos, sin) of twice its angle, l=3 × thrice its
 uniform vec2 uSquash;          // press squash and stretch
 uniform float uPressScale;    // native press swell, independent of glyph size
@@ -57,7 +60,8 @@ uniform float uMirage;
 uniform float uSeeThrough;     // share of the covered bubbles seen through the film
 uniform float uCoveredBend;    // how far they bend, relative to the backdrop's refraction
 uniform bool uHasCovered;
-uniform sampler2D uCovered;    // the backdrop with its bubbles in it
+uniform sampler2D uCovered;    // what lies on the backdrop, premultiplied: its text, images and bubbles
+uniform sampler2D uGround;     // the backdrop with nothing on it
 uniform float uFloorLight;
 uniform float uReach;         // radius of the reflected surroundings, in radii
 uniform float uRefraction;
@@ -75,6 +79,7 @@ uniform float uOilEdge;        // device px from the rim the oil reaches; 0 is e
 uniform float uOilLarge;       // 0 for small controls, 1 for large panels and bars
 uniform float uClearCenter;    // where the oil fades, also drop the reflected haze
 uniform vec4 uTint;            // CSS colour and opacity, applied under the film
+uniform vec4 uPaper;           // the plain colour of a page with no captured backdrop
 uniform vec4 uSoapColor;       // film palette; resolved from tint when auto
 uniform bool uCustomSoapPalette;
 uniform vec4 uSoapPaletteRed;
@@ -179,6 +184,12 @@ float filmThickness(vec3 p, float scale, float seed) {
   return max(0.0, uThickness * scale * profile * (1.0 + variation));
 }
 
+// Reflectivity at a point of the shell. Turned up past its usual level it lifts
+// the rim and its highlights: the flat face keeps its colour.
+float reflectivityAt(float cosI) {
+  return mix(min(uReflectivity, 1.3), uReflectivity, smoothstep(0.0, 0.2, 1.0 - cosI));
+}
+
 // Reflectance of the film in linear sRGB. oil (0–1) is how much of the
 // interference shows at this point; elsewhere the film reflects without
 // colour, like clear water between oil slicks.
@@ -197,7 +208,7 @@ vec3 film(float thickness, float cosI, float oil) {
   vec3 colour = mix(vec3(incoherent), interference, clamp(strength, 0.0, 1.0));
   float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));
   colour = max(vec3(0.0), luma + (colour - luma) * max(1.0, strength));
-  return min(colour * uReflectivity, vec3(1.0));
+  return min(colour * reflectivityAt(cosI), vec3(1.0));
 }
 
 // Where the oil colours show. Coverage below 1 leaves clear film between
@@ -217,6 +228,11 @@ float roundedRect(vec2 p, vec2 halfSize, float r) {
   return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;
 }
 
+// How far the reflected direction turns across one device pixel. A light's
+// image narrower than that falls between the pixels and breaks into dashes,
+// so the panels below are filtered over this width.
+float rayFootprint = 0.0;
+
 // A light panel seen in direction dir: axis is where it hangs, its plane is
 // spanned by right and up, size is the gnomonic half extent.
 float panel(vec3 dir, vec3 axis, vec2 size, float panes, float soft, float tail) {
@@ -233,7 +249,13 @@ float panel(vec3 dir, vec3 axis, vec2 size, float panes, float soft, float tail)
   float taper = clamp((abs(q.x) - size.x * 0.3) / max(reach.x - size.x * 0.3, 1e-4), 0.0, 1.0);
   reach.y *= mix(1.0, tail, taper);
   float edge = roundedRect(q, reach, min(size.x, reach.y) * 0.18);
-  float body = 1.0 - smoothstep(-0.02, 0.02, edge);
+  // The panel filtered over a pixel's footprint: a trapezoid across its short
+  // side, so an image thinner than a pixel dims instead of breaking up. It
+  // keeps its light, and the footprint is capped so a grazing rim stays lit.
+  float blur = clamp(rayFootprint * 0.75 / facing, 0.02, 0.5);
+  float shortSide = max(min(reach.x, reach.y), 1e-4);
+  float ramp = clamp((blur - edge) / (2.0 * min(blur, shortSide)), 0.0, 1.0);
+  float body = ramp * ramp * (3.0 - 2.0 * ramp) * min(1.0, shortSide / blur);
   if (soft > 0.0) {
     float beyond = clamp((abs(q.x) - (size.x - soft * 0.6)) / (soft * 1.2), 0.0, 1.0);
     body *= 1.0 - beyond * beyond * (3.0 - 2.0 * beyond);
@@ -241,7 +263,8 @@ float panel(vec3 dir, vec3 axis, vec2 size, float panes, float soft, float tail)
   if (panes > 0.0) {
     // Window bars between the panes.
     vec2 cell = (0.5 - abs(fract(q / size * panes * 0.5) - 0.5)) * size * 2.0 / panes;
-    float bars = smoothstep(0.012, 0.022, min(cell.x, cell.y));
+    float barBlur = max(0.005, blur * 0.25);
+    float bars = smoothstep(0.017 - barBlur, 0.017 + barBlur, min(cell.x, cell.y));
     body *= mix(1.0, bars, step(edge, -0.03));
     // Daylight is brighter towards the top of the window.
     body *= 0.75 + 0.35 * clamp(q.y / size.y, -1.0, 1.0);
@@ -401,9 +424,65 @@ vec4 layerAt(vec2 xy) {
   return vec4(colour.rgb * a, a);
 }
 
+// The detail level for what is seen through the film. A wide blur starts from a
+// coarser level, so that its nine samples smooth the image instead of showing
+// nine copies of it.
+float transmittedLod() {
+  float blurTexels = uBackdropBlur * uBackdropScale.x * uBackdropSize.x;
+  return max(backdropLod(1.0), log2(max(blurTexels, 1.0)));
+}
+
+vec3 transmittedSample(sampler2D image, vec2 uv) {
+  float lod = transmittedLod();
+  vec3 color = textureLod(image, clamp(uv, 0.0, 1.0), lod).rgb;
+  if (uBackdropBlur < 1e-5) return toLinear(color);
+  // Blur the full-resolution scene before the rim samples it. A coarse mip
+  // level is a reduced image, not a blur: magnifying it at the rim exposes
+  // its texel grid. This Gaussian-weighted kernel keeps the native detail.
+  vec2 dx = vec2(uBackdropScale.x * uBackdropBlur, 0.0);
+  vec2 dy = vec2(0.0, uBackdropScale.y * uBackdropBlur);
+  color *= 0.25;
+  color += 0.125 * (
+    textureLod(image, clamp(uv + dx, 0.0, 1.0), lod).rgb +
+    textureLod(image, clamp(uv - dx, 0.0, 1.0), lod).rgb +
+    textureLod(image, clamp(uv + dy, 0.0, 1.0), lod).rgb +
+    textureLod(image, clamp(uv - dy, 0.0, 1.0), lod).rgb);
+  color += 0.0625 * (
+    textureLod(image, clamp(uv + dx + dy, 0.0, 1.0), lod).rgb +
+    textureLod(image, clamp(uv + dx - dy, 0.0, 1.0), lod).rgb +
+    textureLod(image, clamp(uv - dx + dy, 0.0, 1.0), lod).rgb +
+    textureLod(image, clamp(uv - dx - dy, 0.0, 1.0), lod).rgb);
+  return toLinear(color);
+}
+
+// What lies on the backdrop, in linear light, with how much of it is there.
+vec4 coveredSample(vec2 uv) {
+  float lod = transmittedLod();
+  vec4 color = textureLod(uCovered, clamp(uv, 0.0, 1.0), lod);
+  if (uBackdropBlur >= 1e-5) {
+    vec2 dx = vec2(uBackdropScale.x * uBackdropBlur, 0.0);
+    vec2 dy = vec2(0.0, uBackdropScale.y * uBackdropBlur);
+    color *= 0.25;
+    color += 0.125 * (
+      textureLod(uCovered, clamp(uv + dx, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dx, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv + dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dy, 0.0, 1.0), lod));
+    color += 0.0625 * (
+      textureLod(uCovered, clamp(uv + dx + dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv + dx - dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dx + dy, 0.0, 1.0), lod) +
+      textureLod(uCovered, clamp(uv - dx - dy, 0.0, 1.0), lod));
+  }
+  return vec4(toLinear(color.rgb / max(color.a, 1e-4)), color.a);
+}
+
 vec3 pageThrough(vec2 xy) {
   vec2 uv = uBackdropOrigin + vec2(xy.x, -xy.y) * uBackdropScale;
-  return toLinear(textureLod(uBackdrop, clamp(uv, 0.0, 1.0), backdropLod(1.0)).rgb);
+  // See-through decides how much of what lies on the page shows, so the light
+  // from behind is only the bare page then.
+  if (uHasCovered) return transmittedSample(uGround, uv);
+  return transmittedSample(uBackdrop, uv);
 }
 
 // What lies behind a point of the bubble, in linear light. Over a captured
@@ -413,6 +492,9 @@ vec4 behindAt(vec2 xy) {
   vec4 layer = layerAt(xy);
   vec3 tint = layer.a > 0.0 ? toLinear(layer.rgb / layer.a) : vec3(0.0);
   if (uHasBackdrop) return vec4(mix(pageThrough(xy), tint, layer.a), 1.0);
+  // On a page of a known colour the layer lies on that colour, so a thumb
+  // taller than its track sees the paper past the track, not black.
+  if (uPaper.a > 0.0) return vec4(mix(toLinear(uPaper.rgb), tint, layer.a), 1.0);
   return vec4(tint * layer.a, layer.a);
 }
 
@@ -492,13 +574,19 @@ vec4 contactTint(vec4 tint, vec2 p, vec4 other, float corner, float amount, vec4
 // A film stretched over a rounded frame bulges only as far in as its corner
 // radius: a sphere for a circle, a pillow edge for a panel. Glass narrows
 // that into a bevel.
-float bevelWidth() {
+float glassEdge(float width) {
   float soap = clamp(uCorner, 0.04, 1.0);
-  return mix(soap, min(soap, clamp(uBevel, 0.04, 1.0)), uGlass);
+  return mix(soap, min(soap, clamp(width, 0.04, 1.0)), uGlass);
+}
+
+// No bevel means a face flat to the edge, however much of a film it still is.
+float bevelWidth() {
+  return uBevel > 0.0 ? glassEdge(uBevel) : 0.0;
 }
 
 float shellInset(float sdf) {
-  return clamp(-sdf / bevelWidth(), 0.0, 1.0);
+  float width = bevelWidth();
+  return width > 1e-4 ? clamp(-sdf / width, 0.0, 1.0) : 1.0;
 }
 
 // Height of the shell across its edge, 0 at the rim and 1 where the face
@@ -531,7 +619,7 @@ vec3 surface(vec3 soap, float cosI) {
   if (uGlass <= 0.0) return soap;
   float fresnel = 0.04 + 0.96 * pow(1.0 - cosI, 5.0);
   float luma = dot(soap, vec3(0.2126, 0.7152, 0.0722));
-  vec3 coated = max(vec3(0.0), fresnel * uReflectivity + (soap - luma) * 0.8);
+  vec3 coated = max(vec3(0.0), fresnel * reflectivityAt(cosI) + (soap - luma) * 0.8);
   return min(mix(soap, coated, uGlass), vec3(1.0));
 }
 
@@ -605,10 +693,14 @@ vec2 windowLight(vec2 q, float rc, float pixel, float side) {
   // The small glint past the window. On auto it differs from bubble to
   // bubble: a dot, a short dash along the window, a pair of dots, or none.
   // Smaller than the cartoon's, so it does not read as a dot first.
-  vec2 sparkAt = vec2(to + (0.22 + 0.3 * uGlintOffset.x) * rc, (0.4 + 0.15 * uGlintOffset.y) * rc);
+  // A long control catches a streak on its upper rim. The round bubble's
+  // inset spark would otherwise float in the input's text area.
+  float sparkDepth = mix((0.4 + 0.15 * uGlintOffset.y) * rc,
+                         max(pixel * 1.25, (0.04 + 0.04 * uGlintOffset.y) * rc), elongated);
+  vec2 sparkAt = vec2(to + (0.22 + 0.3 * uGlintOffset.x) * rc, sparkDepth);
   float sparkScale = 0.75 * rc * uWindowSize * uGlintSize;
   int sparkShape = uGlintShape != 0 ? uGlintShape
-      : uSpark < 0.35 ? 1 : uSpark < 0.7 ? 2 : uSpark < 0.86 ? 3 : 4;
+      : elongated > 0.5 ? 2 : uSpark < 0.35 ? 1 : uSpark < 0.7 ? 2 : uSpark < 0.86 ? 3 : 4;
   float spark = glintShape((here - sparkAt) / sparkScale, sparkShape) * sparkScale;
   // Crisp towards the rim, where the surface turns away fast; melting
   // towards the middle of the face.
@@ -623,7 +715,7 @@ vec2 windowLight(vec2 q, float rc, float pixel, float side) {
   // Towards its right end the window dims by the gradient: 0 keeps it even.
   float pane = shape * glow * bar * 0.92 * (1.0 - (twin ? 0.24 : uWindowGradient) * h);
   float glint = twin ? 0.0 : min(1.0, (1.0 - smoothstep(-feather * 0.6, feather * 0.6, spark)) * 0.6 * uGlintIntensity);
-  return vec2(max(pane, glint), across);
+  return vec2(max(uWindowLight ? pane : 0.0, glint), across);
 }
 
 // The window as it first was: the intro's bean and its round glint, drawn
@@ -676,7 +768,7 @@ vec2 bubbleWindow(vec2 rest, float rc, float pixel) {
   float glint = min(1.0, (1.0 - smoothstep(-feather * 0.6, feather * 0.6, spark)) * 0.85 * uGlintIntensity);
   // Only near the top-left, inside the outline.
   float inside = 1.0 - smoothstep(0.95, 1.05, length(curve));
-  return vec2(max(window, glint) * inside, clamp(offset / thick, 0.0, 1.0));
+  return vec2(max(uWindowLight ? window : 0.0, glint) * inside, clamp(offset / thick, 0.0, 1.0));
 }
 
 void main() {
@@ -734,6 +826,13 @@ void main() {
   // A radius-relative window keeps the oily rim at every scale; large panels
   // retain their existing, narrower pixel-sized oil band.
   float clearRim = min(rimOil, 1.0 - smoothstep(0.12, 0.55, -sdf));
+  // Past the usual amount the clearing spreads out from the middle until only
+  // a band at the rim keeps its colours, as wide as Oil edge asks.
+  if (uOilEdge > 0.0 && uClearCenter > 0.73) {
+    float colourBand = min(band * 0.25, 0.5 * uRadius) / uRadius;
+    float toRim = 1.0 - smoothstep(colourBand * 0.5, colourBand, -sdf);
+    clearRim = mix(clearRim, min(clearRim, toRim), smoothstep(0.73, 1.0, uClearCenter));
+  }
   float clarity = mix(1.0, clearRim, uClearCenter);
   frontFilm *= clarity * contactOptics;
   backFilm *= clarity * contactOptics;
@@ -746,6 +845,9 @@ void main() {
   // The reflected direction turns twice as fast as the normal, which turns
   // as 1 / n.z towards the rim.
   float spread = 2.0 * uReach / max(front.z, 0.03);
+  // The shell curves fastest across the outline, so measure one pixel that way.
+  vec3 nextNormal = shellNormal(shellInset(sdf - pixel), gradient, 1.0);
+  rayFootprint = length(reflect(view, nextNormal) - frontRay);
   vec3 frontReflection = frontFilm * radiance(frontPoint, frontRay, uMirage, spread);
   vec3 backReflection = backFilm * (1.0 - frontFilm) * (1.0 - frontFilm) * (1.0 - 0.7 * uGlass) *
                         radiance(backPoint, backRay, uMirage, spread);
@@ -755,17 +857,20 @@ void main() {
   // Light from behind, refracted only if the film is given body. The ray is
   // followed across the shell to where it meets the back wall, so rays near
   // the rim cross a long chord just as they do in a ball lens.
-  vec3 behind = vec3(0.0);
-  float behindAlpha = uHasBackdrop ? 1.0 : 0.0;
+  bool onPaper = !uHasBackdrop && uPaper.a > 0.0;
+  vec3 behind = onPaper ? toLinear(uPaper.rgb) : vec3(0.0);
+  float behindAlpha = uHasBackdrop || onPaper ? 1.0 : 0.0;
   vec3 covered = vec3(0.0);
   float coveredWeight = 0.0;
   if (uHasBackdrop || uHasLayer) {
     vec2 exitXY = p;
     vec3 outward = view;
     float exitZ = -lift;
-    float eta = 1.0 + 0.333 * uRefraction + 0.25 * uGlass;
+    float eta = 1.0 + (0.333 + 0.25 * uGlass) * uRefraction;
+    // With no bevel to trace, the rim lens is all the bending there is.
+    float glassLens = uBevel > 0.0 ? smoothstep(0.5, 0.95, uGlass) : 1.0;
     // A flat face passes light straight through: only the bevel is traced.
-    if (eta > 1.0003 && inset < 0.999) {
+    if (glassLens < 1.0 && eta > 1.0003 && inset < 0.999) {
       vec3 ray = refract(view, front, 1.0 / eta);
       // Distance along the ray at which it leaves through the back wall.
       float near = 0.0;
@@ -789,6 +894,15 @@ void main() {
     }
     float t = (-1.3 - exitZ) / min(outward.z, -0.05);
     vec2 target = exitXY + outward.xy * t;
+    // A ball lens can throw a grazing ray far across the page. As the film
+    // becomes glass, use a local rim lens instead: no displacement on the
+    // flat face, strongest at the outer rim and bounded by its width.
+    // Coordinates stay anchored to the page while a menu changes shape.
+    // Its width is its own, so the edge can bend light with no bevel to see.
+    float lens = uLensWidth > 0.0 ? glassEdge(uLensWidth) : bevelWidth();
+    float rim = lens > 1e-4 ? pow(1.0 - clamp(-sdf / lens, 0.0, 1.0), 2.6) : 0.0;
+    vec2 rimShift = -gradient * lens * 1.1 * rim * uRefraction;
+    target = mix(target, p + rimShift, glassLens);
     // Glass disperses: red bends less than blue.
     vec2 shift = target - p;
     float split = 0.12 * uGlass * uDispersion;
@@ -799,24 +913,34 @@ void main() {
       behind.r = behindAt(p + shift * (1.0 - split)).r;
       behind.b = behindAt(p + shift * (1.0 + split)).b;
     }
-    // The bubbles this one covers, which the backdrop leaves out, seen along
-    // the same ray bent as far as asked.
+    // Everything this one covers (text, images, other bubbles) seen along the
+    // same ray bent as far as asked.
     if (uHasCovered) {
       vec2 bent = p + shift * uCoveredBend;
       vec2 uv = uBackdropOrigin + vec2(bent.x, -bent.y) * uBackdropScale;
-      covered = toLinear(textureLod(uCovered, clamp(uv, 0.0, 1.0), 0.0).rgb);
-      // Only where a bubble lies: over the bare page the film stays whole.
-      vec3 page = toLinear(textureLod(uBackdrop, clamp(uv, 0.0, 1.0), 0.0).rgb);
-      vec3 apart = abs(covered - page);
-      coveredWeight = smoothstep(0.01, 0.06, max(max(apart.r, apart.g), apart.b));
+      vec4 seen = coveredSample(uv);
+      covered = seen.rgb;
+      // Only where something lies: over the bare page the film stays whole.
+      coveredWeight = seen.a;
+      if (split > 1e-4 && dot(shift, shift) > 1e-8) {
+        vec2 reach = shift * uCoveredBend;
+        vec2 red = p + reach * (1.0 - split);
+        vec2 blue = p + reach * (1.0 + split);
+        covered.r = coveredSample(uBackdropOrigin + vec2(red.x, -red.y) * uBackdropScale).r;
+        covered.b = coveredSample(uBackdropOrigin + vec2(blue.x, -blue.y) * uBackdropScale).b;
+      }
     }
   }
   // User-controlled tint under the film, independent of the page theme.
   // Premultiplied compositing also works without a captured backdrop.
+  // A solid body would hide what the rim lens bends, so it can clear there.
+  float lensReach = uLensWidth > 0.0 ? glassEdge(uLensWidth) : bevelWidth();
+  float lensClear = uLensClear * (1.0 - smoothstep(0.0, max(lensReach, 1e-4), -sdf));
   vec4 bodyTint = contactTint(uTint, p, uJoin0, uJoinCorners.x, uJoinAmounts.x, uJoinTint0);
   bodyTint = contactTint(bodyTint, p, uJoin1, uJoinCorners.y, uJoinAmounts.y, uJoinTint1);
   bodyTint = contactTint(bodyTint, p, uJoin2, uJoinCorners.z, uJoinAmounts.z, uJoinTint2);
   bodyTint = contactTint(bodyTint, p, uJoin3, uJoinCorners.w, uJoinAmounts.w, uJoinTint3);
+  bodyTint.a *= 1.0 - lensClear;
   behind = behind * (1.0 - bodyTint.a) + toLinear(bodyTint.rgb) * bodyTint.a;
   behindAlpha = behindAlpha * (1.0 - bodyTint.a) + bodyTint.a;
 
@@ -832,7 +956,7 @@ void main() {
   // bands away. Only light themes use this extra coating: dark themes keep
   // their original spectral reflections and transmission unchanged.
   if (uLightTheme) {
-    float oilCoat = min(uIridescence * 0.3, 0.65) * uGlass * frontOil * clarity * uOilOpacity;
+    float oilCoat = min(uIridescence * 0.3, 0.65) * uGlass * frontOil * clarity * uOilOpacity * min(uReflectivity, 1.0);
     float oilPeak = max(max(frontSoap.r, frontSoap.g), frontSoap.b);
     vec3 oilHue = frontSoap / max(oilPeak, 1e-4);
     float baseLight = max(0.1, dot(colour, vec3(0.2126, 0.7152, 0.0722)));
@@ -874,7 +998,7 @@ void main() {
     bool themed = uShadeColor.a < 0.0;
     vec3 shade = themed ? (uLightTheme ? vec3(0.0) : vec3(1.0)) : toLinear(uShadeColor.rgb);
     shade = mix(shade, toLinear(uSoapShadeColor.rgb), uSoapShadeColor.a);
-    float strength = (themed ? (uLightTheme ? 0.16 : 0.2) : uShadeColor.a * 0.35) * contactOptics;
+    float strength = (themed ? (uLightTheme ? 0.16 : 0.2) : uShadeColor.a * 0.35) * contactOptics * min(uReflectivity, 1.0);
     colour = mix(colour, shade, band * strength);
     through *= 1.0 - band * strength;
   }
@@ -885,7 +1009,7 @@ void main() {
   // (such as the green +) from gaining an additional spectral coating.
   float tintPresent = uCustomSoapPalette ? 1.0 : smoothstep(0.0, 0.2, uSoapColor.a);
   float tintedOil = tintPresent * smoothstep(0.0, 0.05, uIridescence) * 0.95 *
-                    uOilOpacity * frontOil * clarity;
+                    uOilOpacity * frontOil * clarity * min(uReflectivity, 1.0);
   if (tintedOil > 0.0) {
     vec3 spectrum = frontSoap;
     float peak = max(max(spectrum.r, spectrum.g), spectrum.b);
@@ -894,7 +1018,7 @@ void main() {
     colour = mix(colour, hue * baseLight * paletteBrightness, tintedOil);
     through *= 1.0 - tintedOil;
   }
-  if (uWindowLight) {
+  if (uWindowLight || uGlintIntensity > 0.0) {
     // The intro's window, set in from and following the top-left edge (an
     // arc on a round bubble, the end and then the top of a pill, a panel's
     // corner), and its inverted twin, small and faint, on the far wall at
@@ -906,10 +1030,10 @@ void main() {
     vec2 q = restPoint(p);
     vec2 near = uWindowStyle == 1 ? bubbleWindow(q, rc, pixel) : windowLight(q, rc, pixel, 1.0);
     vec2 far = windowLight(uTwinShape == 4 ? q : q * 1.35, rc, pixel, -1.0);
-    float light = min(1.0, near.x * uWindowIntensity) * smoothstep(0.05, 0.35, gradient.y) * contactOptics;
+    float light = min(1.0, near.x * uWindowIntensity) * smoothstep(0.05, 0.35, gradient.y) * contactOptics * min(uReflectivity, 1.0);
     // Thin shapes need more light to read at all.
     float twinStrength = uTwinShape == 0 ? 0.16 : uTwinShape == 2 ? 0.26 : uTwinShape == 4 ? 0.45 : 0.3;
-    float twin = uWindowTwin ? min(1.0, far.x * twinStrength * uWindowIntensity) * smoothstep(0.05, 0.35, -gradient.y) * contactOptics : 0.0;
+    float twin = uWindowLight && uWindowTwin ? min(1.0, far.x * twinStrength * uWindowIntensity) * smoothstep(0.05, 0.35, -gradient.y) * contactOptics * min(uReflectivity, 1.0) : 0.0;
     // The film's oil colours show at the window's edges, as on a bubble.
     float peak = max(max(frontSoap.r, frontSoap.g), frontSoap.b);
     vec3 hue = frontSoap / max(peak, 1e-4);
@@ -924,12 +1048,23 @@ void main() {
   // on a light page, where the film's bright reflections would bury it.
   if (uHasCovered) {
     // What lies behind, so a solid body (Opacity) hides it as it hides the page.
-    colour = mix(colour, covered, uSeeThrough * coveredWeight * (1.0 - uTint.a));
+    colour = mix(colour, covered, uSeeThrough * coveredWeight * (1.0 - bodyTint.a));
   }
   vec3 encoded = pow(max(colour, 0.0), vec3(1.0 / 2.2));
   vec4 bubble;
   if (uHasBackdrop) {
     bubble = vec4(encoded, 1.0);
+  } else if (onPaper) {
+    // The film is lit as it would be on its page, then only what it changes
+    // there is painted: the same colours over the paper, and whatever else
+    // lies on the page still shows through.
+    vec3 shown = min(encoded, vec3(1.0));
+    vec3 away = max(
+      (shown - uPaper.rgb) / max(1.0 - uPaper.rgb, vec3(1e-4)),
+      (uPaper.rgb - shown) / max(uPaper.rgb, vec3(1e-4))
+    );
+    float paint = clamp(max(away.r, max(away.g, away.b)), 0.0, 1.0);
+    bubble = vec4(max(shown - uPaper.rgb * (1.0 - paint), vec3(0.0)), paint);
   } else {
     // Over live page content: the page is seen undistorted through the film,
     // dimmed by what the film reflects away.

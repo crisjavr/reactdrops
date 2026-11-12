@@ -290,6 +290,7 @@
     "packages/components/src/showcase-pointer/showcase-pointer.tsx",
     "packages/components/src/soap-bubble/index.ts",
     "packages/components/src/soap-bubble/soap-bubble-gl.ts",
+    "packages/components/src/soap-bubble/soap-bubble-lens.ts",
     "packages/components/src/soap-bubble/soap-bubble-motion.ts",
     "packages/components/src/soap-bubble/soap-bubble-renderer.ts",
     "packages/components/src/soap-bubble/soap-bubble-shaders.ts",

@@ -139,6 +139,12 @@ function filmTable() {
   return table;
 }
 
+// The tables never change, so every context (one per surface on iOS and in
+// Firefox, and again after a lost context comes back) uploads the same copy
+// instead of working them out afresh.
+let filmTableData: Float32Array | null = null;
+let noiseVolumeData: Uint8Array | null = null;
+
 /**
  * Tiling 3D gradient noise (Perlin, quintic fade) sampled on a grid, for the
  * film's swirls. Gradients wrap every soapBubbleNoisePeriod cells.
@@ -209,6 +215,8 @@ const uniformNames = [
   'uExtent',
   'uCorner',
   'uBevel',
+  'uLensWidth',
+  'uLensClear',
   'uModeBasis',
   'uSquash',
   'uPressScale',
@@ -235,6 +243,7 @@ const uniformNames = [
   'uOilFade',
   'uClearCenter',
   'uTint',
+  'uPaper',
   'uSoapColor',
   'uCustomSoapPalette',
   'uSoapPaletteRed',
@@ -279,6 +288,7 @@ const uniformNames = [
   'uFloorLight',
   'uReach',
   'uRefraction',
+  'uBackdropBlur',
   'uGlass',
   'uDispersion',
   'uSeed',
@@ -308,6 +318,8 @@ export type SoapBubbleUniforms = {
   v4: (location: Location, value: ArrayLike<number>) => void;
   i1: (location: Location, value: number) => void;
   m3: (location: Location, value: ArrayLike<number>) => void;
+  /** Forgets the values held, for a program made again after a lost context. */
+  reset: () => void;
 };
 
 function uniformSetters(gl: WebGL2RenderingContext): SoapBubbleUniforms {
@@ -363,8 +375,14 @@ function uniformSetters(gl: WebGL2RenderingContext): SoapBubbleUniforms {
           same = false;
           v[i] = value[i];
         }
-      if (!same) gl.uniformMatrix3fv(location, false, Array.from(value));
+      if (!same)
+        gl.uniformMatrix3fv(
+          location,
+          false,
+          value instanceof Float32Array ? value : Array.from(value),
+        );
     },
+    reset: () => sent.clear(),
   };
 }
 
@@ -404,9 +422,24 @@ export type SoapBubbleContext = {
   ready: () => boolean;
   /** Frames handed over that the GPU has not finished drawing yet. */
   inFlight: (now: number) => number;
+  /**
+   * When the browser took the context away (a GPU reset, the system switching
+   * graphics cards, a tab left in the background for long), or 0 while it has
+   * it. Until it is given back nothing draws, and every surface keeps the
+   * pixels it last showed.
+   */
+  lostSince: () => number;
+  /**
+   * Called once the browser gives a lost context back, with the program and
+   * every texture made again: whatever was drawn must be drawn again.
+   */
+  onRestore: (listener: () => void) => () => void;
 };
 
 let shared: SoapBubbleContext | null | undefined;
+// A lost context the browser has not given back by then (it drops the oldest
+// once a page holds too many, and never returns that one) is replaced.
+const replaceLostAfter = 3000;
 
 // Every surface over one backdrop asks for its box in the same task; the
 // box is read once and forgotten when the task's draws are handed over.
@@ -419,21 +452,39 @@ export function frameRect(element: Element) {
 
 export function soapBubbleContext(): SoapBubbleContext | null {
   if (shared === undefined) shared = createSoapBubbleContext(soapBubbleFragment, { paced: true });
+  else if (shared) {
+    const since = shared.lostSince();
+    if (
+      since &&
+      performance.now() - since > replaceLostAfter &&
+      typeof document !== 'undefined' &&
+      !document.hidden
+    ) {
+      const fresh = createSoapBubbleContext(soapBubbleFragment, { paced: true });
+      // Surfaces notice the new context on their next draw and draw whole.
+      if (fresh) shared = fresh;
+    }
+  }
   return shared;
 }
 
 // In iOS Safari a copy out of the shared buffer reads that buffer back from
 // the GPU, which a surface that animates whole (a menu opening) pays on
-// every frame. There each surface draws in its own canvas with a context of
-// its own instead, so nothing is copied.
+// every frame. Firefox reads it back once for every surface it is copied
+// into, so an idle page of them fell to 30 frames a second there. In both,
+// each surface draws in its own canvas with a context of its own instead, so
+// nothing is copied.
+const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+const gecko = /\bFirefox\/\d/.test(userAgent);
 const ownContexts =
   typeof navigator !== 'undefined' &&
-  (/iP(hone|ad|od)/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  (/iP(hone|ad|od)/.test(userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+    gecko);
 // WebKit keeps 16 WebGL contexts on a page and fails past that, counting a
-// released context until it is collected. Surfaces take at most 12 of those
-// still alive, leaving the page room for its own; any more share the one
-// context as everywhere else.
+// released context until it is collected; Firefox drops the oldest past 16.
+// Surfaces take at most 12 of those still alive, leaving the page room for
+// its own; any more share the one context as everywhere else.
 const ownContextLimit = 12;
 const ownContextsInUse = new Map<HTMLCanvasElement, SoapBubbleContext>();
 let ownContextsAlive = 0;
@@ -448,24 +499,44 @@ function releaseOwnContext(canvas: HTMLCanvasElement) {
   const context = ownContextsInUse.get(canvas);
   if (!context) return;
   ownContextsInUse.delete(canvas);
-  for (const entry of backdrops.values()) entry.uploads.delete(context.gl);
+  forgetUploads(context.gl);
   context.gl.getExtension('WEBGL_lose_context')?.loseContext();
 }
 
+/** Drops a context's backdrop textures, which go with the context. */
+function forgetUploads(gl: WebGL2RenderingContext) {
+  for (const entry of backdrops.values()) {
+    entry.uploads.delete(gl);
+    entry.groundUploads.delete(gl);
+    for (const view of entry.covered.values()) view.uploads.delete(gl);
+  }
+}
+
+// Firefox has no parallel compile: making a context there blocks for about
+// 45 ms, and a sheet that brings four surfaces froze one frame for 180 ms.
+// There at most one own context is made a frame; the rest wait a frame or two.
+let frameNumber = 0;
+let ownMadeInFrame = -1;
+
 /**
  * The context a surface drawing in canvas should use: its own where that
- * pays and the limit allows, otherwise null for the shared one. A canvas
- * keeps the context it was first given, so a surface mounted on it again
- * (as React does in development) takes that context back.
+ * pays and the limit allows, null for the shared one, or 'later' when it is
+ * to have its own but not in this frame. A canvas keeps the context it was
+ * first given, so a surface mounted on it again (as React does in
+ * development) takes that context back.
  */
-export function soapBubbleOwnContext(canvas: HTMLCanvasElement): SoapBubbleContext | null {
+export function soapBubbleOwnContext(
+  canvas: HTMLCanvasElement,
+): SoapBubbleContext | null | 'later' {
   if (!ownContexts) return null;
   const existing = ownContextsInUse.get(canvas);
   if (existing) return existing;
   for (const used of ownContextsInUse.keys()) if (!used.isConnected) releaseOwnContext(used);
   if (ownContextsAlive >= ownContextLimit) return null;
+  if (gecko && ownMadeInFrame === frameNumber) return 'later';
   const context = createSoapBubbleContext(soapBubbleFragment, { surface: canvas });
   if (!context) return null;
+  ownMadeInFrame = frameNumber;
   ownContextsInUse.set(canvas, context);
   ownContextsAlive++;
   ownContextCollected?.register(context.gl, null);
@@ -512,65 +583,114 @@ export function createSoapBubbleContext(
   // The driver compiles and links on its own thread while the lookup tables
   // are built here; nothing asks for the result until both are done. Paced,
   // the surfaces then ask each frame whether it is done rather than wait.
-  const parallel = paced || surface ? gl.getExtension('KHR_parallel_shader_compile') : null;
+  let parallel: KHR_parallel_shader_compile | null = null;
   const compile = (type: number, source: string) => {
     const shader = gl.createShader(type)!;
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     return shader;
   };
-  const program = gl.createProgram()!;
-  const vertex = compile(gl.VERTEX_SHADER, soapBubbleVertex);
-  const fragment = compile(gl.FRAGMENT_SHADER, fragmentSource);
-  gl.attachShader(program, vertex);
-  gl.attachShader(program, fragment);
-  gl.linkProgram(program);
-  // The film table lives on unit 1 for good; backdrops take unit 0.
-  const film = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, film);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    0,
-    gl.RGBA16F,
-    soapBubbleFilmSize[0],
-    soapBubbleFilmSize[1],
-    0,
-    gl.RGBA,
-    gl.FLOAT,
-    filmTable(),
-  );
-  // Noise on unit 2.
-  const noise = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE2);
-  gl.bindTexture(gl.TEXTURE_3D, noise);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  for (const wrap of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R])
-    gl.texParameteri(gl.TEXTURE_3D, wrap, gl.REPEAT);
-  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texImage3D(
-    gl.TEXTURE_3D,
-    0,
-    gl.R8,
-    soapBubbleNoiseSize,
-    soapBubbleNoiseSize,
-    soapBubbleNoiseSize,
-    0,
-    gl.RED,
-    gl.UNSIGNED_BYTE,
-    noiseVolume(),
-  );
-  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-  gl.activeTexture(gl.TEXTURE0);
-
   const u = {} as SoapBubbleContext['u'];
+  const set = uniformSetters(gl);
+  let program: WebGLProgram;
+  let vertex: WebGLShader;
+  let fragment: WebGLShader;
+  let emptyTexture: WebGLTexture;
   let linked = false;
   let failed = false;
+  // Everything the context holds. A lost context loses all of it, and it is
+  // made again once the browser gives the context back.
+  const build = () => {
+    linked = false;
+    failed = false;
+    // Extensions have to be asked for again once a lost context is back.
+    parallel = paced || surface ? gl.getExtension('KHR_parallel_shader_compile') : null;
+    program = gl.createProgram()!;
+    vertex = compile(gl.VERTEX_SHADER, soapBubbleVertex);
+    fragment = compile(gl.FRAGMENT_SHADER, fragmentSource);
+    gl.attachShader(program, vertex);
+    gl.attachShader(program, fragment);
+    gl.linkProgram(program);
+    // The film table lives on unit 1 for good; backdrops take unit 0.
+    const film = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, film);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA16F,
+      soapBubbleFilmSize[0],
+      soapBubbleFilmSize[1],
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      (filmTableData ??= filmTable()),
+    );
+    // Noise on unit 2.
+    const noise = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_3D, noise);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    for (const wrap of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R])
+      gl.texParameteri(gl.TEXTURE_3D, wrap, gl.REPEAT);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage3D(
+      gl.TEXTURE_3D,
+      0,
+      gl.R8,
+      soapBubbleNoiseSize,
+      soapBubbleNoiseSize,
+      soapBubbleNoiseSize,
+      0,
+      gl.RED,
+      gl.UNSIGNED_BYTE,
+      (noiseVolumeData ??= noiseVolume()),
+    );
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    gl.activeTexture(gl.TEXTURE0);
+    if (!parallel) link();
+
+    const quad = gl.createVertexArray();
+    gl.bindVertexArray(quad);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    emptyTexture = createBackdropTexture(gl);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+    gl.generateMipmap(gl.TEXTURE_2D);
+  };
+
+  // A context can be lost at any time: a GPU reset, the system switching
+  // graphics cards, or a tab left in the background for long. Kept (by
+  // preventing the default), the browser may give it back, and everything is
+  // then made again and drawn again. Until then every surface keeps showing
+  // what it last drew instead of going blank.
+  let lostSince = 0;
+  const restoreListeners = new Set<() => void>();
+  const events = canvas as EventTarget;
+  events.addEventListener('webglcontextlost', (event) => {
+    event.preventDefault();
+    lostSince = performance.now();
+    linked = false;
+    fences.length = 0;
+    pending.length = 0;
+  });
+  events.addEventListener('webglcontextrestored', () => {
+    lostSince = 0;
+    set.reset();
+    forgetUploads(gl);
+    used.width = used.height = used.frames = 0;
+    build();
+    restoreListeners.forEach((listener) => listener());
+  });
+
   const link = () => {
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       const message =
@@ -592,29 +712,22 @@ export function createSoapBubbleContext(
     gl.uniform1i(gl.getUniformLocation(program, 'uFilmTable'), 1);
     gl.uniform1i(gl.getUniformLocation(program, 'uNoise'), 2);
     gl.uniform1i(gl.getUniformLocation(program, 'uCovered'), 3);
+    gl.uniform1i(gl.getUniformLocation(program, 'uGround'), 4);
     linked = true;
   };
-  if (!parallel) link();
-
-  const quad = gl.createVertexArray();
-  gl.bindVertexArray(quad);
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-
-  const emptyTexture = createBackdropTexture(gl);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
-  gl.generateMipmap(gl.TEXTURE_2D);
+  build();
 
   const context: SoapBubbleContext = {
     gl,
     canvas,
     u,
-    set: uniformSetters(gl),
-    emptyTexture,
+    set,
+    get emptyTexture() {
+      return emptyTexture;
+    },
     flush: () => flush(),
     ready() {
+      if (lostSince || gl.isContextLost()) return false;
       if (linked) return true;
       if (failed || !gl.getProgramParameter(program, parallel!.COMPLETION_STATUS_KHR)) return false;
       try {
@@ -623,6 +736,13 @@ export function createSoapBubbleContext(
         failed = true;
       }
       return linked;
+    },
+    lostSince: () => lostSince,
+    onRestore(listener) {
+      restoreListeners.add(listener);
+      return () => {
+        restoreListeners.delete(listener);
+      };
     },
     inFlight(now) {
       while (fences.length) {
@@ -688,6 +808,8 @@ export function createSoapBubbleContext(
   };
   let queued: Region = { x: 0, y: 0, width: 0, height: 0, left: 0, top: 0 };
   let flushQueued = false;
+  let staging: HTMLCanvasElement | null = null;
+  let stagingContext: CanvasRenderingContext2D | null = null;
   // A paced context marks the end of each frame's draws, to learn when the
   // GPU is through with them.
   const fences: { sync: WebGLSync; at: number }[] = [];
@@ -698,10 +820,13 @@ export function createSoapBubbleContext(
       atlas.shelf = 0;
     }
     if (atlas.y + height > canvas.height || width > canvas.width) {
-      // Full: hand over what is drawn, then grow so a frame like this fits.
+      // Full: hand over what is drawn, then grow so a frame like this fits,
+      // with a quarter to spare. Each growth reallocates the buffer, which
+      // costs a long frame; a menu or sheet opening otherwise grows it again
+      // for every surface it brings.
       const need = atlas.y + height;
       flush();
-      fit(Math.max(canvas.width, width), Math.max(canvas.height, need));
+      fit(Math.max(canvas.width, width), Math.max(canvas.height, need * 1.25));
     }
     const at: [number, number] = [atlas.x, atlas.y];
     atlas.x += width;
@@ -719,27 +844,48 @@ export function createSoapBubbleContext(
     atlas.shelf = 0;
     atlas.right = 0;
     if (!pending.length) return;
+    // A lost context draws nothing: the surfaces keep what they show.
+    if (gl.isContextLost()) {
+      pending.length = 0;
+      return;
+    }
     if (paced && fences.length < 4) {
       const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
       if (sync) fences.push({ sync, at: performance.now() });
     }
     // Copied straight from the buffer. Through transferToImageBitmap, Safari
     // reads every copy back from the GPU while painting, and the page falls
-    // to a few frames a second.
+    // to a few frames a second. Firefox reads the buffer back for every copy
+    // taken from it, so there (with more surfaces than own contexts) it is
+    // read back once into a canvas of its own and the copies come from that.
+    let source: HTMLCanvasElement | OffscreenCanvas = canvas;
+    let bottom = canvas.height;
+    if (gecko && pending.length > 1 && typeof document !== 'undefined') {
+      staging ??= document.createElement('canvas');
+      if (staging.width !== canvas.width) staging.width = canvas.width;
+      if (staging.height !== canvas.height) staging.height = canvas.height;
+      stagingContext ??= staging.getContext('2d');
+      if (stagingContext) {
+        stagingContext.clearRect(0, 0, usedWidth, usedHeight);
+        stagingContext.drawImage(
+          canvas,
+          0,
+          canvas.height - usedHeight,
+          usedWidth,
+          usedHeight,
+          0,
+          0,
+          usedWidth,
+          usedHeight,
+        );
+        source = staging;
+        bottom = usedHeight;
+      }
+    }
     for (const { target, x, y, width, height, left, top } of pending) {
       target.clearRect(left, top, width, height);
       // WebGL rows start at the bottom of the buffer.
-      target.drawImage(
-        canvas,
-        x,
-        canvas.height - y - height,
-        width,
-        height,
-        left,
-        top,
-        width,
-        height,
-      );
+      target.drawImage(source, x, bottom - y - height, width, height, left, top, width, height);
     }
     pending.length = 0;
     used.width = Math.max(used.width, usedWidth);
@@ -772,12 +918,17 @@ export function backdropTexture(gl: WebGL2RenderingContext, backdrop: SoapBubble
 export function coveredTexture(
   gl: WebGL2RenderingContext,
   backdrop: SoapBubbleBackdrop,
-  self: Element | null,
+  self: CoveredKey,
 ) {
-  const view = (backdrop as BackdropEntry).covered.get(self);
-  if (!view?.canvas) return null;
-  // Sampled once, near where it lies: no mipmaps to build.
-  return uploaded(gl, view.uploads, view.canvas, view.version, false);
+  const entry = backdrop as BackdropEntry;
+  const view = entry.covered.get(self);
+  if (!view?.canvas || !entry.ground) return null;
+  // Panels can soften covered controls just like the ordinary backdrop.
+  // Built only when the settled capture changes, never on animation frames.
+  return {
+    covered: uploaded(gl, view.uploads, view.canvas, view.version, true, true),
+    ground: uploaded(gl, entry.groundUploads, entry.ground, entry.groundVersion, true),
+  };
 }
 
 /**
@@ -787,7 +938,7 @@ export function coveredTexture(
  */
 export function wantCoveredBackdrop(
   backdrop: SoapBubbleBackdrop,
-  self: Element | null,
+  self: CoveredKey,
   want: number,
   shown: number,
 ) {
@@ -799,7 +950,8 @@ export function wantCoveredBackdrop(
       self,
       (view = { canvas: null, version: 0, uploads: new Map(), wanted: 0, shown: 0 }),
     );
-    if (entry.layer.canvas) compose(entry, self, view);
+    compose(entry, self, view);
+    if (!view.canvas) entry.layer.stale = true;
   }
   view.wanted += want;
   view.shown += shown;
@@ -820,6 +972,7 @@ function uploaded(
   source: TexImageSource | null,
   version: number,
   mipmaps: boolean,
+  premultiplied = false,
 ) {
   let upload = uploads.get(gl);
   if (!upload)
@@ -827,8 +980,9 @@ function uploaded(
   if (source && upload.version !== version) {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, upload.texture);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, premultiplied);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     if (mipmaps) gl.generateMipmap(gl.TEXTURE_2D);
     upload.version = version;
   }
@@ -850,6 +1004,12 @@ function createBackdropTexture(gl: WebGL2RenderingContext, mipmaps = true) {
   return texture;
 }
 
+/**
+ * Which view of the backdrop a surface shows: a surface over other bubbles has
+ * its own, one in a group shares null, and 'page' is for one over the page alone.
+ */
+export type CoveredKey = Element | null | 'page';
+
 export type SoapBubbleBackdrop = {
   element: HTMLElement;
   /** Texel size, or null until the first capture lands. */
@@ -863,19 +1023,35 @@ type BackdropEntry = SoapBubbleBackdrop & {
   version: number;
   uploads: Uploads;
   /**
-   * The backdrop with its bubbles in it (groups left out, and the surface a
-   * view is for), for surfaces that show what they cover. Every view is put
+   * What lies on the backdrop: its text and images, and its bubbles (groups
+   * left out, and the surface a view is for), over nothing, so that a view's
+   * alpha says where something lies. For surfaces that show what they cover,
+   * which is every one with a body to see through. Every view is put
    * together from one capture of the bubbles' content, taken only while a
    * view is wanted, and then only when the page has settled after a change.
    */
-  covered: Map<Element | null, CoveredView>;
-  layer: { canvas: HTMLCanvasElement | null; stale: boolean; capturing: boolean; timer: number };
+  covered: Map<CoveredKey, CoveredView>;
+  /** The backdrop with nothing on it, which surfaces see past what they cover. */
+  ground: TexImageSource | null;
+  groundVersion: number;
+  groundUploads: Uploads;
+  layer: {
+    canvas: HTMLCanvasElement | null;
+    /** The same without any surface, for the 'page' view. */
+    page: HTMLCanvasElement | null;
+    stale: boolean;
+    capturing: boolean;
+    timer: number;
+  };
   fontEmbedCSS: Promise<string> | null;
   listeners: Set<() => void>;
   capturing: boolean;
   dirty: boolean;
   timer: number;
   mutations: MutationObserver;
+  scrolled: (event: Event) => void;
+  /** What has scrolled inside the element: a snapshot starts it all at the top. */
+  scrollers: Set<Element>;
   resize: ResizeObserver;
 };
 
@@ -898,6 +1074,23 @@ const insideSurface = (node: Node) =>
 const groupSelector = '[data-soap-bubble-group]';
 const insideGroup = (node: Node) =>
   (node instanceof Element ? node : node.parentElement)?.closest(groupSelector) != null;
+const scrollAttribute = 'data-soap-bubble-scroll';
+
+/** A snapshot clones the page without its scroll offsets, so its children carry them instead. */
+function scrollOffsets(entry: BackdropEntry) {
+  let css = '';
+  let index = 0;
+  for (const scroller of entry.scrollers) {
+    if (!scroller.isConnected) {
+      entry.scrollers.delete(scroller);
+      continue;
+    }
+    const id = String(index++);
+    if (scroller.getAttribute(scrollAttribute) !== id) scroller.setAttribute(scrollAttribute, id);
+    css += `[${scrollAttribute}="${id}"] > * { translate: ${-scroller.scrollLeft}px ${-scroller.scrollTop}px !important; }\n`;
+  }
+  return css;
+}
 
 /**
  * One rasterised copy of a backdrop element, shared by every surface over it
@@ -915,7 +1108,10 @@ export function subscribeBackdrop(
       version: 0,
       uploads: new Map(),
       covered: new Map(),
-      layer: { canvas: null, stale: true, capturing: false, timer: 0 },
+      ground: null,
+      groundVersion: 0,
+      groundUploads: new Map(),
+      layer: { canvas: null, page: null, stale: true, capturing: false, timer: 0 },
       fontEmbedCSS: null,
       size: null,
       failed: false,
@@ -923,7 +1119,8 @@ export function subscribeBackdrop(
       capturing: false,
       dirty: false,
       timer: 0,
-      mutations: new MutationObserver((records) => {
+      mutations: new MutationObserver((all) => {
+        const records = all.filter((record) => record.attributeName !== scrollAttribute);
         if (records.some((record) => !insideSurface(record.target))) schedule(created);
         // The bubbles are in the covered view; a menu opening is not, nor the
         // flags surfaces set on their canvases.
@@ -938,7 +1135,15 @@ export function subscribeBackdrop(
         schedule(created);
         staleCovered(created);
       }),
+      // Scrolling moves what is seen through the film without a mutation.
+      scrolled: (event) => {
+        if (event.target instanceof Element) created.scrollers.add(event.target);
+        schedule(created);
+        staleCovered(created);
+      },
+      scrollers: new Set(),
     };
+    element.addEventListener('scroll', created.scrolled, { capture: true, passive: true });
     created.mutations.observe(element, {
       subtree: true,
       childList: true,
@@ -960,7 +1165,9 @@ export function subscribeBackdrop(
     window.clearTimeout(current.timer);
     current.mutations.disconnect();
     current.resize.disconnect();
+    element.removeEventListener('scroll', current.scrolled, { capture: true });
     deleteUploads(current.uploads);
+    deleteUploads(current.groundUploads);
     window.clearTimeout(current.layer.timer);
     for (const view of current.covered.values()) deleteUploads(view.uploads);
     backdrops.delete(element);
@@ -995,11 +1202,23 @@ async function capture(entry: BackdropEntry) {
       source = await toCanvas(element, {
         width: rect.width,
         height: rect.height,
-        pixelRatio: Math.min(1.5, window.devicePixelRatio || 1),
+        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
         includeQueryParams: true,
-        fontEmbedCSS: await fontEmbedCSS(entry),
-        style: { transform: 'none' },
-        filter: (node) => !(node instanceof Element && node.matches(bubbleSelector)),
+        // Hide the paint, not the boxes: removing an in-flow control moves
+        // every sibling below it in the snapshot.
+        fontEmbedCSS: `${await fontEmbedCSS(entry)}\n${scrollOffsets(entry)}${bubbleSelector}, [data-soap-bubble] *, [data-soap-bubble-group] * { visibility: hidden !important; }`,
+        // A positioned backdrop is rasterised in its own coordinate space.
+        // Its page offset must not become an offset inside its texture too.
+        style: {
+          transform: 'none',
+          position: 'relative',
+          left: '0',
+          top: '0',
+          right: 'auto',
+          bottom: 'auto',
+          margin: '0',
+        },
+        filter: (node) => !(node instanceof Element && node.localName === 'canvas'),
       });
     }
     if (backdrops.get(element) !== entry) return;
@@ -1040,7 +1259,11 @@ function scheduleLayer(entry: BackdropEntry) {
   const { layer } = entry;
   if (!entry.covered.size || !layer.stale || !entry.source) return;
   // Once there is a layer, it is only refreshed for a view on screen.
-  if (layer.canvas && ![...entry.covered.values()].some((view) => view.shown > 0)) return;
+  if (
+    (layer.canvas || layer.page) &&
+    ![...entry.covered.values()].some((view) => view.shown > 0 || !view.canvas)
+  )
+    return;
   window.clearTimeout(layer.timer);
   layer.timer = window.setTimeout(() => void captureLayer(entry), 700);
 }
@@ -1053,7 +1276,9 @@ async function captureLayer(entry: BackdropEntry) {
   try {
     const rect = element.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return;
-    let canvas: HTMLCanvasElement;
+    let canvas: HTMLCanvasElement | null;
+    let page: HTMLCanvasElement | null = null;
+    let ground: TexImageSource = entry.source as TexImageSource;
     if (element instanceof HTMLImageElement || element instanceof HTMLCanvasElement) {
       canvas = Object.assign(document.createElement('canvas'), {
         width: entry.size![0],
@@ -1064,21 +1289,51 @@ async function captureLayer(entry: BackdropEntry) {
       // let the rest close up); only the films, drawn apart, are skipped.
       // At the backdrop's own scale, so the page matches it pixel for pixel.
       const { toCanvas } = await import('html-to-image');
-      canvas = await toCanvas(element, {
+      const snapshot = {
+        transform: 'none',
+        position: 'relative',
+        left: '0',
+        top: '0',
+        right: 'auto',
+        bottom: 'auto',
+        margin: '0',
+      };
+      ground = await toCanvas(element, {
         width: rect.width,
         height: rect.height,
-        pixelRatio: Math.min(1.5, window.devicePixelRatio || 1),
-        includeQueryParams: true,
-        // Groups are never part of a covered view. Hide their paint in the
-        // snapshot while preserving layout: erasing at their live position
-        // afterwards can leave a ghost if they move during rasterisation.
-        fontEmbedCSS: `${await fontEmbedCSS(entry)}\n${groupSelector}, ${groupSelector} * { visibility: hidden !important; }`,
-        style: { transform: 'none', background: 'transparent' },
-        filter: (node) => !(node instanceof Element && node.localName === 'canvas'),
+        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+        style: snapshot,
+        filter: () => false,
       });
+      const content = (hidden: string) =>
+        fontEmbedCSS(entry).then((fonts) =>
+          toCanvas(element, {
+            width: rect.width,
+            height: rect.height,
+            pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+            includeQueryParams: true,
+            fontEmbedCSS: `${fonts}\n${scrollOffsets(entry)}${hidden}`,
+            style: { ...snapshot, background: 'transparent' },
+            filter: (node) => !(node instanceof Element && node.localName === 'canvas'),
+          }),
+        );
+      page = entry.covered.has('page')
+        ? await content(
+            `${bubbleSelector}, [data-soap-bubble] *, [data-soap-bubble-group] * { visibility: hidden !important; }`,
+          )
+        : null;
+      // Groups are never part of a covered view. Hide their paint in the
+      // snapshot while preserving layout: erasing at their live position
+      // afterwards can leave a ghost if they move during rasterisation.
+      canvas = [...entry.covered.keys()].some((key) => key !== 'page')
+        ? await content(`${groupSelector}, ${groupSelector} * { visibility: hidden !important; }`)
+        : null;
     }
     if (backdrops.get(element) !== entry) return;
     layer.canvas = canvas;
+    layer.page = page;
+    entry.ground = ground;
+    entry.groundVersion++;
     for (const [self, view] of entry.covered) compose(entry, self, view);
     entry.listeners.forEach((listener) => listener());
   } catch {
@@ -1090,10 +1345,17 @@ async function captureLayer(entry: BackdropEntry) {
 }
 
 // One view from the content layer: groups were hidden during capture; erase
-// the surface it is for, then draw the other bubbles' films and the page
-// underneath.
-function compose(entry: BackdropEntry, self: Element | null, view: CoveredView) {
+// the surface it is for, then draw the other bubbles' films underneath. A
+// surface over the page alone has none to see: its view is the layer without any.
+function compose(entry: BackdropEntry, self: CoveredKey, view: CoveredView) {
   const { element, layer } = entry;
+  if (self === 'page') {
+    if (layer.page) {
+      view.canvas = layer.page;
+      view.version++;
+    }
+    return;
+  }
   if (!layer.canvas || !entry.source) return;
   const rect = element.getBoundingClientRect();
   const scale = layer.canvas.width / Math.max(1, rect.width);
@@ -1118,7 +1380,6 @@ function compose(entry: BackdropEntry, self: Element | null, view: CoveredView) 
       box.height * scale,
     );
   }
-  context.drawImage(entry.source as CanvasImageSource, 0, 0, canvas.width, canvas.height);
   view.canvas = canvas;
   view.version++;
 }
@@ -1167,10 +1428,23 @@ export function cancelSoapBubbleFrame(task: (now: number) => void) {
 
 let runningTasks = new Set<(now: number) => void>();
 
-// One clock for the film's 30 frames a second, shared by every surface.
+// One clock for the film's 20 frames a second, shared by every surface. Its drift
+// is slow enough not to miss the rest, and it waits while anything scrolls: the
+// page's own motion is what the eye is following then.
+const filmInterval = 49;
+const scrollHold = 150;
 let filmAt = 0;
 let filmFrame = false;
+let scrollingUntil = 0;
 export const isFilmFrame = () => filmFrame;
+if (typeof window !== 'undefined')
+  window.addEventListener(
+    'scroll',
+    () => {
+      scrollingUntil = performance.now() + scrollHold;
+    },
+    { capture: true, passive: true },
+  );
 
 // The GPU's pace. A frame is held back while two earlier ones are still
 // being drawn, so a slow GPU never queues work ahead of the page's own
@@ -1232,6 +1506,7 @@ function pace(now: number, held: boolean) {
 
 function runFrame(now: number) {
   frameHandle = 0;
+  frameNumber++;
   const held = (shared?.inFlight(now) ?? 0) >= 2;
   if (shared) pace(now, held);
   if (held) {
@@ -1239,7 +1514,7 @@ function runFrame(now: number) {
     frameHandle = requestAnimationFrame(runFrame);
     return;
   }
-  filmFrame = now - filmAt >= 31;
+  filmFrame = now - filmAt >= filmInterval && now >= scrollingUntil;
   if (filmFrame) filmAt = now;
   // Swap the sets instead of copying: tasks queued while running wait for
   // the next frame.

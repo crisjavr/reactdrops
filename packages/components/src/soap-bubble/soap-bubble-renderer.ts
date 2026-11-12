@@ -7,12 +7,14 @@ import {
   soapBubbleResolution,
   backdropTexture,
   coveredTexture,
+  type CoveredKey,
   releaseSoapBubbleOwnContext,
   soapBubbleContext,
   soapBubbleOwnContext,
   subscribeBackdrop,
   wantCoveredBackdrop,
   type SoapBubbleBackdrop,
+  type SoapBubbleContext,
   type SoapBubbleRect,
 } from './soap-bubble-gl';
 import { soapBubbleContactStrength, stepSoapBubblePress } from './soap-bubble-motion';
@@ -31,12 +33,20 @@ export type SoapBubbleGlintShape = (typeof soapBubbleGlintShapes)[number];
 /** Shapes the window light's inverted twin can take. */
 export const soapBubbleTwinShapes = ['arc', 'crescent', 'streak', 'dot', 'mirror'] as const;
 export type SoapBubbleTwinShape = (typeof soapBubbleTwinShapes)[number];
+/**
+ * What a surface is made of: the soap film alone, the film over live liquid
+ * glass, or that glass alone, without the film.
+ */
+export const soapBubbleSurfaces = ['bubble', 'bubble-liquid', 'liquid-glass'] as const;
+export type SoapBubbleSurfaceKind = (typeof soapBubbleSurfaces)[number];
 
 export type SoapBubbleTuning = {
   /** Corner radius in pixels at a 16 px font; it grows with the text. Large values give fully round ends. */
   radius: number;
-  /** Width of the liquid glass bevel in pixels at a 16 px font; it grows with the text. */
+  /** Width of the liquid glass bevel in pixels at a 16 px font; it grows with the text. 0 leaves a flat face. */
   bevel: number;
+  /** Blur of the transmitted backdrop in pixels at a 16 px font. */
+  backdropBlur: number;
   /** Mean film thickness in nanometres. */
   thickness: number;
   /** Strength of the oil-like interference colours; 1 is physical. */
@@ -67,6 +77,11 @@ export type SoapBubbleTuning = {
    * white on light pages and black on dark ones.
    */
   tint: string;
+  /**
+   * With no backdrop to capture, the colour of the page under the film, so it
+   * looks as it does over a captured one. Transparent leaves it unlit by the page.
+   */
+  paper: string;
   /** Gentle colour filter for the multicolour film; auto and transparent leave it unchanged. */
   soapColor: string;
   /** Natural spectral colours by default, or six editable hue families. */
@@ -151,6 +166,10 @@ export type SoapBubbleTuning = {
   reach: number;
   /** Bends the light passing through; 0 is a true thin film. */
   refraction: number;
+  /** Width of the edge that bends it, in pixels at a 16 px font, with or without a bevel to see. 0 follows the bevel. */
+  refractionWidth: number;
+  /** How far the tint clears over that edge, so what it bends shows through a solid body. */
+  refractionClear: number;
   /** Morphs the soap film into liquid glass: 0 is a bubble, 1 a glass lens. */
   glass: number;
   /** Colour split of light refracted by the glass. */
@@ -164,11 +183,46 @@ export type SoapBubbleTuning = {
   paused: boolean;
   seed: number;
   maxDpr: number;
+  /**
+   * What the surfaces are made of. bubble is the soap film alone, refracting
+   * a backdrop when one is given. bubble-liquid lays the film over live
+   * liquid glass that blurs, tints and bends the page behind it as it is,
+   * moving, so nothing has to capture the page and backdrop is left out.
+   * liquid-glass is that glass alone, without the film.
+   */
+  surface: SoapBubbleSurfaceKind;
+  /** Strength of the live glass tint; 0 leaves only its blur, rim and shadow. */
+  liquidTint: number;
+  /** Live glass from thin (0) to dense (1). */
+  liquidDensity: number;
+  /** How much denser a menu's panel is, so its actions stay readable over text. */
+  liquidPanelDensity: number;
+  /** Blur of the page behind the live glass, in pixels. */
+  liquidBlur: number;
+  /** Saturation of the page behind the live glass; 1 leaves it as it is. */
+  liquidSaturation: number;
+  /** Brightness of the page behind the live glass; 1 leaves it as it is. */
+  liquidBrightness: number;
+  /** Bends the page at the live glass's rim. Chromium draws it; elsewhere the glass only blurs. */
+  liquidLens: boolean;
+  /** Width of the rim that bends, in pixels; at most a third of the short side. */
+  liquidRimWidth: number;
+  /** How far the rim bends the page. */
+  liquidBend: number;
+  /** How far apart red, green and blue bend at the rim; 0 bends them as one, in one pass. */
+  liquidSplit: number;
+  /** Light along the edge of the glass on its own (liquid-glass). */
+  liquidEdgeLight: number;
+  /** Highlight from the top left and glow inside the rim of the glass on its own. */
+  liquidInnerLight: number;
+  /** Shadow under the glass on its own. */
+  liquidShadow: number;
 };
 
 export const soapBubbleDefaults: SoapBubbleTuning = {
   radius: 9999,
   bevel: 24,
+  backdropBlur: 0,
   thickness: 520,
   iridescence: 1,
   drainage: 0.6,
@@ -180,6 +234,7 @@ export const soapBubbleDefaults: SoapBubbleTuning = {
   oilEdgeFade: 1,
   clearCenter: 0,
   tint: '#ffffff00',
+  paper: 'transparent',
   soapColor: 'auto',
   soapPalette: 'natural',
   soapPaletteRed: '#ff6685',
@@ -222,6 +277,8 @@ export const soapBubbleDefaults: SoapBubbleTuning = {
   bottomShadeColor: 'auto',
   reach: 2.6,
   refraction: 0.08,
+  refractionWidth: 0,
+  refractionClear: 0,
   glass: 0,
   dispersion: 1,
   environment: 'studio',
@@ -231,7 +288,39 @@ export const soapBubbleDefaults: SoapBubbleTuning = {
   paused: false,
   seed: 7,
   maxDpr: 2,
+  surface: 'bubble',
+  liquidTint: 1,
+  liquidDensity: 1,
+  liquidPanelDensity: 1.9,
+  liquidBlur: 2,
+  liquidSaturation: 1.6,
+  liquidBrightness: 0.8,
+  liquidLens: true,
+  liquidRimWidth: 44,
+  liquidBend: 1.1,
+  liquidSplit: 0.08,
+  liquidEdgeLight: 1,
+  liquidInnerLight: 1,
+  liquidShadow: 1,
 };
+
+/** Settings only the live glass reads, in CSS: changing them leaves the film as it is. */
+export const soapBubbleLiquidKeys = [
+  'surface',
+  'liquidTint',
+  'liquidDensity',
+  'liquidPanelDensity',
+  'liquidBlur',
+  'liquidSaturation',
+  'liquidBrightness',
+  'liquidLens',
+  'liquidRimWidth',
+  'liquidBend',
+  'liquidSplit',
+  'liquidEdgeLight',
+  'liquidInnerLight',
+  'liquidShadow',
+] as const satisfies readonly (keyof SoapBubbleTuning)[];
 
 const clamp = (value: number, min: number, max: number, fallback: number) =>
   Math.min(max, Math.max(min, Number.isFinite(value) ? value : fallback));
@@ -263,7 +352,8 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
   const v = { ...d, ...value };
   return {
     radius: clamp(v.radius, 0, 9999, d.radius),
-    bevel: clamp(v.bevel, 2, 200, d.bevel),
+    bevel: clamp(v.bevel, 0, 200, d.bevel),
+    backdropBlur: clamp(v.backdropBlur, 0, 40, d.backdropBlur),
     thickness: clamp(v.thickness, 0, 2400, d.thickness),
     iridescence: clamp(v.iridescence, 0, 3, d.iridescence),
     drainage: clamp(v.drainage, 0, 1, d.drainage),
@@ -275,6 +365,7 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
     oilEdgeFade: clamp(v.oilEdgeFade, 0, 3, d.oilEdgeFade),
     clearCenter: clamp(v.clearCenter, 0, 1, d.clearCenter),
     tint: typeof v.tint === 'string' && v.tint.trim() ? v.tint : d.tint,
+    paper: typeof v.paper === 'string' && v.paper.trim() ? v.paper : d.paper,
     soapColor: typeof v.soapColor === 'string' && v.soapColor.trim() ? v.soapColor : d.soapColor,
     soapPalette: v.soapPalette === 'custom' ? 'custom' : 'natural',
     ...(Object.fromEntries(
@@ -328,6 +419,8 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
         : d.bottomShadeColor,
     reach: clamp(v.reach, 0.5, 8, d.reach),
     refraction: clamp(v.refraction, 0, 1, d.refraction),
+    refractionWidth: clamp(v.refractionWidth, 0, 200, d.refractionWidth),
+    refractionClear: clamp(v.refractionClear, 0, 1, d.refractionClear),
     glass: clamp(v.glass, 0, 1, d.glass),
     dispersion: clamp(v.dispersion, 0, 3, d.dispersion),
     environment: soapBubbleEnvironments.includes(v.environment) ? v.environment : d.environment,
@@ -337,6 +430,20 @@ export function normalizeSoapBubble(value: Partial<SoapBubbleTuning>): SoapBubbl
     paused: Boolean(v.paused),
     seed: clamp(v.seed, 0, 9999, d.seed),
     maxDpr: clamp(v.maxDpr, 0.5, 3, d.maxDpr),
+    surface: soapBubbleSurfaces.includes(v.surface) ? v.surface : d.surface,
+    liquidTint: clamp(v.liquidTint, 0, 1.5, d.liquidTint),
+    liquidDensity: clamp(v.liquidDensity, 0, 1, d.liquidDensity),
+    liquidPanelDensity: clamp(v.liquidPanelDensity, 1, 2.6, d.liquidPanelDensity),
+    liquidBlur: clamp(v.liquidBlur, 0, 24, d.liquidBlur),
+    liquidSaturation: clamp(v.liquidSaturation, 0, 3, d.liquidSaturation),
+    liquidBrightness: clamp(v.liquidBrightness, 0.3, 1.5, d.liquidBrightness),
+    liquidLens: v.liquidLens !== false,
+    liquidRimWidth: clamp(v.liquidRimWidth, 4, 120, d.liquidRimWidth),
+    liquidBend: clamp(v.liquidBend, 0, 3, d.liquidBend),
+    liquidSplit: clamp(v.liquidSplit, 0, 2, d.liquidSplit),
+    liquidEdgeLight: clamp(v.liquidEdgeLight, 0, 3, d.liquidEdgeLight),
+    liquidInnerLight: clamp(v.liquidInnerLight, 0, 3, d.liquidInnerLight),
+    liquidShadow: clamp(v.liquidShadow, 0, 3, d.liquidShadow),
   };
 }
 
@@ -351,6 +458,19 @@ type ButtonSurface = {
   invalidate: () => void;
 };
 const buttonSurfaces = new Map<HTMLElement, ButtonSurface>();
+
+/**
+ * Whether two buttons lie close enough to join while either is pressed. A
+ * contact needs the gap between their boxes under a third of the smaller one
+ * (soapBubbleContactStrength), and each swells by up to 36 % of its radius:
+ * a whole diameter covers both with room to spare.
+ */
+function withinContact(a: DOMRect, b: DOMRect) {
+  const reach = Math.min(a.width, a.height, b.width, b.height);
+  const gapX = Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right));
+  const gapY = Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom));
+  return gapX <= reach && gapY <= reach;
+}
 
 /** Everything that moves in a bubble's look, apart from its box. */
 export type SoapBubbleMotion = {
@@ -389,7 +509,7 @@ export type SoapBubbleRenderer = {
   setLightTheme: (light: boolean) => void;
   /** Draw now, for example after the bubble moved. */
   invalidate: () => void;
-  pointer: (x: number, y: number, inside: boolean) => void;
+  pointer: (x: number, y: number, inside: boolean, strength?: number) => void;
   press: (pressed: boolean) => void;
   /** Excite the same fluid modes as the pointer, without moving the element. */
   rebound: () => void;
@@ -429,6 +549,12 @@ function cssColour(value: string): [number, number, number, number] {
 
 const noColour: readonly number[] = [0, 0, 0, 0];
 
+/** A CSS colour's red, green and blue from 0 to 255, whatever its alpha, and that alpha from 0 to 1. */
+export function soapBubbleRgba(value: string): [number, number, number, number] {
+  const [r, g, b] = cssHue(value).map((channel) => Math.round(channel * 255));
+  return [r, g, b, cssColour(value)[3]];
+}
+
 // A colour's hue at full strength, kept even when it is transparent: the
 // canvas serialises the style it is given, whatever its alpha.
 function cssHue(value: string): [number, number, number] {
@@ -454,12 +580,56 @@ export function createSoapBubbleRenderer(
   initial: SoapBubbleTuning,
   onReady?: () => void,
 ): SoapBubbleRenderer | null {
-  const own = soapBubbleOwnContext(canvas);
-  const context = own ?? soapBubbleContext();
-  // Drawing in its own canvas, the surface has nothing handed to it.
-  const target = own ? null : canvas.getContext('2d');
-  if (!context || (!own && !target)) return null;
-  const { gl, u, set } = context;
+  // Where the surface draws: in its own context where soapBubbleOwnContext
+  // says so, else in the shared one, handed over through a 2D canvas. An own
+  // context can be due a frame later, so the choice may wait for a draw.
+  let own: SoapBubbleContext | null = null;
+  let target: CanvasRenderingContext2D | null = null;
+  // Undefined until placed, false where nothing can draw (no WebGL 2).
+  let placed: boolean | undefined;
+  const place = () => {
+    const chosen = soapBubbleOwnContext(canvas);
+    if (chosen === 'later') return;
+    own = chosen;
+    // Drawing in its own canvas, the surface has nothing handed to it.
+    if (!own) target = canvas.getContext('2d');
+    placed = Boolean(own || (target && soapBubbleContext()));
+  };
+  place();
+  if (placed === false) return null;
+  // The shared context is asked for on every draw: should the browser not
+  // give a lost one back, a new one stands in for it.
+  const contextNow = () => {
+    if (placed === undefined) place();
+    if (!placed) return null;
+    return own ?? soapBubbleContext();
+  };
+  // The context the last draw went to, and the one whose return is awaited.
+  let drawnWith: SoapBubbleContext | null = null;
+  let watched: SoapBubbleContext | null = null;
+  let unwatch = () => {};
+  const watch = (context: SoapBubbleContext) => {
+    if (context === watched) return;
+    unwatch();
+    watched = context;
+    // A context given back has a new program and textures, and nothing it
+    // drew is left: the whole surface is drawn again.
+    unwatch = context.onRestore(() => {
+      drawnWith = null;
+      dirtyFrame = true;
+      request();
+    });
+  };
+  let retry = 0;
+  // A lost context can take a while to come back; asked again four times a
+  // second instead of every frame.
+  const retryLater = () => {
+    if (retry || disposed) return;
+    retry = window.setTimeout(() => {
+      retry = 0;
+      request();
+    }, 250);
+  };
 
   let tuning = initial;
   // The tint fills the body; Opacity, when set, is its strength. The film's
@@ -495,6 +665,7 @@ export function createSoapBubbleRenderer(
     pageTheme === 'light' ||
     (pageTheme !== 'dark' && !matchMedia('(prefers-color-scheme: dark)').matches);
   let tint = tintOf(initial);
+  let paper = cssColour(initial.paper);
   let disposed = false;
   let frame = false;
   let dirtyFrame = true;
@@ -574,7 +745,7 @@ export function createSoapBubbleRenderer(
   // Which view of the bubbles it covers this surface shows, if it covers
   // any: the shared one when it floats in a group (a menu's panel), else one
   // without itself. Covering nothing, it shows none and costs nothing.
-  let covering: Element | null | undefined;
+  let covering: CoveredKey | undefined;
   const overlapsAnother = (page: HTMLElement) => {
     const own = self.getBoundingClientRect();
     for (const other of page.querySelectorAll('[data-soap-bubble]')) {
@@ -598,16 +769,16 @@ export function createSoapBubbleRenderer(
   };
   let coveringShown = false;
   const showCovered = () => {
-    let next: Element | null | undefined;
+    let next: CoveredKey | undefined;
     // A solid body hides what lies behind: nothing to show then. A floating
     // surface (a menu's panel) keeps the shared view while it is hidden, so
-    // that it is ready the moment it opens; on screen, a surface shows a
-    // view only while it lies over another bubble.
+    // that it is ready the moment it opens; on screen, a surface over another
+    // bubble needs a view with that bubble in it, and any other the page's.
     const shownNow = visible && !document.hidden;
-    if (backdrop && tuning.seeThrough > 0 && tint[3] < 1) {
+    if (backdrop && tint[3] < 1) {
       const floating = self.closest('[data-soap-bubble-group]') != null;
-      if (floating && !shownNow) next = null;
-      else if (overlapsAnother(backdrop.element)) next = floating ? null : self;
+      if (floating) next = null;
+      else next = overlapsAnother(backdrop.element) ? self : 'page';
     }
     const shownNext = next !== undefined && shownNow;
     if (next === covering && shownNext === coveringShown) return;
@@ -626,11 +797,22 @@ export function createSoapBubbleRenderer(
    */
   const draw = (filmOnly = false): boolean => {
     if (disposed) return false;
-    if (!context.ready()) {
-      // Asked again each frame until the driver has linked the program.
-      request();
+    const context = contextNow();
+    if (!context) {
+      // Its own context is due in a later frame.
+      if (placed === undefined) request();
       return false;
     }
+    watch(context);
+    if (!context.ready()) {
+      // Asked again each frame until the driver has linked the program.
+      if (context.lostSince()) retryLater();
+      else request();
+      return false;
+    }
+    // A new context has none of this surface yet.
+    if (context !== drawnWith) filmOnly = false;
+    const { gl, u, set } = context;
     const [ex, ey] = extent();
     const cssRadius = Math.min(hostWidth, hostHeight) / 2;
     const radius = cssRadius * dpr;
@@ -740,6 +922,9 @@ export function createSoapBubbleRenderer(
     set.v4(u.uJoinAmounts, amounts);
     set.f1(u.uCorner, Math.min(1, (tuning.radius * em) / cssRadius));
     set.f1(u.uBevel, (tuning.bevel * em) / cssRadius);
+    set.f1(u.uLensWidth, (tuning.refractionWidth * em) / cssRadius);
+    set.f1(u.uLensClear, tuning.refractionClear);
+    set.f1(u.uBackdropBlur, (tuning.backdropBlur * em) / cssRadius);
     set.f1(u.uFilmScale, tuning.filmScale);
     set.f1(u.uOilOpacity, tuning.oilOpacity);
     set.f1(u.uOilCoverage, tuning.oilCoverage);
@@ -747,6 +932,7 @@ export function createSoapBubbleRenderer(
     set.f1(u.uOilFade, tuning.oilEdgeFade);
     set.f1(u.uClearCenter, tuning.clearCenter);
     set.v4(u.uTint, tint);
+    set.v4(u.uPaper, paper);
     set.v4(u.uSoapColor, soapColor);
     set.v4(u.uSoapShadeColor, soapShadeColor);
     set.v4(u.uSoapHighlightColor, soapHighlightColor);
@@ -843,7 +1029,9 @@ export function createSoapBubbleRenderer(
     if (covered) {
       set.f1(u.uCoveredBend, tuning.seeThroughBend);
       gl.activeTexture(gl.TEXTURE3);
-      gl.bindTexture(gl.TEXTURE_2D, covered);
+      gl.bindTexture(gl.TEXTURE_2D, covered.covered);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, covered.ground);
     }
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, captured ? backdropTexture(gl, captured) : context.emptyTexture);
@@ -884,6 +1072,7 @@ export function createSoapBubbleRenderer(
     }
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     context.present(target);
+    drawnWith = context;
     if (!painted) {
       painted = true;
       onReady?.();
@@ -903,10 +1092,11 @@ export function createSoapBubbleRenderer(
       tiltValue.some((value, axis) => Math.abs(value - tiltTarget[axis]) > 1e-3));
   const tick = (now: number) => {
     frame = false;
+    if (placed === false) return;
     const drifting = moving();
     const wobbling = jiggling();
-    // While only the film drifts, 30 frames a second is plenty, and every
-    // surface takes the same ones: the page then repaints 30 times a second,
+    // While only the film drifts, 20 frames a second is plenty, and every
+    // surface takes the same ones: the page then repaints 20 times a second,
     // not on every frame some surface happens to fall due. The skipped time
     // is caught up on the next film frame.
     if (drifting && !wobbling && !dirtyFrame && !isFilmFrame()) {
@@ -921,7 +1111,11 @@ export function createSoapBubbleRenderer(
       if (before !== pressure.value) {
         host.style.setProperty('--soap-bubble-press', String(Math.max(0, pressure.value)));
         dirtyFrame = true;
-        for (const [other, entry] of buttonSurfaces) if (other !== host) entry.invalidate();
+        // Only a button close enough to join this one as it swells needs its
+        // contact drawn again; the rest would redraw whole for nothing.
+        const own = frameRect(host);
+        for (const [other, entry] of buttonSurfaces)
+          if (other !== host && withinContact(own, frameRect(other))) entry.invalidate();
       }
     }
     if (drifting) {
@@ -958,6 +1152,17 @@ export function createSoapBubbleRenderer(
     const density = Math.min(window.devicePixelRatio || 1, tuning.maxDpr);
     // Fewer pixels when the GPU cannot keep up, but never under one per CSS pixel.
     dpr = Math.max(Math.min(1, density), density * soapBubbleResolution());
+    // A small shape packs its reflections into few pixels, and one sample each
+    // breaks their thin lines into stairs. It gets two samples per pixel on each
+    // side while that stays cheap: not on a long bar, where it would cost as much
+    // as a panel, not once the GPU is behind, and not under a density limit.
+    const samples = width * height * density * density * 4;
+    if (
+      samples <= 150_000 &&
+      soapBubbleResolution() === 1 &&
+      density >= (window.devicePixelRatio || 1)
+    )
+      dpr = density * 2;
     // Large surfaces are soft at their centre anyway; cap the buffer near 0.8 MP.
     dpr = Math.min(dpr, Math.sqrt(800_000 / (width * height)));
     const pixelWidth = Math.max(1, Math.round(width * dpr));
@@ -996,8 +1201,21 @@ export function createSoapBubbleRenderer(
   const onScroll = () => {
     if (backdrop?.size || layer) request();
   };
+  // Back from a long while hidden, the browser may have dropped what the
+  // canvas held (a GPU reset, a reclaimed 2D canvas): it is drawn whole.
+  const onVisible = () => {
+    if (document.hidden) return;
+    dirtyFrame = true;
+    request();
+  };
+  const onCanvasRestored = () => {
+    dirtyFrame = true;
+    request();
+  };
   reduced?.addEventListener?.('change', onMotion);
   document.addEventListener('visibilitychange', onMotion);
+  document.addEventListener('visibilitychange', onVisible);
+  canvas.addEventListener('contextrestored', onCanvasRestored);
   window.addEventListener('scroll', onScroll, { passive: true, capture: true });
   if (isButton)
     buttonSurfaces.set(host, {
@@ -1027,6 +1245,7 @@ export function createSoapBubbleRenderer(
     update(next) {
       tuning = next;
       tint = tintOf(next);
+      paper = cssColour(next.paper);
       showCovered();
       soapColor = paletteColour(next.soapColor);
       soapShadeColor = paletteColour(next.soapShadeColor);
@@ -1078,21 +1297,22 @@ export function createSoapBubbleRenderer(
       dirtyFrame = true;
       request();
     },
-    pointer(x, y, inside) {
+    pointer(x, y, inside, strength = 1) {
       const now = performance.now();
       if (inside) {
         const dt = Math.max(16, now - pointerAt.time) / 1000;
         const vx = pointerAt.inside ? (x - pointerAt.x) / dt : 0;
         const vy = pointerAt.inside ? (y - pointerAt.y) / dt : 0;
-        if (!pointerAt.inside) kick(0.35, Math.atan2(y, x));
+        if (!pointerAt.inside) kick(0.35 * strength, Math.atan2(y, x));
         else {
           const speed = Math.min(6, Math.hypot(vx, vy));
-          if (speed > 0.2) kick(speed * 0.02, Math.atan2(vy, vx));
+          // These add up with every event, so a gentle response leaves them out.
+          if (strength === 1 && speed > 0.2) kick(speed * 0.02, Math.atan2(vy, vx));
         }
-        tiltTarget[0] = x;
-        tiltTarget[1] = y;
+        tiltTarget[0] = x * strength;
+        tiltTarget[1] = y * strength;
       } else {
-        if (pointerAt.inside) kick(0.25, Math.atan2(pointerAt.y, pointerAt.x));
+        if (pointerAt.inside) kick(0.25 * strength, Math.atan2(pointerAt.y, pointerAt.x));
         tiltTarget[0] = 0;
         tiltTarget[1] = 0;
       }
@@ -1152,6 +1372,8 @@ export function createSoapBubbleRenderer(
       }
       if (own) releaseSoapBubbleOwnContext(canvas);
       cancelSoapBubbleFrame(tick);
+      unwatch();
+      window.clearTimeout(retry);
       if (backdrop && covering !== undefined)
         wantCoveredBackdrop(backdrop, covering, -1, coveringShown ? -1 : 0);
       releaseBackdrop();
@@ -1160,6 +1382,8 @@ export function createSoapBubbleRenderer(
       releaseResolution();
       reduced?.removeEventListener?.('change', onMotion);
       document.removeEventListener('visibilitychange', onMotion);
+      document.removeEventListener('visibilitychange', onVisible);
+      canvas.removeEventListener('contextrestored', onCanvasRestored);
       window.removeEventListener('scroll', onScroll, { capture: true });
     },
   };

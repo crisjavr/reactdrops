@@ -59,10 +59,10 @@
       "label": "Glass bevel (px)",
       "type": "number",
       "defaultValue": 24,
-      "min": 2,
+      "min": 0,
       "max": 200,
       "step": 1,
-      "description": "Width of the refracting edge as Liquid glass rises, in pixels at a 16 px font. It grows with the component's text so larger controls keep their proportions."
+      "description": "Width of the visible edge as Liquid glass rises, in pixels at a 16 px font. It grows with the component's text so larger controls keep their proportions. At 0 the face runs flat to the edge."
     },
     {
       "name": "iridescence",
@@ -273,7 +273,7 @@
       "min": 0,
       "max": 1,
       "step": 0.01,
-      "description": "How much of the bubbles a surface covers shows through it, bent like light through glass: an open menu over a field, a panel over buttons. Surfaces over nothing but the page are unaffected and cost nothing. 0 shows only the page behind."
+      "description": "How much of what a surface covers shows through it, bent like light through glass: text, images and other bubbles alike. 0 shows only the bare page behind; 1 shows everything, up to what Opacity hides."
     },
     {
       "name": "seeThroughBend",
@@ -314,6 +314,36 @@
       "max": 1,
       "step": 0.01,
       "description": "Bends the light passing through the bubble like liquid glass. A real film is 0; at 1 the bubble behaves as a ball of water. Needs a backdrop."
+    },
+    {
+      "name": "refractionWidth",
+      "label": "Refraction width (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 200,
+      "step": 1,
+      "description": "Width of the edge that bends the backdrop once Liquid glass is high, in pixels at a 16 px font. It works with Glass bevel at 0, so the light bends with no visible rim. 0 follows Glass bevel."
+    },
+    {
+      "name": "backdropBlur",
+      "label": "Backdrop blur (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "description": "Blurs everything seen through the bubble: the page, its text and images and the bubbles it covers, in pixels at a 16 px font. Needs a backdrop."
+    },
+    {
+      "name": "refractionClear",
+      "label": "Clear edge",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.01,
+      "description": "Clears the tint over the refracting edge, so what it bends shows even when Opacity makes the body solid. At 0 the tint covers the edge too."
     },
     {
       "name": "glass",
@@ -629,6 +659,145 @@
       "type": "boolean",
       "defaultValue": false,
       "description": "Hold the current frame. Pointer wobble still plays."
+    },
+    {
+      "name": "surface",
+      "label": "Surface",
+      "type": "select",
+      "defaultValue": "bubble",
+      "options": [
+        "bubble",
+        "bubble-liquid",
+        "liquid-glass"
+      ],
+      "description": "What the surfaces are made of. bubble is the soap film alone, refracting the backdrop when one is given. bubble-liquid lays the film over live liquid glass that blurs, tints and bends the page behind it as it is, moving, so nothing captures the page and backdrop is left out. liquid-glass is that glass alone, without the film or WebGL."
+    },
+    {
+      "name": "liquidSplit",
+      "label": "Color separation",
+      "type": "number",
+      "defaultValue": 0.08,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "How far apart red, green and blue bend at the live glass's rim. 0 bends them as one, in a single pass."
+    },
+    {
+      "name": "liquidTint",
+      "label": "Tint",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "description": "Strength of the live glass's tint: dark on dark pages, white on light ones. At 0 only its blur, rim and shadow are left."
+    },
+    {
+      "name": "liquidDensity",
+      "label": "Density",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "description": "Live glass from thin to dense."
+    },
+    {
+      "name": "liquidPanelDensity",
+      "label": "Panel density",
+      "type": "number",
+      "defaultValue": 1.9,
+      "min": 1,
+      "max": 2.6,
+      "step": 0.05,
+      "description": "How much denser a menu's panel is than the controls, so its actions stay readable over text."
+    },
+    {
+      "name": "liquidBlur",
+      "label": "Blur",
+      "type": "number",
+      "defaultValue": 2,
+      "min": 0,
+      "max": 24,
+      "step": 0.5,
+      "description": "Blur of the page behind the live glass, in pixels."
+    },
+    {
+      "name": "liquidSaturation",
+      "label": "Saturation",
+      "type": "number",
+      "defaultValue": 1.6,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Saturation of the page behind the live glass; 1 leaves it as it is."
+    },
+    {
+      "name": "liquidBrightness",
+      "label": "Brightness",
+      "type": "number",
+      "defaultValue": 0.8,
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.01,
+      "description": "Brightness of the page behind the live glass. It dims it on dark pages and lifts it on light ones."
+    },
+    {
+      "name": "liquidLens",
+      "label": "Rim lens",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Bends the page at the live glass's rim. Chromium draws it; in Safari and Firefox the glass blurs and tints without bending. It is the costliest part while the page scrolls."
+    },
+    {
+      "name": "liquidRimWidth",
+      "label": "Rim width (px)",
+      "type": "number",
+      "defaultValue": 44,
+      "min": 4,
+      "max": 120,
+      "step": 1,
+      "description": "Width of the rim that bends, in pixels; at most a third of the surface's short side."
+    },
+    {
+      "name": "liquidBend",
+      "label": "Bend",
+      "type": "number",
+      "defaultValue": 1.1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "How far the rim bends the page."
+    },
+    {
+      "name": "liquidEdgeLight",
+      "label": "Edge light",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Light along the edge of Liquid Glass, where there is no film to catch it."
+    },
+    {
+      "name": "liquidInnerLight",
+      "label": "Inner light",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "A highlight from the top left and glows just inside the rim of Liquid Glass."
+    },
+    {
+      "name": "liquidShadow",
+      "label": "Shadow",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "description": "Shadow under Liquid Glass."
     }
   ],
   "version": "0.1.0",

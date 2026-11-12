@@ -24,6 +24,8 @@ export {
   soapBubbleTwinShapes,
   soapBubbleWindowStyles,
   soapBubbleGlintShapes,
+  soapBubbleSurfaces,
+  type SoapBubbleSurfaceKind,
   type SoapBubbleEnvironment,
   type SoapBubbleLighting,
   type SoapBubbleTwinShape,

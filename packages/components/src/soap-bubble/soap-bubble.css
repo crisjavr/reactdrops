@@ -441,3 +441,185 @@
     background: var(--soap-bubble-fallback-palette), rgb(255 255 255 / 0.08);
   }
 }
+
+/* ------------------------------------------------------------- live glass */
+
+/* Bubble Liquid lays the film over live liquid glass; Liquid Glass is that
+   glass alone. It blurs, tints and, in Chromium, bends the page behind it as
+   the page is, so nothing captures it. Its values come from the material, as
+   custom properties on each component's root. */
+@property --soap-bubble-liquid-hover {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+.soap-bubble-surface[data-soap-bubble-glass]:not(.soap-bubble-menu-panel),
+.soap-bubble-menu-panel[data-soap-bubble-glass] > .soap-bubble-menu-clip {
+  background: rgb(
+    var(--soap-bubble-liquid-rgb) /
+      min(1, calc(var(--soap-bubble-liquid-alpha) * var(--soap-bubble-liquid-hover)))
+  );
+  -webkit-backdrop-filter: var(--soap-bubble-liquid-filter);
+  backdrop-filter: var(--soap-bubble-liquid-filter) var(--soap-bubble-liquid-lens,);
+  border-color: transparent;
+  transition: --soap-bubble-liquid-hover 0.2s ease;
+}
+/* A menu's glass is on its clip, which is what animates. */
+.soap-bubble-surface.soap-bubble-menu-panel[data-soap-bubble-glass] {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* With a compositing layer of its own, Chrome would draw the lens map
+   instead of the bent page. */
+.soap-bubble-menu-panel[data-soap-bubble-glass] > .soap-bubble-menu-clip {
+  will-change: auto;
+}
+/* The film over the panel's tint, which would otherwise bury its rim. */
+.soap-bubble-menu-panel[data-soap-bubble-glass='bubble-liquid'] > .soap-bubble-surface-canvas {
+  z-index: 1;
+}
+/* On a light page it would wash out the actions it lies over, so only its rim
+   is kept. The canvas is 135% of the panel plus its bleeds, which puts the
+   panel's far edges this far in from the canvas's. */
+.soap-bubble-menu-panel[data-soap-bubble-glass='bubble-liquid'][data-soap-bubble-glass-light]
+  > .soap-bubble-surface-canvas {
+  --soap-bubble-rim-near: var(--soap-bubble-surface-bleed);
+  --soap-bubble-rim-far: calc(25.926% + 0.4815 * var(--soap-bubble-surface-bleed));
+  --soap-bubble-rim-start: var(--soap-bubble-rim-near);
+  --soap-bubble-rim-end: var(--soap-bubble-rim-far);
+  --soap-bubble-rim-mask:
+    linear-gradient(
+      to right,
+      #000 calc(var(--soap-bubble-rim-start) + 0.6em),
+      transparent calc(var(--soap-bubble-rim-start) + 1.2em)
+    ),
+    linear-gradient(
+      to left,
+      #000 calc(var(--soap-bubble-rim-end) + 0.6em),
+      transparent calc(var(--soap-bubble-rim-end) + 1.2em)
+    ),
+    linear-gradient(
+      to bottom,
+      #000 calc(var(--soap-bubble-rim-near) + 0.6em),
+      transparent calc(var(--soap-bubble-rim-near) + 1.2em)
+    ),
+    linear-gradient(
+      to top,
+      #000 calc(var(--soap-bubble-rim-far) + 0.6em),
+      transparent calc(var(--soap-bubble-rim-far) + 1.2em)
+    );
+  -webkit-mask-image: var(--soap-bubble-rim-mask);
+  mask-image: var(--soap-bubble-rim-mask);
+}
+.soap-bubble-menu[data-align='end']
+  > .soap-bubble-menu-panel[data-soap-bubble-glass='bubble-liquid'][data-soap-bubble-glass-light]
+  > .soap-bubble-surface-canvas {
+  --soap-bubble-rim-start: var(--soap-bubble-rim-far);
+  --soap-bubble-rim-end: var(--soap-bubble-rim-near);
+}
+
+/* Liquid glass alone: no film, so no canvas, and an edge, inner light and
+   shadow of its own. */
+[data-soap-bubble-glass='liquid-glass'] > .soap-bubble-surface-canvas,
+[data-soap-bubble-glass='liquid-glass'] > .soap-bubble-control-canvas {
+  display: none;
+}
+.soap-bubble-surface[data-soap-bubble-glass='liquid-glass']:not(.soap-bubble-menu-panel),
+.soap-bubble-menu-panel[data-soap-bubble-glass='liquid-glass'] > .soap-bubble-menu-clip {
+  box-shadow: var(--soap-bubble-liquid-edge);
+}
+.soap-bubble-surface.soap-bubble-menu-panel[data-soap-bubble-glass='liquid-glass'] {
+  box-shadow: none;
+}
+.soap-bubble-button[data-soap-bubble-glass='liquid-glass']:not(:disabled):hover,
+.soap-bubble-search[data-soap-bubble-glass='liquid-glass']:hover {
+  --soap-bubble-liquid-hover: 1.14;
+}
+/* A highlight from the top left and glows just inside the rim. */
+.soap-bubble-surface[data-soap-bubble-glass='liquid-glass']:not(.soap-bubble-menu-panel)::before,
+.soap-bubble-menu-panel[data-soap-bubble-glass='liquid-glass'] > .soap-bubble-menu-clip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 0 0,
+    rgb(255 255 255 / calc(0.1 * var(--soap-bubble-liquid-inner))),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 3px 6px -3px rgb(255 255 255 / calc(0.14 * var(--soap-bubble-liquid-inner))),
+    inset 3px 0 6px -3px rgb(255 255 255 / calc(0.1 * var(--soap-bubble-liquid-inner))),
+    inset 0 -3px 6px -3px rgb(0 0 0 / calc(0.16 * var(--soap-bubble-liquid-inner)));
+}
+/* Ink adds to the glass on dark pages. On light ones adding dark ink would
+   leave none, and a coloured action keeps its ink as it is. */
+.soap-bubble-surface[data-soap-bubble-glass='liquid-glass']:not(
+    .soap-bubble-menu-panel,
+    [data-soap-bubble-glass-light],
+    [data-soap-bubble-accent]
+  )
+  > *,
+.soap-bubble-menu-panel[data-soap-bubble-glass='liquid-glass']:not([data-soap-bubble-glass-light])
+  .soap-bubble-menu-content {
+  mix-blend-mode: plus-lighter;
+}
+/* Controls drew their track and thumb in the film. */
+.soap-bubble-toggle[data-soap-bubble-glass='liquid-glass'] {
+  background: rgb(255 255 255 / 0.16);
+  box-shadow: var(--soap-bubble-liquid-edge);
+}
+.soap-bubble-toggle[data-soap-bubble-glass='liquid-glass'][data-soap-bubble-glass-light] {
+  background: rgb(120 120 128 / 0.22);
+}
+.soap-bubble-toggle[data-soap-bubble-glass='liquid-glass'][aria-checked='true'] {
+  background: var(--soap-bubble-toggle-color);
+}
+.soap-bubble-toggle[data-soap-bubble-glass='liquid-glass'] > .soap-bubble-toggle-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #fff;
+}
+.soap-bubble-slider[data-soap-bubble-glass='liquid-glass']::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: var(--soap-bubble-slider-track);
+  border-radius: 9999px;
+  background:
+    linear-gradient(to right, var(--soap-bubble-slider-from), var(--soap-bubble-slider-to)) 0 0 /
+      var(--soap-bubble-slider-fill) 100% no-repeat,
+    rgb(255 255 255 / 0.24);
+  transform: translateY(-50%);
+}
+.soap-bubble-slider[data-soap-bubble-glass='liquid-glass'][data-soap-bubble-glass-light]::before {
+  background:
+    linear-gradient(to right, var(--soap-bubble-slider-from), var(--soap-bubble-slider-to)) 0 0 /
+      var(--soap-bubble-slider-fill) 100% no-repeat,
+    rgb(120 120 128 / 0.2);
+}
+.soap-bubble-slider[data-soap-bubble-glass='liquid-glass'] .soap-bubble-slider-thumb {
+  background: #fff;
+  box-shadow: 0 0.25em 0.625em rgb(0 0 0 / 0.35);
+}
+
+/* No transparency: a solid surface in the same tint. */
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .soap-bubble-surface[data-soap-bubble-glass]:not(.soap-bubble-menu-panel),
+  .soap-bubble-menu-panel[data-soap-bubble-glass] > .soap-bubble-menu-clip {
+    background: rgb(var(--soap-bubble-liquid-rgb));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .soap-bubble-surface[data-soap-bubble-glass='liquid-glass'] > *,
+  .soap-bubble-menu-panel[data-soap-bubble-glass='liquid-glass'] .soap-bubble-menu-content {
+    mix-blend-mode: normal;
+  }
+}
