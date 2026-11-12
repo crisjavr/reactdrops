@@ -100,7 +100,7 @@ const lightMaterial = {
   drainage: 0.35,
   swirl: 0.5,
   reflectivity: 1.3,
-  refraction: 0.15,
+  refraction: 0.55,
   dispersion: 1,
   bevel: 14,
 } satisfies Partial<Values>;
@@ -172,7 +172,7 @@ const materialPresets: Record<string, Partial<Values>> = {
     drainage: 0.35,
     swirl: 0.5,
     reflectivity: 1.3,
-    refraction: 0.15,
+    refraction: 0.55,
     dispersion: 1,
     bevel: 14,
   },

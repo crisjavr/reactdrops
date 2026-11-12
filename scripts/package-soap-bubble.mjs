@@ -33,7 +33,7 @@ export function Example({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
       <SoapBubbleMaterial backdrop={page}
         glass={0.95} filmScale={4.85} oilOpacity={1} oilEdge={18}
         thickness={480} drainage={0.35} swirl={0.5} reflectivity={1.3}
-        refraction={0.15} dispersion={1} bevel={14} environment="auto"
+        refraction={0.55} dispersion={1} bevel={14} environment="auto"
         windowLight={false} windowStyle="edge" windowWidth={0.8} windowHead={0.7}
         windowLength={1.3} windowMargin={0.85} windowBend={0.75}
         windowSize={0.75} windowTail={0.6} windowIntensity={0.85} windowGradient={0.96}

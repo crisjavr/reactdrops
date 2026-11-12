@@ -951,7 +951,6 @@ export function wantCoveredBackdrop(
       (view = { canvas: null, version: 0, uploads: new Map(), wanted: 0, shown: 0 }),
     );
     compose(entry, self, view);
-    if (!view.canvas) entry.layer.stale = true;
   }
   view.wanted += want;
   view.shown += shown;
@@ -1039,8 +1038,28 @@ type BackdropEntry = SoapBubbleBackdrop & {
     canvas: HTMLCanvasElement | null;
     /** The same without any surface, for the 'page' view. */
     page: HTMLCanvasElement | null;
-    stale: boolean;
+    /**
+     * Which parts the page changed under since they were captured: its text,
+     * images, size or scroll show in every one.
+     */
+    stale: { ground: boolean; page: boolean; bubbles: boolean };
+    /**
+     * Bubbles whose own content changed since the bubbles were captured. They
+     * are not in the 'page' view, and only matter to a view whose surfaces
+     * lie over them: a button pressed elsewhere costs no capture.
+     */
+    changed: Set<Element>;
+    /**
+     * What attributes and text inside bubbles were when the bubbles were
+     * captured, for those changed since: a press that plays out and settles
+     * where it started has changed nothing.
+     */
+    was: Map<Node, Map<string, string | null>>;
+    /** Where each bubble was on the backdrop when the bubbles were captured. */
+    boxes: Map<Element, DOMRect>;
     capturing: boolean;
+    /** Asked for while capturing, so looked at again once done. */
+    again: boolean;
     timer: number;
   };
   fontEmbedCSS: Promise<string> | null;
@@ -1074,6 +1093,8 @@ const insideSurface = (node: Node) =>
 const groupSelector = '[data-soap-bubble-group]';
 const insideGroup = (node: Node) =>
   (node instanceof Element ? node : node.parentElement)?.closest(groupSelector) != null;
+const surfaceOf = (node: Node) =>
+  (node instanceof Element ? node : node.parentElement)?.closest('[data-soap-bubble]') ?? null;
 const scrollAttribute = 'data-soap-bubble-scroll';
 
 /** A snapshot clones the page without its scroll offsets, so its children carry them instead. */
@@ -1111,7 +1132,17 @@ export function subscribeBackdrop(
       ground: null,
       groundVersion: 0,
       groundUploads: new Map(),
-      layer: { canvas: null, page: null, stale: true, capturing: false, timer: 0 },
+      layer: {
+        canvas: null,
+        page: null,
+        stale: { ground: true, page: true, bubbles: true },
+        changed: new Set(),
+        was: new Map(),
+        boxes: new Map(),
+        capturing: false,
+        again: false,
+        timer: 0,
+      },
       fontEmbedCSS: null,
       size: null,
       failed: false,
@@ -1122,22 +1153,49 @@ export function subscribeBackdrop(
       mutations: new MutationObserver((all) => {
         const records = all.filter((record) => record.attributeName !== scrollAttribute);
         if (records.some((record) => !insideSurface(record.target))) schedule(created);
-        // The bubbles are in the covered view; a menu opening is not, nor the
-        // flags surfaces set on their canvases.
-        if (
-          records.some(
-            (record) => !insideGroup(record.target) && record.attributeName !== 'data-backdrop',
-          )
-        )
-          staleCovered(created);
+        // The bubbles are in the covered views; a menu opening is not, nor the
+        // flags surfaces set on their canvases. A change inside a bubble is
+        // only seen by the surfaces over it.
+        let page = false;
+        let bubbles = false;
+        for (const { target, type, attributeName, oldValue } of records) {
+          if (insideGroup(target) || attributeName === 'data-backdrop') continue;
+          const bubble = surfaceOf(target);
+          if (!bubble) {
+            page = true;
+            continue;
+          }
+          bubbles = true;
+          if (type === 'childList') {
+            created.layer.changed.add(bubble);
+            continue;
+          }
+          let values = created.layer.was.get(target);
+          if (!values) created.layer.was.set(target, (values = new Map()));
+          if (!values.has(attributeName ?? '')) values.set(attributeName ?? '', oldValue);
+        }
+        if (page) staleCovered(created);
+        else if (bubbles) scheduleLayer(created);
       }),
       resize: new ResizeObserver(() => {
         schedule(created);
         staleCovered(created);
       }),
       // Scrolling moves what is seen through the film without a mutation.
+      // A menu's list scrolling is in no snapshot; a bubble's own content
+      // scrolling is only in the bubbles' view.
       scrolled: (event) => {
-        if (event.target instanceof Element) created.scrollers.add(event.target);
+        const { target } = event;
+        if (target instanceof Element) {
+          if (insideGroup(target)) return;
+          created.scrollers.add(target);
+          const bubble = surfaceOf(target);
+          if (bubble) {
+            created.layer.changed.add(bubble);
+            scheduleLayer(created);
+            return;
+          }
+        }
         schedule(created);
         staleCovered(created);
       },
@@ -1149,6 +1207,8 @@ export function subscribeBackdrop(
       childList: true,
       characterData: true,
       attributes: true,
+      attributeOldValue: true,
+      characterDataOldValue: true,
     });
     created.resize.observe(element);
     backdrops.set(element, created);
@@ -1248,42 +1308,152 @@ function fontEmbedCSS(entry: BackdropEntry) {
 }
 
 function staleCovered(entry: BackdropEntry) {
-  entry.layer.stale = true;
+  const { stale } = entry.layer;
+  stale.ground = stale.page = stale.bubbles = true;
   scheduleLayer(entry);
 }
 
-// The bubbles' content costs another rasterisation, so it waits for the page
-// to settle (a slider being dragged, a theme switching) and is skipped while
-// no surface shows what it covers.
+// Each part of the covered views costs a rasterisation, so it waits for the
+// page to settle (a slider being dragged, a theme switching) and is skipped
+// while no surface that shows it would see the change.
 function scheduleLayer(entry: BackdropEntry) {
   const { layer } = entry;
-  if (!entry.covered.size || !layer.stale || !entry.source) return;
-  // Once there is a layer, it is only refreshed for a view on screen.
-  if (
-    (layer.canvas || layer.page) &&
-    ![...entry.covered.values()].some((view) => view.shown > 0 || !view.canvas)
-  )
+  if (layer.capturing) {
+    layer.again = true;
     return;
+  }
+  const due = layerDue(entry, false);
+  if (!entry.source || (!due.page && !due.bubbles)) return;
   window.clearTimeout(layer.timer);
   layer.timer = window.setTimeout(() => void captureLayer(entry), 700);
 }
 
+/**
+ * Which parts of the covered views to capture again: the page's for a 'page'
+ * view, the bubbles' for any other. A view not made yet needs its part
+ * whatever happened; once made, it is only refreshed while a surface shows
+ * it, and for a bubble that changed, only if that surface lies over it. That
+ * last test is left until the capture is due (exact), when a menu's panel has
+ * finished opening.
+ */
+function layerDue(entry: BackdropEntry, exact: boolean) {
+  const { layer } = entry;
+  const due = { page: false, bubbles: false };
+  let changed: Set<Element> | undefined;
+  for (const [key, view] of entry.covered) {
+    if (key === 'page') {
+      due.page ||= !view.canvas || (view.shown > 0 && layer.stale.page);
+      continue;
+    }
+    if (due.bubbles || (view.canvas && view.shown <= 0)) continue;
+    if (!view.canvas || layer.stale.bubbles) due.bubbles = true;
+    else if (layer.changed.size || layer.was.size)
+      due.bubbles = !exact || seesChange(entry, key, (changed ??= changedBubbles(layer)));
+  }
+  return due;
+}
+
+// The bubbles whose content is not what was captured: one that gained or lost
+// a node, or whose attributes or text differ from then.
+function changedBubbles(layer: BackdropEntry['layer']) {
+  const changed = new Set(layer.changed);
+  for (const [node, values] of layer.was) {
+    const bubble = node.isConnected ? surfaceOf(node) : null;
+    if (!bubble || changed.has(bubble)) continue;
+    for (const [name, value] of values) {
+      const now = name ? (node as Element).getAttribute(name) : (node as CharacterData).data;
+      if (now === value) continue;
+      changed.add(bubble);
+      break;
+    }
+  }
+  return changed;
+}
+
+// How far past its box a surface sees what it covers: its lens bends in
+// what lies just outside.
+const lensReach = 16;
+
+// Whether the surfaces showing a view (one laid among the others, or every
+// floating one) lie over a bubble that changed, where it is now or was when
+// the bubbles were captured. A surface's own changes are left out of its view.
+function seesChange(entry: BackdropEntry, key: Element | null, changed: Set<Element>) {
+  if (!changed.size) return false;
+  const { element, layer } = entry;
+  const origin = element.getBoundingClientRect();
+  const areas: DOMRect[] = [];
+  const surfaces = key ? [key] : element.querySelectorAll(`${groupSelector} [data-soap-bubble]`);
+  for (const surface of surfaces) {
+    const box = onBackdrop(surface, origin);
+    // A closed menu's panel takes no room and sees nothing.
+    if (box.width > 0 && box.height > 0)
+      areas.push(
+        new DOMRect(
+          box.x - lensReach,
+          box.y - lensReach,
+          box.width + 2 * lensReach,
+          box.height + 2 * lensReach,
+        ),
+      );
+  }
+  for (const bubble of changed) {
+    if (key && (key.contains(bubble) || bubble.contains(key))) continue;
+    const then = layer.boxes.get(bubble);
+    const now = bubble.isConnected ? onBackdrop(bubble, origin) : undefined;
+    if (areas.some((area) => overlaps(area, then) || overlaps(area, now))) return true;
+  }
+  return false;
+}
+
+// An element's box from the backdrop's corner, which holds while the page
+// around the backdrop scrolls.
+function onBackdrop(element: Element, origin: DOMRect) {
+  const box = element.getBoundingClientRect();
+  return new DOMRect(box.x - origin.x, box.y - origin.y, box.width, box.height);
+}
+
+function overlaps(area: DOMRect, box: DOMRect | undefined) {
+  return (
+    box != null &&
+    box.width > 0 &&
+    box.height > 0 &&
+    area.left < box.right &&
+    box.left < area.right &&
+    area.top < box.bottom &&
+    box.top < area.bottom
+  );
+}
+
 async function captureLayer(entry: BackdropEntry) {
   const { element, layer } = entry;
-  if (layer.capturing || !entry.covered.size || !entry.source) return;
+  if (layer.capturing || !entry.source) return;
+  const due = layerDue(entry, true);
+  if (!due.page && !due.bubbles) return;
   layer.capturing = true;
-  layer.stale = false;
+  const withGround = layer.stale.ground || !entry.ground;
+  layer.stale.ground = false;
+  if (due.page) layer.stale.page = false;
+  if (due.bubbles) {
+    layer.stale.bubbles = false;
+    layer.changed.clear();
+    layer.was.clear();
+  }
   try {
     const rect = element.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return;
-    let canvas: HTMLCanvasElement | null;
+    let canvas: HTMLCanvasElement | null = null;
     let page: HTMLCanvasElement | null = null;
-    let ground: TexImageSource = entry.source as TexImageSource;
+    let ground: TexImageSource | null = withGround ? entry.source : null;
+    const boxes = new Map<Element, DOMRect>();
+    if (due.bubbles)
+      for (const bubble of element.querySelectorAll('[data-soap-bubble]'))
+        if (!insideGroup(bubble)) boxes.set(bubble, onBackdrop(bubble, rect));
     if (element instanceof HTMLImageElement || element instanceof HTMLCanvasElement) {
-      canvas = Object.assign(document.createElement('canvas'), {
-        width: entry.size![0],
-        height: entry.size![1],
-      });
+      if (due.bubbles)
+        canvas = Object.assign(document.createElement('canvas'), {
+          width: entry.size![0],
+          height: entry.size![1],
+        });
     } else {
       // Everything stays where it is laid out (leaving a surface out would
       // let the rest close up); only the films, drawn apart, are skipped.
@@ -1298,13 +1468,16 @@ async function captureLayer(entry: BackdropEntry) {
         bottom: 'auto',
         margin: '0',
       };
-      ground = await toCanvas(element, {
-        width: rect.width,
-        height: rect.height,
-        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
-        style: snapshot,
-        filter: () => false,
-      });
+      // The ground has no text: no fonts to inline.
+      if (withGround)
+        ground = await toCanvas(element, {
+          width: rect.width,
+          height: rect.height,
+          pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+          style: snapshot,
+          filter: () => false,
+          skipFonts: true,
+        });
       const content = (hidden: string) =>
         fontEmbedCSS(entry).then((fonts) =>
           toCanvas(element, {
@@ -1317,30 +1490,40 @@ async function captureLayer(entry: BackdropEntry) {
             filter: (node) => !(node instanceof Element && node.localName === 'canvas'),
           }),
         );
-      page = entry.covered.has('page')
-        ? await content(
-            `${bubbleSelector}, [data-soap-bubble] *, [data-soap-bubble-group] * { visibility: hidden !important; }`,
-          )
-        : null;
+      if (due.page)
+        page = await content(
+          `${bubbleSelector}, [data-soap-bubble] *, [data-soap-bubble-group] * { visibility: hidden !important; }`,
+        );
       // Groups are never part of a covered view. Hide their paint in the
       // snapshot while preserving layout: erasing at their live position
       // afterwards can leave a ghost if they move during rasterisation.
-      canvas = [...entry.covered.keys()].some((key) => key !== 'page')
-        ? await content(`${groupSelector}, ${groupSelector} * { visibility: hidden !important; }`)
-        : null;
+      if (due.bubbles)
+        canvas = await content(
+          `${groupSelector}, ${groupSelector} * { visibility: hidden !important; }`,
+        );
     }
     if (backdrops.get(element) !== entry) return;
-    layer.canvas = canvas;
-    layer.page = page;
-    entry.ground = ground;
-    entry.groundVersion++;
-    for (const [self, view] of entry.covered) compose(entry, self, view);
+    if (ground) {
+      entry.ground = ground;
+      entry.groundVersion++;
+    }
+    if (page) layer.page = page;
+    if (canvas) {
+      layer.canvas = canvas;
+      layer.boxes = boxes;
+    }
+    // Only the views whose part was captured again are put together again.
+    for (const [self, view] of entry.covered)
+      if (self === 'page' ? page : canvas) compose(entry, self, view);
     entry.listeners.forEach((listener) => listener());
   } catch {
     // Without it, surfaces show the backdrop alone.
   } finally {
     layer.capturing = false;
-    if (layer.stale) scheduleLayer(entry);
+    if (layer.again) {
+      layer.again = false;
+      scheduleLayer(entry);
+    }
   }
 }
 

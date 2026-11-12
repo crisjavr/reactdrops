@@ -38,14 +38,14 @@ export const soapBubbleSystemDefaults: Partial<SoapBubbleSettings> = {
   thickness: 480,
   drainage: 0.35,
   swirl: 0.5,
-  refraction: 0.15,
+  refraction: 0.55,
   dispersion: 1,
   reflectivity: 1.3,
   mirage: 0.7,
   // A surface over another bubble (an open menu over a field) shows a little
   // of it, bent.
   seeThrough: 0.3,
-  seeThroughBend: 0.3,
+  seeThroughBend: 1.01,
   reach: 2,
   bevel: 14,
   environment: 'auto',

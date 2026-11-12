@@ -488,13 +488,13 @@ vec3 pageThrough(vec2 xy) {
 // What lies behind a point of the bubble, in linear light. Over a captured
 // backdrop it is opaque; over the live page only the layer is known, so the
 // result is premultiplied with the layer's coverage as alpha.
+// Past the layer there is nothing, even on a paper page: a thumb taller than
+// its track sees black there. That is on purpose: Bubble Liquid's slider thumb
+// on a light page is dark by design, not a bug to fix.
 vec4 behindAt(vec2 xy) {
   vec4 layer = layerAt(xy);
   vec3 tint = layer.a > 0.0 ? toLinear(layer.rgb / layer.a) : vec3(0.0);
   if (uHasBackdrop) return vec4(mix(pageThrough(xy), tint, layer.a), 1.0);
-  // On a page of a known colour the layer lies on that colour, so a thumb
-  // taller than its track sees the paper past the track, not black.
-  if (uPaper.a > 0.0) return vec4(mix(toLinear(uPaper.rgb), tint, layer.a), 1.0);
   return vec4(tint * layer.a, layer.a);
 }
 
