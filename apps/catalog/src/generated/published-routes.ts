@@ -18,6 +18,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/fluid-agent-orb')),
   },
   {
+    path: '/components/background/fluid-ripples',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/fluid-ripples')),
+  },
+  {
     path: '/components/image/fractal-glass',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/fractal-glass')),
   },

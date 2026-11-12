@@ -16,7 +16,7 @@
 <p>
   <a href="https://github.com/crisjavr/reactdrops/stargazers"><img src="https://img.shields.io/github/stars/crisjavr/reactdrops?style=flat&logo=github&label=Stars&color=111111" alt="GitHub stars" /></a>
   <a href="https://github.com/crisjavr/reactdrops/commits/main"><img src="https://img.shields.io/github/last-commit/crisjavr/reactdrops?style=flat&label=Last%20drop&color=111111" alt="Last commit" /></a>
-  <a href="https://reactdrops.dev/components"><img src="https://img.shields.io/badge/components-12-111111?style=flat" alt="12 components" /></a>
+  <a href="https://reactdrops.dev/components"><img src="https://img.shields.io/badge/components-13-111111?style=flat" alt="13 components" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-ReactDrops%20Component%201.0-111111?style=flat" alt="License" /></a>
 </p>
 <p>
@@ -70,6 +70,7 @@ export function Hero() {
 
 | Component | Category | Description | Dependencies |
 | --- | --- | --- | --- |
+| [**Fluid Typing**](https://reactdrops.dev/components/background/fluid-ripples) | Background | Text typed over liquid ripples that spread from the caret, with an opening wave, a natural rhythm and light and dark palettes. | — |
 | [**Depth Field**](https://reactdrops.dev/components/hero/depth-field) | Hero | A hero where your photos emerge from depth and orbit around the heading, with an entrance pulse and scroll impulses. | — |
 | [**Bubble UI**](https://reactdrops.dev/components/button/soap-bubble) | Button | Soap-film buttons, menus, search, switches and sliders with configurable glass and oil. | `html-to-image` |
 | [**Liquid Glass Orb**](https://reactdrops.dev/components/ai/liquid-glass-orb) | AI | A liquid glass orb for AI interfaces with agent states, voice response and six palettes. | `gsap` |
@@ -87,6 +88,7 @@ export function Hero() {
 <summary><strong>Install all components</strong></summary>
 
 ```sh
+npx shadcn@latest add https://reactdrops.dev/r/fluid-ripples.json
 npx shadcn@latest add https://reactdrops.dev/r/depth-field.json
 npx shadcn@latest add https://reactdrops.dev/r/soap-bubble.json
 npx shadcn@latest add https://reactdrops.dev/r/liquid-glass-orb.json
@@ -108,6 +110,32 @@ Bubble UI follows the catalog defaults: **Light glass on light pages and Rainbow
 ## Usage
 
 Each example assumes you installed the component with the command shown. Visit the component page for every prop and a live customizer.
+
+<details>
+<summary><strong>Fluid Typing</strong>: text typed over liquid ripples</summary>
+
+```sh
+npx shadcn@latest add https://reactdrops.dev/r/fluid-ripples.json
+```
+
+```tsx
+import { FluidTyping } from './components/fluid-typing';
+
+export function Example() {
+  return (
+    <FluidTyping
+      text={['Text over a fluid background.', 'Animated with React Drops.']}
+      height="100svh"
+    />
+  );
+}
+```
+
+- The lone cursor opens with one large wave, then types each line with a natural rhythm. Every character sends a ripple from the caret, sized by its typing speed.
+- `typingMode="manual"` turns it into a field visitors type into, and `autoType={false}` renders controlled text. Clicks and taps add waves.
+- Installs `fluid-typing.tsx`, `fluid-ripples.tsx`, `fluid-ripples-renderer.ts`, `fluid-ripples-shaders.ts`, `fluid-ripples-field.ts` and their CSS. WebGL 2 with a CSS fallback; no runtime library beyond React.
+
+</details>
 
 <details>
 <summary><strong>Depth Field</strong>: a hero with photos emerging from depth</summary>

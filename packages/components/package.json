@@ -19,7 +19,8 @@
     "./refracted-text": "./src/refracted-text/index.ts",
     "./showcase-pointer": "./src/showcase-pointer/index.ts",
     "./soap-bubble": "./src/soap-bubble/index.ts",
-    "./depth-field": "./src/depth-field/index.ts"
+    "./depth-field": "./src/depth-field/index.ts",
+    "./fluid-ripples": "./src/fluid-ripples/index.ts"
   },
   "peerDependencies": {
     "@gsap/react": ">=2.1.0",
@@ -66,6 +67,14 @@
     "src/fluid-glass-gradient/fluid-glass-gradient.css",
     "src/fluid-glass-gradient/fluid-glass-gradient.tsx",
     "src/fluid-glass-gradient/index.ts",
+    "src/fluid-ripples/fluid-ripples-field.ts",
+    "src/fluid-ripples/fluid-ripples-renderer.ts",
+    "src/fluid-ripples/fluid-ripples-shaders.ts",
+    "src/fluid-ripples/fluid-ripples.css",
+    "src/fluid-ripples/fluid-ripples.tsx",
+    "src/fluid-ripples/fluid-typing.css",
+    "src/fluid-ripples/fluid-typing.tsx",
+    "src/fluid-ripples/index.ts",
     "src/fractal-glass/fractal-glass-model.ts",
     "src/fractal-glass/fractal-glass-renderer.ts",
     "src/fractal-glass/fractal-glass-shaders.ts",

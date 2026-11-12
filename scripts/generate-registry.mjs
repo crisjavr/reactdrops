@@ -17,6 +17,7 @@ import { packageSoapBubble, soapBubbleUsage } from './package-soap-bubble.mjs';
 import { packageRefractedText } from './package-refracted-text.mjs';
 import { packageShowcasePointer, showcasePointerUsage } from './package-showcase-pointer.mjs';
 import { packageDepthField } from './package-depth-field.mjs';
+import { packageFluidRipples, fluidRipplesUsage } from './package-fluid-ripples.mjs';
 import { licenseName, licenseUrl, syncLicenseFiles } from './registry-license.mjs';
 import { componentPath } from '../packages/catalog-data/src/publication.mjs';
 
@@ -31,6 +32,13 @@ assert.deepEqual(
 );
 const options = await resolveConfig(resolve(root, 'package.json'));
 const releases = {
+  'fluid-ripples': {
+    sourceSlug: 'fluid-ripples',
+    symbol: 'FluidTyping',
+    prefix: 'fluidRipples',
+    package: () => packageFluidRipples(root),
+    usage: fluidRipplesUsage,
+  },
   'depth-field': {
     sourceSlug: 'depth-field',
     symbol: 'DepthField',

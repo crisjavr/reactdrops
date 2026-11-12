@@ -1,0 +1,55 @@
+.component-showcase:has(.fluid-ripples-demo),
+.component-preview-canvas:has(.fluid-ripples-demo) {
+  min-height: 0;
+}
+
+.component-showcase:has(.fluid-ripples-demo) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.component-preview-canvas:has(.fluid-ripples-demo) {
+  background: transparent;
+}
+
+.component-showcase .component-preview-stage:has(> .fluid-ripples-demo) {
+  padding: 0;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.component-showcase:not(.is-fullscreen) .component-preview-stage:has(> .fluid-ripples-demo) {
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.fluid-ripples-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  margin-inline: auto;
+}
+
+.fluid-ripples-demo > .fluid-ripples {
+  width: 100%;
+  max-width: 100%;
+  height: 100% !important;
+}
+
+.fluid-typing-text-control {
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-subtle, #d5d8df);
+  border-radius: 10px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  line-height: 1.4;
+  resize: vertical;
+  box-sizing: border-box;
+}

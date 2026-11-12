@@ -23,6 +23,7 @@
 !/apps/catalog/public-release/r/chromatic-button.json
 !/apps/catalog/public-release/r/depth-field.json
 !/apps/catalog/public-release/r/fan-gallery.json
+!/apps/catalog/public-release/r/fluid-ripples.json
 !/apps/catalog/public-release/r/fractal-glass.json
 !/apps/catalog/public-release/r/liquid-glass-logo.json
 !/apps/catalog/public-release/r/liquid-glass-orb.json
@@ -45,6 +46,7 @@
 !/packages/catalog-data/src/components/depth-field.json
 !/packages/catalog-data/src/components/fan-gallery.json
 !/packages/catalog-data/src/components/fluid-agent-orb.json
+!/packages/catalog-data/src/components/fluid-ripples.json
 !/packages/catalog-data/src/components/fractal-glass.json
 !/packages/catalog-data/src/components/liquid-glass-logo.json
 !/packages/catalog-data/src/components/refracted-text.json
@@ -57,6 +59,7 @@
 !/packages/catalog-data/src/generated/depth-field-source.ts
 !/packages/catalog-data/src/generated/fan-gallery-source.ts
 !/packages/catalog-data/src/generated/fluid-agent-orb-source.ts
+!/packages/catalog-data/src/generated/fluid-ripples-source.ts
 !/packages/catalog-data/src/generated/fractal-glass-source.ts
 !/packages/catalog-data/src/generated/liquid-glass-logo-source.ts
 !/packages/catalog-data/src/generated/refracted-text-source.ts
@@ -75,6 +78,8 @@
 !/packages/catalog-ui/src/assets/chromatic-button-preview.webp
 !/packages/catalog-ui/src/assets/depth-field-preview.webp
 !/packages/catalog-ui/src/assets/fan-gallery-preview.webp
+!/packages/catalog-ui/src/assets/fluid-ripples-preview-dark.webp
+!/packages/catalog-ui/src/assets/fluid-ripples-preview-light.webp
 !/packages/catalog-ui/src/assets/fractal-glass-preview.webp
 !/packages/catalog-ui/src/assets/liquid-glass-logo-preview-dark.webp
 !/packages/catalog-ui/src/assets/liquid-glass-logo-preview-light.webp
@@ -133,6 +138,8 @@
 !/packages/catalog-ui/src/fluid-agent-orb-page.css
 !/packages/catalog-ui/src/fluid-agent-orb-page.tsx
 !/packages/catalog-ui/src/fluid-agent-orb-speech.ts
+!/packages/catalog-ui/src/fluid-ripples-page.css
+!/packages/catalog-ui/src/fluid-ripples-page.tsx
 !/packages/catalog-ui/src/fractal-glass-page.css
 !/packages/catalog-ui/src/fractal-glass-page.tsx
 !/packages/catalog-ui/src/highlighted-code.tsx
@@ -207,6 +214,14 @@
 !/packages/components/src/fluid-glass-gradient/fluid-glass-gradient.css
 !/packages/components/src/fluid-glass-gradient/fluid-glass-gradient.tsx
 !/packages/components/src/fluid-glass-gradient/index.ts
+!/packages/components/src/fluid-ripples/fluid-ripples-field.ts
+!/packages/components/src/fluid-ripples/fluid-ripples-renderer.ts
+!/packages/components/src/fluid-ripples/fluid-ripples-shaders.ts
+!/packages/components/src/fluid-ripples/fluid-ripples.css
+!/packages/components/src/fluid-ripples/fluid-ripples.tsx
+!/packages/components/src/fluid-ripples/fluid-typing.css
+!/packages/components/src/fluid-ripples/fluid-typing.tsx
+!/packages/components/src/fluid-ripples/index.ts
 !/packages/components/src/fractal-glass/fractal-glass-model.ts
 !/packages/components/src/fractal-glass/fractal-glass-renderer.ts
 !/packages/components/src/fractal-glass/fractal-glass-shaders.ts
@@ -269,6 +284,7 @@
 !/registry/chromatic-button.json
 !/registry/depth-field.json
 !/registry/fan-gallery.json
+!/registry/fluid-ripples.json
 !/registry/fractal-glass.json
 !/registry/liquid-glass-logo.json
 !/registry/liquid-glass-orb.json
@@ -286,6 +302,7 @@
 !/scripts/package-chromatic-button.mjs
 !/scripts/package-depth-field.mjs
 !/scripts/package-fan-gallery.mjs
+!/scripts/package-fluid-ripples.mjs
 !/scripts/package-fractal-glass.mjs
 !/scripts/package-liquid-glass-logo.mjs
 !/scripts/package-liquid-glass-orb.mjs

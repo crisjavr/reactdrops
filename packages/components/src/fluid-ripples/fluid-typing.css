@@ -1,0 +1,152 @@
+.fluid-typing {
+  --fluid-typing-color: var(--fluid-typing-palette-light, #173b4b);
+  container-type: inline-size;
+}
+@media (prefers-color-scheme: dark) {
+  .fluid-typing[data-fluid-mode='auto'] {
+    --fluid-typing-color: var(--fluid-typing-palette-dark, #bce6f5);
+  }
+}
+:where([data-theme='dark'], .dark) .fluid-typing[data-fluid-mode='auto'],
+.fluid-typing[data-fluid-mode='dark'] {
+  --fluid-typing-color: var(--fluid-typing-palette-dark, #bce6f5);
+}
+:where([data-theme='light']) .fluid-typing[data-fluid-mode='auto'],
+.fluid-typing[data-fluid-mode='light'] {
+  --fluid-typing-color: var(--fluid-typing-palette-light, #173b4b);
+}
+.fluid-typing[data-fluid-theme='dark'] {
+  --fluid-typing-color: var(--fluid-typing-palette-dark, #bce6f5);
+}
+.fluid-typing[data-fluid-theme='light'] {
+  --fluid-typing-color: var(--fluid-typing-palette-light, #173b4b);
+}
+.fluid-typing-stage {
+  display: grid;
+  place-content: center start;
+  justify-items: start;
+  gap: 1.25rem;
+  min-width: 0;
+  height: 100%;
+  padding: clamp(1rem, 5cqw, 3rem);
+  padding-inline: clamp(1.5rem, 12cqw, 12rem);
+  box-sizing: border-box;
+}
+.fluid-typing-copy {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  color: var(--fluid-typing-color);
+  font-family: inherit;
+  font-size: clamp(1.5rem, 5.8cqw, 3rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fluid-typing-reserve {
+  visibility: hidden;
+}
+.fluid-typing-visible {
+  position: absolute;
+  inset: 0;
+}
+.fluid-typing-character {
+  animation: fluid-typing-reveal 140ms ease-out;
+}
+.fluid-typing-stage[data-fluid-typing-mode='manual'] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+.fluid-typing-stage[data-fluid-typing-mode='manual'] .fluid-typing-copy {
+  display: flex;
+  align-items: baseline;
+  width: min(100%, 26ch);
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  box-sizing: border-box;
+}
+.fluid-typing-stage[data-fluid-typing-mode='manual'] .fluid-typing-fixed {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.fluid-typing-input {
+  display: block;
+  flex: 1;
+  min-width: 1ch;
+  min-height: 1em;
+  padding-inline-end: 0.12em;
+  box-sizing: border-box;
+  cursor: text;
+  caret-color: transparent;
+  outline: none;
+}
+.fluid-typing-input:empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.45;
+}
+.fluid-typing-caret {
+  display: inline-block;
+  width: 0.055em;
+  height: 0.95em;
+  margin-inline-start: 0.02em;
+  background: currentColor;
+  vertical-align: -0.08em;
+  animation: fluid-typing-blink 1s steps(1, end) infinite;
+}
+.fluid-typing-caret-metrics {
+  position: absolute;
+  inset: 0 auto auto 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.fluid-typing-manual-caret {
+  position: absolute;
+  pointer-events: none;
+}
+.fluid-typing-manual-caret:not([data-fluid-active='true']) {
+  visibility: hidden;
+}
+.fluid-typing-caret[data-fluid-cursor='false'] {
+  visibility: hidden;
+}
+[data-fluid-typing-paused='true'] .fluid-typing-caret,
+[data-fluid-typing-paused='true'] .fluid-typing-character {
+  animation-play-state: paused;
+}
+.fluid-typing-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@keyframes fluid-typing-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes fluid-typing-reveal {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fluid-typing-caret,
+  .fluid-typing-character {
+    animation: none;
+  }
+}

@@ -15,3 +15,5 @@ export * from './showcase-pointer';
 export * from './soap-bubble';
 
 export * from './depth-field';
+
+export * from './fluid-ripples';

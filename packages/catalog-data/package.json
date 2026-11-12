@@ -18,6 +18,7 @@
     "./sources/showcase-pointer": "./src/generated/showcase-pointer-source.ts",
     "./sources/soap-bubble": "./src/generated/soap-bubble-source.ts",
     "./sources/depth-field": "./src/generated/depth-field-source.ts",
+    "./sources/fluid-ripples": "./src/generated/fluid-ripples-source.ts",
     "./home-carousel-items": "./src/home-carousel-items.ts"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "src/components/depth-field.json",
     "src/components/fan-gallery.json",
     "src/components/fluid-agent-orb.json",
+    "src/components/fluid-ripples.json",
     "src/components/fractal-glass.json",
     "src/components/liquid-glass-logo.json",
     "src/components/refracted-text.json",
@@ -41,6 +43,7 @@
     "src/generated/depth-field-source.ts",
     "src/generated/fan-gallery-source.ts",
     "src/generated/fluid-agent-orb-source.ts",
+    "src/generated/fluid-ripples-source.ts",
     "src/generated/fractal-glass-source.ts",
     "src/generated/liquid-glass-logo-source.ts",
     "src/generated/refracted-text-source.ts",

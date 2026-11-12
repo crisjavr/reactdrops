@@ -1,0 +1,438 @@
+{
+  "slug": "fluid-ripples",
+  "name": "Fluid Typing",
+  "family": {
+    "slug": "background",
+    "name": "Background"
+  },
+  "version": "1.5.0",
+  "description": "Fixed and animated text or visitor-written text over liquid ripples, with click interaction and palettes for light and dark themes.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 24,
+  "publishedAt": "2026-11-12",
+  "styles": [
+    "fluid",
+    "ripple",
+    "glass"
+  ],
+  "types": [
+    "background",
+    "text"
+  ],
+  "interactions": [
+    "automatic",
+    "typing",
+    "controlled",
+    "click",
+    "touch"
+  ],
+  "technologies": [
+    "webgl",
+    "css",
+    "dom"
+  ],
+  "scopes": [
+    "component"
+  ],
+  "compatibility": [
+    "react",
+    "vite",
+    "next-js",
+    "responsive",
+    "reduced-motion"
+  ],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "staticText",
+      "label": "Static text",
+      "type": "text",
+      "defaultValue": "",
+      "multiline": true,
+      "description": "A fixed prefix displayed alongside the animated, static, or manually entered text."
+    },
+    {
+      "name": "typingMode",
+      "label": "Typing mode",
+      "type": "select",
+      "defaultValue": "auto",
+      "options": [
+        "auto",
+        "manual",
+        "static"
+      ],
+      "description": "Animate the message, let the visitor type directly, or show the complete text."
+    },
+    {
+      "name": "defaultValue",
+      "label": "Initial input",
+      "type": "text",
+      "defaultValue": "",
+      "multiline": true,
+      "description": "Initial text for uncontrolled manual input. Replay restores this value."
+    },
+    {
+      "name": "placeholder",
+      "label": "Input placeholder",
+      "type": "text",
+      "defaultValue": "Type here…",
+      "description": "Prompt shown when the manual input is empty."
+    },
+    {
+      "name": "inputLabel",
+      "label": "Input label",
+      "type": "text",
+      "defaultValue": "Your text",
+      "description": "Accessible name of the manual text field."
+    },
+    {
+      "name": "text",
+      "label": "Text",
+      "type": "text",
+      "defaultValue": "Text over a fluid background.\nAnimated with React Drops.",
+      "multiline": true,
+      "description": "Text to type. A string array creates consecutive lines in the same message."
+    },
+    {
+      "name": "typeSpeed",
+      "label": "Type speed (ms)",
+      "type": "number",
+      "defaultValue": 110,
+      "min": 1,
+      "max": 1000,
+      "step": 5,
+      "description": "Average time between typed characters. Every character emits one wave at the caret."
+    },
+    {
+      "name": "deleteSpeed",
+      "label": "Delete speed (ms)",
+      "type": "number",
+      "defaultValue": 50,
+      "min": 1,
+      "max": 1000,
+      "step": 5,
+      "description": "Time between deleted characters. Deletion emits a weaker wave."
+    },
+    {
+      "name": "holdDuration",
+      "label": "Hold duration (ms)",
+      "type": "number",
+      "defaultValue": 1800,
+      "min": 0,
+      "max": 10000,
+      "step": 100,
+      "description": "Hold the complete message before deleting and repeating."
+    },
+    {
+      "name": "introWave",
+      "label": "Opening wave",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Start each automatic cycle with one large wave from the lone cursor, then pause before typing."
+    },
+    {
+      "name": "introPause",
+      "label": "Opening pause (ms)",
+      "type": "number",
+      "defaultValue": 900,
+      "min": 0,
+      "max": 5000,
+      "step": 50,
+      "description": "Time between the opening wave and the first character."
+    },
+    {
+      "name": "naturalRhythm",
+      "label": "Natural rhythm",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Size every wave by the typing speed: slow keystrokes emit broad, strong waves and quick bursts small, soft ones. Automatic typing also follows a person's uneven rhythm. Turn off for a steady rate with identical waves."
+    },
+    {
+      "name": "autoType",
+      "label": "Automatic typing",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Type the text automatically. Turn off to show controlled text directly and emit waves from its changes."
+    },
+    {
+      "name": "loop",
+      "label": "Loop typing",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Delete and retype the complete message. Turn off to keep the completed text visible."
+    },
+    {
+      "name": "cursor",
+      "label": "Cursor",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Display the blinking text caret. Wave positions still follow its location when hidden."
+    },
+    {
+      "name": "rippleCount",
+      "label": "Ripple layers",
+      "type": "number",
+      "defaultValue": 7,
+      "min": 1,
+      "max": 24,
+      "step": 1,
+      "description": "Maximum active ripple layers. Each typed character emits a new wave from the caret."
+    },
+    {
+      "name": "rippleWidth",
+      "label": "Ripple width",
+      "type": "number",
+      "defaultValue": 0.09,
+      "min": 0.01,
+      "max": 0.4,
+      "step": 0.005,
+      "description": "Width of each ripple before blur, relative to the composition height."
+    },
+    {
+      "name": "rippleSpacing",
+      "label": "Ripple delay (s)",
+      "type": "number",
+      "defaultValue": 0.14,
+      "min": 0.03,
+      "max": 1,
+      "step": 0.005,
+      "description": "Temporal delay between successive waves in seconds. Increase it to spread their animation timing."
+    },
+    {
+      "name": "centerX",
+      "label": "Center X",
+      "type": "number",
+      "defaultValue": 0.34,
+      "min": -1,
+      "max": 2,
+      "step": 0.01,
+      "description": "Horizontal ripple origin. Zero is the left edge and one is the right edge."
+    },
+    {
+      "name": "centerY",
+      "label": "Center Y",
+      "type": "number",
+      "defaultValue": 0.5,
+      "min": -1,
+      "max": 2,
+      "step": 0.01,
+      "description": "Vertical ripple origin. Zero is the top edge and one is the bottom edge."
+    },
+    {
+      "name": "travel",
+      "label": "Horizontal travel",
+      "type": "number",
+      "defaultValue": 0.36,
+      "min": 0,
+      "max": 2,
+      "step": 0.01,
+      "description": "Horizontal movement of successive ripple origins, relative to the composition width."
+    },
+    {
+      "name": "seed",
+      "label": "Seed",
+      "type": "number",
+      "defaultValue": 1,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "description": "Choose a repeatable arrangement of fluid distortion."
+    },
+    {
+      "name": "borderRadius",
+      "label": "Border radius (px)",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 240,
+      "step": 1,
+      "description": "Round the outer corners of the effect independently of the preview window."
+    },
+    {
+      "name": "blur",
+      "label": "Ripple blur",
+      "type": "number",
+      "defaultValue": 0.035,
+      "min": 0,
+      "max": 0.15,
+      "step": 0.0025,
+      "description": "Blur each ripple before distortion. Rose Lagoon defaults to 0.035; the Original preset uses 0.05, corresponding to about 54 px in a 1080 px composition."
+    },
+    {
+      "name": "distortion",
+      "label": "Distortion",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 0.2,
+      "step": 0.001,
+      "description": "Bend the blurred ripples with fluid turbulence. Rose Lagoon uses zero distortion; the Original preset's 0.0133 corresponds to Amount 14.4 in a 1080 px composition."
+    },
+    {
+      "name": "turbulenceScale",
+      "label": "Turbulence scale",
+      "type": "number",
+      "defaultValue": 0.093,
+      "min": 0.02,
+      "max": 1,
+      "step": 0.001,
+      "description": "Size of the folds in the fluid distortion. The default corresponds to Turbulent Displace Size 100 in a 1080 px composition."
+    },
+    {
+      "name": "refraction",
+      "label": "Wave height",
+      "type": "number",
+      "defaultValue": 0.87,
+      "min": 0,
+      "max": 1.5,
+      "step": 0.01,
+      "description": "Strength of the broad luminous water ripples, corresponding to the tutorial's Caustics Water Wave Height."
+    },
+    {
+      "name": "interactive",
+      "label": "Click interaction",
+      "type": "boolean",
+      "defaultValue": true,
+      "description": "Click or tap the surface to emit a liquid ripple at that position. Foreground buttons, links, and inputs keep their own behavior."
+    },
+    {
+      "name": "interactionStrength",
+      "label": "Click strength",
+      "type": "number",
+      "defaultValue": 1.4,
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "description": "Strength of click and tap waves. Zero disables pointer emissions without affecting typing waves."
+    },
+    {
+      "name": "palette",
+      "label": "Palette",
+      "type": "select",
+      "defaultValue": "rose-lagoon",
+      "options": [
+        "auto",
+        "turquoise",
+        "rose-lagoon",
+        "silk",
+        "opal",
+        "aurora",
+        "rose",
+        "glacier",
+        "solar",
+        "graphite"
+      ],
+      "description": "Choose Original, Turquoise, Rose Lagoon, or another gradient palette. The catalog lists Light and Dark versions together; selecting one sets its theme independently of the page. The Effect preset selector restores refraction and ripple settings too."
+    },
+    {
+      "name": "theme",
+      "label": "Theme",
+      "type": "select",
+      "defaultValue": "auto",
+      "options": [
+        "auto",
+        "light",
+        "dark"
+      ],
+      "description": "Follow the page theme automatically or explicitly use a light or dark variation. Both variations remain available in the Palette selector."
+    },
+    {
+      "name": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "defaultValue": "#11b6df",
+      "description": "Automatic background color unless overridden. An empty string follows the selected palette and theme."
+    },
+    {
+      "name": "blueColor",
+      "label": "Blue color",
+      "type": "color",
+      "defaultValue": "#ffeafb",
+      "description": "Cool tint inside the fluid ripples. An empty string follows the selected palette and theme."
+    },
+    {
+      "name": "lavenderColor",
+      "label": "Lavender color",
+      "type": "color",
+      "defaultValue": "#d5d7f5",
+      "description": "Soft secondary tint in the refracted folds. An empty string follows the selected palette and theme."
+    },
+    {
+      "name": "highlightColor",
+      "label": "Highlight color",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Light reflected along the ripple ridges. An empty string follows the selected palette and theme."
+    },
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "number",
+      "defaultValue": 0.25,
+      "min": 0,
+      "max": 2,
+      "step": 0.005,
+      "description": "Playback speed. Zero holds the current frame."
+    },
+    {
+      "name": "phase",
+      "label": "Phase",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 1,
+      "step": 0.005,
+      "description": "Starting point in the repeating ripple animation, from zero to one."
+    },
+    {
+      "name": "paused",
+      "label": "Paused",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Hold the current frame and resume from the same position."
+    },
+    {
+      "name": "maxFps",
+      "label": "Frame limit",
+      "type": "number",
+      "defaultValue": 60,
+      "min": 1,
+      "max": 120,
+      "step": 1,
+      "description": "Maximum drawing rate. This does not change playback speed."
+    },
+    {
+      "name": "resolutionScale",
+      "label": "Resolution scale",
+      "type": "number",
+      "defaultValue": 0.75,
+      "min": 0.25,
+      "max": 1,
+      "step": 0.05,
+      "description": "Scale the drawing buffer to balance sharpness and GPU work."
+    },
+    {
+      "name": "maxDpr",
+      "label": "Pixel ratio limit",
+      "type": "number",
+      "defaultValue": 1.5,
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "description": "Limit the drawing resolution on high-density displays."
+    },
+    {
+      "name": "maxPixels",
+      "label": "Pixel budget",
+      "type": "number",
+      "defaultValue": 1000000,
+      "min": 65536,
+      "max": 4000000,
+      "step": 16384,
+      "description": "Maximum number of pixels in the drawing buffer."
+    }
+  ]
+}

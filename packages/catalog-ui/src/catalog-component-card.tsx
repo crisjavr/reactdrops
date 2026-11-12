@@ -10,6 +10,8 @@ import fanGalleryPreview from './assets/fan-gallery-preview.webp';
 import shapePhysicsPreview from './assets/shape-physics-preview.webp';
 import topographicFlowPreview from './assets/topographic-flow-preview.webp';
 import chromaticButtonPreview from './assets/chromatic-button-preview.webp';
+import fluidRipplesPreviewDark from './assets/fluid-ripples-preview-dark.webp';
+import fluidRipplesPreviewLight from './assets/fluid-ripples-preview-light.webp';
 import liquidGlassLogoPreviewDark from './assets/liquid-glass-logo-preview-dark.webp';
 import liquidGlassLogoPreviewLight from './assets/liquid-glass-logo-preview-light.webp';
 import showcasePointerPreview from './assets/showcase-pointer-preview.svg';
@@ -18,6 +20,7 @@ import soapBubblePreviewLight from './assets/soap-bubble/button-light.webp';
 
 // Cards with one preview per site theme; CSS shows the one matching the page.
 const themedPreviews: Record<string, { dark: string; light: string }> = {
+  'fluid-ripples': { dark: fluidRipplesPreviewDark, light: fluidRipplesPreviewLight },
   'liquid-glass-logo': { dark: liquidGlassLogoPreviewDark, light: liquidGlassLogoPreviewLight },
   'soap-bubble': { dark: soapBubblePreview, light: soapBubblePreviewLight },
 };

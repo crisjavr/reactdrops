@@ -20,7 +20,8 @@
     "./pages/refracted-text": "./src/refracted-text-page.tsx",
     "./pages/showcase-pointer": "./src/showcase-pointer-page.tsx",
     "./pages/soap-bubble": "./src/soap-bubble-page.tsx",
-    "./pages/depth-field": "./src/depth-field-page.tsx"
+    "./pages/depth-field": "./src/depth-field-page.tsx",
+    "./pages/fluid-ripples": "./src/fluid-ripples-page.tsx"
   },
   "dependencies": {
     "@reactdrops/catalog-data": "workspace:*",
@@ -40,6 +41,8 @@
     "src/assets/chromatic-button-preview.webp",
     "src/assets/depth-field-preview.webp",
     "src/assets/fan-gallery-preview.webp",
+    "src/assets/fluid-ripples-preview-dark.webp",
+    "src/assets/fluid-ripples-preview-light.webp",
     "src/assets/fractal-glass-preview.webp",
     "src/assets/liquid-glass-logo-preview-dark.webp",
     "src/assets/liquid-glass-logo-preview-light.webp",
@@ -98,6 +101,8 @@
     "src/fluid-agent-orb-page.css",
     "src/fluid-agent-orb-page.tsx",
     "src/fluid-agent-orb-speech.ts",
+    "src/fluid-ripples-page.css",
+    "src/fluid-ripples-page.tsx",
     "src/fractal-glass-page.css",
     "src/fractal-glass-page.tsx",
     "src/highlighted-code.tsx",

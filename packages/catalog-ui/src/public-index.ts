@@ -32,3 +32,5 @@ export {
 export { default as SoapBubbleCatalogPage, soapBubbleMeta } from './soap-bubble-page';
 
 export { default as DepthFieldCatalogPage, depthFieldMeta } from './depth-field-page';
+
+export { default as FluidRipplesCatalogPage, fluidRipplesMeta } from './fluid-ripples-page';

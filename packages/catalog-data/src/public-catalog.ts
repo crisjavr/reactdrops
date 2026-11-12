@@ -11,6 +11,7 @@ import chromaticButtonJson from './components/chromatic-button.json';
 import showcasePointerJson from './components/showcase-pointer.json';
 import soapBubbleJson from './components/soap-bubble.json';
 import depthFieldJson from './components/depth-field.json';
+import fluidRipplesJson from './components/fluid-ripples.json';
 import { isPublishedComponent } from './publication.mjs';
 export type { ComponentMetadata } from '@reactdrops/component-schema';
 export { isPublishedComponent, componentPath } from './publication.mjs';
@@ -27,7 +28,9 @@ export const refractedText = refractedTextJson as ComponentMetadata;
 export const showcasePointer = showcasePointerJson as ComponentMetadata;
 export const soapBubble = soapBubbleJson as ComponentMetadata;
 export const depthField = depthFieldJson as ComponentMetadata;
+export const fluidRipples = fluidRipplesJson as ComponentMetadata;
 export const components = [
+  fluidRipples,
   depthField,
   soapBubble,
   showcasePointer,
