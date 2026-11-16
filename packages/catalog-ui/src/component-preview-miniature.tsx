@@ -312,6 +312,11 @@ export function ComponentPreviewMiniature({
     };
     const interaction = (event: Event) => {
       if (
+        event.target instanceof Element &&
+        event.target.matches('[data-preview-on-file="manual"]')
+      )
+        return;
+      if (
         event.type !== 'reactdrops:preview-interaction' &&
         !(event.target instanceof Element && event.target.closest('#controls .reveal-field'))
       )

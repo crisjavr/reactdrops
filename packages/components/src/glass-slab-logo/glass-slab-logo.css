@@ -1,0 +1,40 @@
+.glass-slab-logo {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--glass-slab-background, #fff);
+  container-type: size;
+}
+.glass-slab-logo > canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+.glass-slab-logo-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.glass-slab-logo[data-glass-slab-media='true']:not([data-glass-slab-reflective='true']) > canvas {
+  mix-blend-mode: multiply;
+}
+.glass-slab-logo[data-glass-slab-ready='true'] > canvas {
+  opacity: 1;
+}
+.glass-slab-logo-fallback {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: calc(var(--glass-slab-scale, 0.75) * min(100cqw, 100cqh));
+  height: calc(var(--glass-slab-scale, 0.75) * min(100cqw, 100cqh));
+  object-fit: contain;
+}

@@ -37,6 +37,28 @@ export function ControlsPanel({
   );
 }
 
+export function ControlsResetButton({
+  disabled,
+  onClick,
+}: {
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className="component-controls-reset"
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 12a8 8 0 1 0 2.34-5.66M4 4v4.5h4.5" />
+      </svg>
+      Reset
+    </button>
+  );
+}
+
 /** Use for every customizer field. The surrounding layout provides its tooltip. */
 export function ControlField({
   label,

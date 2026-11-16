@@ -1,0 +1,82 @@
+{
+  "slug": "glass-slab-logo",
+  "name": "Glass Slab Logo",
+  "family": {
+    "slug": "logo",
+    "name": "Logo"
+  },
+  "version": "0.1.0",
+  "description": "Turns any logo into a stack of tinted glass discs, ray traced with refraction, reflection, total internal reflection and absorption, and seen from below like a product shot on a lit card. Every horizontal run of the logo becomes one disc; detached pieces get their own finer stack. White and empty parts of the logo are cut out of the glass, so emblems, scripts and line art keep their gaps.",
+  "access": "free",
+  "status": "published",
+  "visibility": "catalog",
+  "featured": false,
+  "drop": 35,
+  "publishedAt": "2026-11-16",
+  "styles": ["glass", "chromatic", "experimental"],
+  "types": ["logo"],
+  "interactions": ["automatic", "hover", "viewport"],
+  "technologies": ["webgl", "canvas", "css"],
+  "scopes": ["component"],
+  "compatibility": ["react", "vite", "next-js", "typescript", "responsive", "reduced-motion"],
+  "dependencies": [],
+  "controls": [
+    {
+      "name": "slabs",
+      "label": "Discs",
+      "type": "number",
+      "defaultValue": 22,
+      "min": 3,
+      "max": 64,
+      "step": 1,
+      "description": "Glass discs stacked across the logo height."
+    },
+    {
+      "name": "thickness",
+      "label": "Thickness",
+      "type": "number",
+      "defaultValue": 0.008,
+      "min": 0.002,
+      "max": 0.04,
+      "step": 0.001,
+      "description": "Glass thickness as a share of the logo height."
+    },
+    {
+      "name": "depth",
+      "label": "Depth",
+      "type": "number",
+      "defaultValue": 0.5,
+      "min": 0.2,
+      "max": 3,
+      "step": 0.05,
+      "description": "Front-to-back size of each disc, relative to the spacing between discs."
+    },
+    {
+      "name": "elevation",
+      "label": "Camera angle (\u00b0)",
+      "type": "number",
+      "defaultValue": 47,
+      "min": 5,
+      "max": 60,
+      "step": 1,
+      "description": "How far below the logo the camera sits."
+    },
+    {
+      "name": "aperture",
+      "label": "Lens blur",
+      "type": "number",
+      "defaultValue": 0,
+      "min": 0,
+      "max": 0.2,
+      "step": 0.005,
+      "description": "Softens the far edge of each disc."
+    },
+    {
+      "name": "backgroundColor",
+      "label": "Background",
+      "type": "color",
+      "defaultValue": "#ffffff",
+      "description": "Hex color or transparent."
+    }
+  ]
+}

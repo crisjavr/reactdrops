@@ -10,6 +10,7 @@ import { packageTopographicTerrain } from './package-topographic-terrain.mjs';
 import { packageFanGallery } from './package-fan-gallery.mjs';
 import { packageShapePhysics } from './package-shape-physics.mjs';
 import { packageTopographicFlow } from './package-topographic-flow.mjs';
+import { packageGlassSlabLogo } from './package-glass-slab-logo.mjs';
 import { packageLiquidGlassLogo } from './package-liquid-glass-logo.mjs';
 import { packageChromaticButton } from './package-chromatic-button.mjs';
 import { packageFractalGlass } from './package-fractal-glass.mjs';
@@ -73,6 +74,13 @@ const releases = {
     prefix: 'fractalGlass',
     package: () => packageFractalGlass(root),
     element: '<FractalGlass src="/your-image.jpg" alt="Your image" height={480} />',
+  },
+  'glass-slab-logo': {
+    sourceSlug: 'glass-slab-logo',
+    symbol: 'GlassSlabLogo',
+    prefix: 'glassSlabLogo',
+    package: () => packageGlassSlabLogo(root),
+    element: '<GlassSlabLogo logo="/logo.svg" colorPreset="sunset" style={{ height: 520 }} />',
   },
   'liquid-glass-logo': {
     sourceSlug: 'liquid-glass-logo',

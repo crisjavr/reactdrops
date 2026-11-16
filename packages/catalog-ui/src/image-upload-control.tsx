@@ -18,6 +18,10 @@ type ImageUploadControlProps = {
   previewType?: 'image' | 'video';
   /** Name of the uploaded file. A remove button appears while it is set. */
   fileName?: string;
+  /** Progress label while the file is being prepared. */
+  status?: string;
+  /** Bring the preview into view immediately when a file is selected. */
+  revealOnUpload?: boolean;
   /** How the thumbnail fills its square. */
   fit?: 'cover' | 'contain';
   /** Color behind the thumbnail, so a light or dark logo stays visible. */
@@ -53,6 +57,8 @@ export function ImageUploadControl({
   preview = '',
   previewType = 'image',
   fileName = '',
+  status,
+  revealOnUpload = true,
   fit = 'cover',
   surface,
   url,
@@ -73,7 +79,7 @@ export function ImageUploadControl({
     if (problem) return;
     onFile(file);
     // A new image is worth seeing: bring the preview back if it scrolled away.
-    requestComponentPreview(input.current);
+    if (revealOnUpload) requestComponentPreview(input.current);
   };
   const apply = () => {
     if (!url) return;
@@ -146,6 +152,11 @@ export function ImageUploadControl({
               }
             }}
           />
+        ) : status ? (
+          <span className="image-upload-control-value image-upload-control-status" role="status">
+            <span className="image-upload-control-spinner" aria-hidden="true" />
+            {status}
+          </span>
         ) : (
           <span className="image-upload-control-value" title={fileName || hint}>
             {fileName || hint}
@@ -156,6 +167,7 @@ export function ImageUploadControl({
           type="file"
           accept={accept}
           aria-label={`Choose ${name} file`}
+          data-preview-on-file={revealOnUpload ? undefined : 'manual'}
           hidden
           onChange={(event) => {
             take(event.target.files?.[0]);

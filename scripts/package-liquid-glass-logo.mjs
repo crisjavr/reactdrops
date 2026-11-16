@@ -4,6 +4,7 @@ import { withReactDropsLicense } from './registry-license.mjs';
 
 const modules = [
   'liquid-glass-logo.tsx',
+  'liquid-glass-logo-video.ts',
   'liquid-glass-logo-renderer.ts',
   'liquid-glass-logo-shaders.ts',
   'liquid-glass-logo.css',

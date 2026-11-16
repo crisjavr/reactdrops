@@ -1,12 +1,14 @@
+import { soapBubbleFilmMax, soapBubbleFilmSize } from './soap-bubble-film';
+export {
+  soapBubbleFilmMax,
+  soapBubbleFilmSize,
+  soapBubbleSpectralSamples,
+} from './soap-bubble-film';
+
 // Soap film optics. Lengths in the fragment shader are bubble radii unless a
 // name says otherwise; film thickness is in nanometres. The viewer looks down
 // -z, the page lies on a plane behind the bubble and y points up.
 
-export const soapBubbleSpectralSamples = 16;
-/** Thickest film in the lookup table, nm; thicker films have washed out to white. */
-export const soapBubbleFilmMax = 3000;
-/** Lookup table size: thickness samples × incidence samples. */
-export const soapBubbleFilmSize = [768, 48] as const;
 /** The baked noise repeats every this many units, in this many texels. */
 export const soapBubbleNoisePeriod = 8;
 export const soapBubbleNoiseSize = 64;

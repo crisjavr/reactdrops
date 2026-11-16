@@ -2,6 +2,7 @@ import type { ComponentMetadata } from '@reactdrops/component-schema';
 import fractalGlassJson from './components/fractal-glass.json';
 import refractedTextJson from './components/refracted-text.json';
 import liquidGlassLogoJson from './components/liquid-glass-logo.json';
+import glassSlabLogoJson from './components/glass-slab-logo.json';
 import fluidAgentOrbJson from './components/fluid-agent-orb.json';
 import topographicTerrainJson from './components/topographic-terrain.json';
 import fanGalleryJson from './components/fan-gallery.json';
@@ -23,6 +24,7 @@ export const shapePhysics = shapePhysicsJson as ComponentMetadata;
 export const topographicFlow = topographicFlowJson as ComponentMetadata;
 export const chromaticButton = chromaticButtonJson as ComponentMetadata;
 export const liquidGlassLogo = liquidGlassLogoJson as ComponentMetadata;
+export const glassSlabLogo = glassSlabLogoJson as ComponentMetadata;
 export const fractalGlass = fractalGlassJson as ComponentMetadata;
 export const refractedText = refractedTextJson as ComponentMetadata;
 export const showcasePointer = showcasePointerJson as ComponentMetadata;
@@ -30,6 +32,7 @@ export const soapBubble = soapBubbleJson as ComponentMetadata;
 export const depthField = depthFieldJson as ComponentMetadata;
 export const fluidRipples = fluidRipplesJson as ComponentMetadata;
 export const components = [
+  glassSlabLogo,
   fluidRipples,
   depthField,
   soapBubble,

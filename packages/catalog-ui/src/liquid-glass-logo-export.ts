@@ -1,5 +1,6 @@
 import { liquidGlassLogoVideoTime } from '../../components/src/liquid-glass-logo';
 import { canvasVideoEncoderCodec, encodeCanvasVideo } from './canvas-video-encode';
+import { recordCanvasVideo } from './canvas-video-export';
 
 // Exports the Liquid Glass Logo as a still image or a video. Both use the same
 // background composition and explicitly seek the animation before copying it.
@@ -36,7 +37,10 @@ export function liquidGlassLogoVideoFormats(): LiquidGlassLogoVideoFormat[] {
 type FrameOptions = {
   /** The animation's WebGL canvas, already sized to width × height pixels. */
   source: HTMLCanvasElement;
-  seek: (seconds: number) => void;
+  seek: (
+    seconds: number,
+    backdrop: HTMLImageElement | HTMLVideoElement | null,
+  ) => void | Promise<void>;
   width: number;
   height: number;
   background: string;
@@ -51,6 +55,8 @@ type FrameOptions = {
   backgroundScale?: number;
   backgroundTint?: string;
   backgroundTintOpacity?: number;
+  /** Glass with transparent gaps can filter an uploaded backdrop. */
+  multiplyBackdrop?: boolean;
 };
 type RecordOptions = FrameOptions & {
   fps: number;
@@ -58,8 +64,6 @@ type RecordOptions = FrameOptions & {
   duration: number;
   onProgress?: (fraction: number) => void;
 };
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
 
 async function loadImage(src: string) {
   const image = new Image();
@@ -176,6 +180,7 @@ async function createFramePainter(
     backgroundScale = 1,
     backgroundTint = '#000000',
     backgroundTintOpacity = 0,
+    multiplyBackdrop = false,
   }: FrameOptions,
   { transparent = false, live = false } = {},
 ) {
@@ -194,7 +199,7 @@ async function createFramePainter(
   // The video frame is ready first, so the background and the glass stay in step.
   const paint = async (seconds: number) => {
     await syncVideo?.(seconds);
-    seek(seconds);
+    await seek(seconds, image);
     context.clearRect(0, 0, width, height);
     if (!transparent) {
       context.fillStyle = background;
@@ -216,7 +221,10 @@ async function createFramePainter(
       context.fillRect(0, 0, width, height);
       context.restore();
     }
+    context.save();
+    if (image && multiplyBackdrop) context.globalCompositeOperation = 'multiply';
     context.drawImage(source, 0, 0, width, height);
+    context.restore();
   };
   const dispose = () => {
     if (!video) return;
@@ -267,67 +275,110 @@ export async function exportLiquidGlassLogoImage(
   return { blob, extension: options.format === 'jpeg' ? 'jpg' : options.format };
 }
 
-/** Real-time recording where WebCodecs is missing; frames slower than the frame rate are dropped. */
-async function recordInRealTime(
-  options: RecordOptions,
-  frame: HTMLCanvasElement,
-  paintFrame: (seconds: number) => Promise<void>,
-) {
-  const { width, height, fps, format, duration, onProgress } = options;
-  const stream = frame.captureStream(0);
-  const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
-  const recorder = new MediaRecorder(stream, {
-    mimeType: format.mimeType,
-    videoBitsPerSecond: Math.round(width * height * fps * 0.12),
-  });
-  const chunks: Blob[] = [];
-  recorder.ondataavailable = (event) => {
-    if (event.data.size) chunks.push(event.data);
-  };
-  const stopped = new Promise<void>((resolve) => {
-    recorder.onstop = () => resolve();
-  });
-  const paint = async (seconds: number) => {
-    await paintFrame(seconds);
-    track.requestFrame();
-  };
-  await paint(0);
-  recorder.start();
-  const frames = Math.max(1, Math.round(duration * fps));
-  const start = performance.now();
-  for (let index = 0; index <= frames; index++) {
-    await wait(start + (index * 1000) / fps - performance.now());
-    await paint(index / fps);
-    onProgress?.(index / frames);
-  }
-  await wait(1000 / fps);
-  recorder.stop();
-  await stopped;
-  track.stop();
-  return { blob: new Blob(chunks, { type: format.mimeType }), extension: format.extension };
-}
-
 /**
  * Exports the video frame by frame where the browser can encode it (WebCodecs):
  * every frame lands on its exact time, background video included, however slowly
  * it renders. Elsewhere it records in real time, which drops slow frames.
  */
 export async function recordLiquidGlassLogoVideo(options: RecordOptions) {
-  const { format } = options;
   const probe = { ...options, canvas: options.source, paint: () => {} };
   const codec = await canvasVideoEncoderCodec(probe);
-  if (
-    !codec &&
-    (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported(format.mimeType))
-  ) {
-    throw new Error(`This browser cannot record ${format.extension.toUpperCase()} video.`);
-  }
   const { frame, paint, dispose } = await createFramePainter(options, { live: !codec });
   try {
-    return codec
-      ? await encodeCanvasVideo({ ...options, canvas: frame, paint }, codec)
-      : await recordInRealTime(options, frame, paint);
+    const video = { ...options, canvas: frame, paint };
+    return codec ? await encodeCanvasVideo(video, codec) : await recordCanvasVideo(video);
   } finally {
     dispose();
   }
+}
+
+export const exportResolutions = [720, 1080, 1440, 2160] as const;
+export const exportAspects = {
+  '16:9': [16, 9],
+  '9:16': [9, 16],
+  '1:1': [1, 1],
+  '4:5': [4, 5],
+  '4:3': [4, 3],
+} as const;
+export type ExportAspect = keyof typeof exportAspects;
+
+export const backgroundDefaults = {
+  backgroundX: 0,
+  backgroundY: 0,
+  backgroundScale: 1,
+  backgroundTint: '#000000',
+  backgroundTintOpacity: 0,
+};
+export type BackgroundValues = typeof backgroundDefaults;
+export const backgroundNumbers = [
+  {
+    name: 'backgroundX',
+    label: 'Position X',
+    min: -100,
+    max: 100,
+    step: 1,
+    description: 'Move the background left or right, as a percentage of the frame width.',
+  },
+  {
+    name: 'backgroundY',
+    label: 'Position Y',
+    min: -100,
+    max: 100,
+    step: 1,
+    description: 'Move the background up or down, as a percentage of the frame height.',
+  },
+  {
+    name: 'backgroundScale',
+    label: 'Zoom',
+    min: 1,
+    max: 3,
+    step: 0.05,
+    description: 'Enlarge the background to keep the frame covered while moving it.',
+  },
+  {
+    name: 'backgroundTintOpacity',
+    label: 'Tint intensity',
+    min: 0,
+    max: 1,
+    step: 0.05,
+    description:
+      'Use black to darken the background, or choose a tint color. Zero removes the tint.',
+  },
+] as const;
+
+export type BackgroundType = 'image' | 'video';
+export const backgroundAccept =
+  'image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime,video/x-m4v';
+export const backgroundVideoError = 'This browser cannot play that video. Try an MP4 or WebM file.';
+export const isVideoFile = (file: File) =>
+  file.type.startsWith('video/') || (!file.type && /\.(mp4|m4v|mov|webm)$/i.test(file.name));
+
+// Reads the metadata of a chosen video, so an undecodable file is refused up
+// front, and measures its length: null when it cannot play, NaN when the
+// length stays unknown.
+export function probeVideo(url: string) {
+  return new Promise<number | null>((resolve) => {
+    const video = document.createElement('video');
+    let timer = 0;
+    const finish = (duration: number | null) => {
+      clearTimeout(timer);
+      video.onloadedmetadata = video.ondurationchange = video.onerror = null;
+      video.removeAttribute('src');
+      video.load();
+      resolve(duration);
+    };
+    const measured = () => Number.isFinite(video.duration) && video.duration > 0;
+    video.muted = true;
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      if (!(video.videoWidth > 0 && video.videoHeight > 0)) return finish(null);
+      if (measured()) return finish(video.duration);
+      // WebM recordings can leave the length out; reading the end measures it.
+      video.ondurationchange = () => measured() && finish(video.duration);
+      timer = window.setTimeout(() => finish(NaN), 5000);
+      video.currentTime = 1e7;
+    };
+    video.onerror = () => finish(null);
+    video.src = url;
+  });
 }

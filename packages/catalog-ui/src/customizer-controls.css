@@ -652,3 +652,46 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Reset sits in the Controls heading beside the information button. */
+.component-controls-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 28px;
+  padding: 0 0.625rem;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--theme-ink-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    color 140ms,
+    border-color 140ms,
+    background-color 140ms;
+}
+.component-controls-reset:not(:disabled):hover {
+  border-color: var(--theme-border-strong);
+  color: var(--theme-ink);
+  background: color-mix(in srgb, var(--theme-ink) 5%, transparent);
+}
+.component-controls-reset:focus-visible {
+  outline: 2px solid var(--theme-ink);
+  outline-offset: 2px;
+}
+.component-controls-reset svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.component-controls-reset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

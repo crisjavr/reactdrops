@@ -17,3 +17,4 @@ export * from './soap-bubble';
 export * from './depth-field';
 
 export * from './fluid-ripples';
+export * from './glass-slab-logo';

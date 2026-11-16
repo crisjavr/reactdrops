@@ -33,3 +33,4 @@ export { soapBubbleSourceFiles, soapBubbleUsage } from './generated/soap-bubble-
 export { depthFieldSourceFiles, depthFieldUsage } from './generated/depth-field-source';
 
 export { fluidRipplesSourceFiles, fluidRipplesUsage } from './generated/fluid-ripples-source';
+export { glassSlabLogoSourceFiles, glassSlabLogoUsage } from './generated/glass-slab-logo-source';

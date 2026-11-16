@@ -26,6 +26,10 @@ export const publishedCatalogRoutes = [
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/fractal-glass')),
   },
   {
+    path: '/components/logo/glass-slab-logo',
+    Page: lazy(() => import('@reactdrops/catalog-ui/pages/glass-slab-logo')),
+  },
+  {
     path: '/components/text-reveal/liquid-glass-logo',
     Page: lazy(() => import('@reactdrops/catalog-ui/pages/liquid-glass-logo')),
   },
