@@ -10,7 +10,7 @@
   "access": "free",
   "status": "published",
   "visibility": "catalog",
-  "featured": false,
+  "featured": true,
   "drop": 35,
   "publishedAt": "2026-11-16",
   "styles": ["glass", "chromatic", "experimental"],
