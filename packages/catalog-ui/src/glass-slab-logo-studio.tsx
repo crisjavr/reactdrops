@@ -407,11 +407,8 @@ export function useGlassSlabLogoStudio({
               ? { source, backgroundColor: color, ...background, colorOpacity: photoColorOpacity }
               : null,
           );
-          const expanding = type === 'video' && seconds > values.delay && seconds < logoEnd;
-          exportRenderer.renderFrame(
-            seconds,
-            expanding ? Math.min(tuning.samples, 8) : tuning.samples,
-          );
+          // Use the selected sample count throughout the export, including the entrance.
+          exportRenderer.renderFrame(seconds, tuning.samples);
         },
         width,
         height,
